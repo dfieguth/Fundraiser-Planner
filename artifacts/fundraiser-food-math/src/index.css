@@ -768,6 +768,86 @@
     @apply text-center text-xs text-gray-500 mt-20 pt-6 border-t border-gray-300;
   }
 
+  /* ── Locked row in free preview table ── */
+  .table-locked-row td {
+    @apply bg-secondary/40 border-0 py-3 px-4;
+  }
+  .table-locked-msg {
+    @apply flex items-center text-sm text-muted-foreground font-medium italic;
+  }
+
+  /* ── Locked section on results page ── */
+  .locked-section {
+    @apply mt-8 rounded-2xl border-2 border-dashed border-border bg-secondary/30 overflow-hidden;
+  }
+  .locked-inner {
+    @apply p-8 md:p-12 max-w-3xl mx-auto;
+  }
+  .locked-header {
+    @apply text-center mb-8;
+  }
+  .locked-icon {
+    @apply mx-auto mb-4 w-10 h-10 text-muted-foreground;
+  }
+  .locked-title {
+    @apply text-2xl md:text-3xl font-bold text-primary mb-3;
+  }
+  .locked-subtitle {
+    @apply text-muted-foreground text-base max-w-xl mx-auto;
+  }
+  .locked-features-grid {
+    @apply grid sm:grid-cols-2 gap-4 mb-8;
+  }
+  .locked-feature {
+    @apply flex items-start gap-3 bg-card rounded-xl p-4 border shadow-sm;
+  }
+  .locked-feature-icon {
+    @apply text-accent shrink-0 mt-0.5;
+  }
+  .locked-feature-title {
+    @apply font-semibold text-sm text-primary mb-0.5;
+  }
+  .locked-feature-desc {
+    @apply text-xs text-muted-foreground leading-relaxed;
+  }
+  .locked-cta-group {
+    @apply flex flex-col items-center gap-3 text-center;
+  }
+  .btn-locked-cta {
+    @apply inline-flex items-center justify-center rounded-xl px-8 py-4 font-bold text-lg
+      bg-accent text-white hover:bg-accent/90 transition-all shadow-md hover:shadow-lg
+      hover:-translate-y-0.5 active:translate-y-0;
+  }
+  .locked-cta-note {
+    @apply text-xs text-muted-foreground;
+  }
+
+  /* Demo unlock button — visible only when ENABLE_DEMO_UNLOCK = true */
+  .btn-demo-unlock {
+    @apply mt-2 text-xs text-muted-foreground underline underline-offset-4
+      hover:text-foreground transition-colors bg-transparent border-0 cursor-pointer p-0;
+  }
+
+  /* ── Print page locked message ── */
+  .print-locked-message {
+    @apply flex flex-col items-center justify-center text-center min-h-[60vh] px-6 max-w-lg mx-auto;
+  }
+  .print-locked-icon {
+    @apply mb-6 text-muted-foreground;
+  }
+  .print-locked-title {
+    @apply text-2xl font-bold text-primary mb-4;
+  }
+  .print-locked-desc {
+    @apply text-muted-foreground mb-8 leading-relaxed;
+  }
+  .print-locked-actions {
+    @apply flex flex-col sm:flex-row gap-3 justify-center mb-4;
+  }
+  .print-locked-note {
+    @apply text-xs text-muted-foreground;
+  }
+
   @media print {
     .no-print {
       display: none !important;

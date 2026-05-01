@@ -1,8 +1,10 @@
 import { useEffect, useState } from "react";
 import type { FundraiserPlan, PlannerFormData } from "@/lib/types";
+import { PAYMENT_LINKS } from "@/config/paymentLinks";
 
 // ── Print-friendly plan page ──────────────────────────────────
 // Loaded in a new tab; data is passed via sessionStorage.
+// Unlock state is also read from sessionStorage ("ffm_unlocked").
 // User can print to PDF from the browser (Ctrl+P / Cmd+P).
 
 function fmt(n: number) {
@@ -11,6 +13,7 @@ function fmt(n: number) {
 
 export default function PrintPage() {
   const [plan, setPlan] = useState<FundraiserPlan | null>(null);
+  const [unlocked, setUnlocked] = useState(false);
 
   useEffect(() => {
     try {
@@ -19,25 +22,77 @@ export default function PrintPage() {
         const parsed = JSON.parse(raw) as { plan: FundraiserPlan; formData: PlannerFormData };
         setPlan(parsed.plan);
       }
+      setUnlocked(sessionStorage.getItem("ffm_unlocked") === "true");
     } catch {
-      // ignore
+      // ignore parse errors
     }
   }, []);
 
+  // No plan found at all
   if (!plan) {
     return (
-      <div style={{ padding: "2rem", fontFamily: "sans-serif" }}>
-        <h2>No plan found.</h2>
-        <p>Please generate a plan first from the <a href="/planner">planner page</a>.</p>
+      <div className="print-page" data-testid="print-page-empty">
+        <div className="no-print print-toolbar">
+          <a href="/" className="btn-secondary">Back to Home</a>
+        </div>
+        <div className="print-locked-message">
+          <h2>No plan found.</h2>
+          <p>Please <a href="/planner">build a plan first</a>, then return here.</p>
+        </div>
       </div>
     );
   }
 
+  // Plan exists but not unlocked — show locked message
+  if (!unlocked) {
+    return (
+      <div className="print-page" data-testid="print-page-locked">
+        <div className="no-print print-toolbar">
+          <a href="/" className="btn-secondary" data-testid="button-back-home-locked">Back to Home</a>
+        </div>
+        <div className="print-locked-message" data-testid="print-locked-content">
+          <div className="print-locked-icon">
+            {/* Simple lock symbol without emoji */}
+            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+              <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+              <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+            </svg>
+          </div>
+          <h2 className="print-locked-title">Your printable event plan is part of the Full Event Pack.</h2>
+          <p className="print-locked-desc">
+            The Full Event Pack includes your complete shopping list, prep timeline, volunteer plan,
+            sign-up sheet, and this print-ready plan — all for a one-time $19 purchase.
+          </p>
+          <div className="print-locked-actions">
+            <a
+              href={PAYMENT_LINKS.fullEventPack ?? "#"}
+              className="btn-locked-cta"
+              target="_blank"
+              rel="noopener noreferrer"
+              data-testid="button-get-full-pack"
+            >
+              Get the Full Event Pack — $19
+            </a>
+            <a href="/results" className="btn-secondary" data-testid="button-back-results">
+              Back to Results
+            </a>
+          </div>
+          <p className="print-locked-note">
+            One-time purchase. No account required. Instant access.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  // Unlocked — show the full printable plan
   return (
     <div className="print-page" data-testid="print-page">
-      {/* Print button — hidden when printing */}
+      {/* Print button — hidden when printing via @media print */}
       <div className="no-print print-toolbar">
-        <button onClick={() => window.print()} className="btn-primary" data-testid="button-print-action">Print / Save as PDF</button>
+        <button onClick={() => window.print()} className="btn-primary" data-testid="button-print-action">
+          Print / Save as PDF
+        </button>
         <a href="/" className="btn-secondary" data-testid="button-back-home">Back to Home</a>
       </div>
 
@@ -47,7 +102,7 @@ export default function PrintPage() {
         <h1 className="print-title">{plan.summary.eventName}</h1>
         <p className="print-meta">
           {plan.summary.mealType} · {plan.summary.attendance} guests ·
-          {plan.summary.orgType} · Store: {plan.summary.storePreference}
+          {" "}{plan.summary.orgType} · Store: {plan.summary.storePreference}
         </p>
       </div>
 
@@ -77,7 +132,7 @@ export default function PrintPage() {
           <h2 className="print-section-title">Risks & Notes</h2>
           {plan.riskWarnings.map((w, i) => (
             <p key={i} className={`print-warning print-warning--${w.level}`}>
-              {w.level === "error" ? "⚠ " : w.level === "warning" ? "! " : "i "}{w.message}
+              {w.level === "error" ? "[!] " : w.level === "warning" ? "[!] " : "[i] "}{w.message}
             </p>
           ))}
         </div>

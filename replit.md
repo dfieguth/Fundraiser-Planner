@@ -45,11 +45,27 @@ A production-ready food fundraiser planning web app for churches, schools, sport
 - `pnpm run build` — typecheck + build all packages
 - Workflow: `artifacts/fundraiser-food-math: web` — runs `pnpm --filter @workspace/fundraiser-food-math run dev`
 
-## Payment Links
+## Monetization Flow
 
-Pricing buttons in the app are placeholders. To activate them:
+The app uses a free preview / paid full plan model — no accounts, no database, no subscriptions.
+
+**Free preview includes:** event summary, revenue/cost/profit estimates, top 5 shopping items, risk warnings.
+
+**Full Event Pack ($19) includes:** complete shopping list, supplies list, prep timeline, volunteer plan, sign-up sheet, email blurb, printable plan.
+
+### Payment Links
 1. Open `src/config/paymentLinks.ts`
 2. Replace the URLs in the `PAYMENT_LINKS` object with your Stripe Payment Link or Gumroad product URLs
+
+### Demo Unlock
+- `ENABLE_DEMO_UNLOCK = true` in `paymentLinks.ts` shows a small "Demo: Unlock Full Plan" button on the results page
+- Clicking it stores `ffm_unlocked = "true"` in sessionStorage, granting access to the full plan locally
+- **Set `ENABLE_DEMO_UNLOCK = false` before going live**
+
+### Unlock State
+- Stored in `sessionStorage` under key `ffm_unlocked`
+- Lasts for the browser tab session only (resets on close)
+- The print page reads this key to decide whether to show the full plan or the locked message
 
 ## Volunteer Terminology
 
