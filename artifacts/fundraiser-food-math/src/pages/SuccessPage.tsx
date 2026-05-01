@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { CheckCircle2, AlertCircle, ArrowLeft, FileText } from "lucide-react";
 import { setUnlocked, getStoredPlan, FULL_PACK_UNLOCK_VALUE } from "@/lib/unlock";
+import { SUPPORT_EMAIL } from "@/config/paymentLinks";
 
 // ── /success route ────────────────────────────────────────────
 // Stripe or Gumroad redirects here after payment.
@@ -89,6 +90,13 @@ export default function SuccessPage() {
           <p className="success-note">
             Your access is saved to this browser. Clear your browser data to reset.
           </p>
+          <p className="success-note">
+            If you have trouble,{" "}
+            <a href={`mailto:${SUPPORT_EMAIL}`} className="success-support-link" data-testid="link-support-no-plan">
+              contact us
+            </a>{" "}
+            and we'll help.
+          </p>
         </div>
       </div>
     );
@@ -107,8 +115,12 @@ export default function SuccessPage() {
           Payment status could not be confirmed from this link.
         </h1>
         <p className="success-desc">
-          This page is only accessible after completing a purchase. If you believe this
-          is an error, please contact us with your order confirmation number.
+          This page is only accessible after completing a purchase. If you believe you
+          already paid,{" "}
+          <a href={`mailto:${SUPPORT_EMAIL}`} className="success-support-link" data-testid="link-support-unconfirmed">
+            contact us
+          </a>{" "}
+          and we'll help unlock your plan.
         </p>
         <div className="success-actions">
           {hasSavedPlan && (

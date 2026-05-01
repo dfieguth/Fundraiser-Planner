@@ -799,6 +799,9 @@
   .success-note {
     @apply text-xs text-muted-foreground mt-2;
   }
+  .success-support-link {
+    @apply underline underline-offset-2 hover:opacity-75 transition-opacity;
+  }
 
   /* ── Locked row in free preview table ── */
   .table-locked-row td {

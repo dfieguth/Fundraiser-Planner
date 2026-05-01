@@ -42,6 +42,17 @@ export const PAYMENT_LINKS = {
 } as const;
 
 // ============================================================
+// SUPPORT EMAIL
+// Shown on the /success page when payment cannot be confirmed
+// or when a buyer's plan is missing after a redirect.
+//
+// Replace "support@example.com" with your real support address
+// before going live.
+// ============================================================
+
+export const SUPPORT_EMAIL = "support@example.com";
+
+// ============================================================
 // DEMO UNLOCK FLAG
 //
 // Set ENABLE_DEMO_UNLOCK to true while you are testing the
