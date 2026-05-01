@@ -2,6 +2,17 @@
 // PAYMENT LINKS CONFIGURATION
 // Replace the placeholder URLs below with your actual
 // Stripe Payment Links or Gumroad product links.
+//
+// DEVELOPER NOTE — MVP SECURITY POSTURE:
+// The current unlock flow is client-side only (sessionStorage flag set after
+// a post-payment redirect). This is fine for early MVP testing and low-volume
+// sales — the downside exposure is minimal and the implementation is simple.
+//
+// If this app starts getting meaningful sales volume, replace this with a
+// server-verified flow: use a Stripe webhook to confirm payment server-side,
+// then issue a short-lived signed token or session that the client can
+// validate before showing the full plan. Do not rely solely on a URL
+// parameter or sessionStorage flag for high-stakes gating.
 // ============================================================
 
 export const PAYMENT_LINKS = {

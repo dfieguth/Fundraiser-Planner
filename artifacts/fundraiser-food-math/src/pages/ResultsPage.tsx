@@ -24,7 +24,16 @@ function fmt(n: number) {
   return n.toLocaleString("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 });
 }
 
-// Persist unlock state in sessionStorage so the print page can read it.
+// ── UNLOCK HELPER ────────────────────────────────────────────
+// MVP unlock flow: this is based on post-payment redirect and is not server-verified.
+// For higher-volume sales, replace with Stripe webhook verification.
+//
+// Currently unlock state lives in sessionStorage only — it resets when the
+// browser tab closes and cannot be forged across sessions in a meaningful way
+// for a simple redirect-based flow. This is acceptable for early MVP volume.
+// If you add a URL-param unlock (?unlocked=true after Stripe redirect), read
+// that param here and write it to sessionStorage so the state persists within
+// the session.
 const UNLOCK_KEY = "ffm_unlocked";
 
 function getUnlocked(): boolean {
