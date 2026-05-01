@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Switch, Route, Router as WouterRouter } from "wouter";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
@@ -7,16 +7,30 @@ import LandingPage from "@/pages/LandingPage";
 import PlannerPage from "@/pages/PlannerPage";
 import ResultsPage from "@/pages/ResultsPage";
 import PrintPage from "@/pages/PrintPage";
+import SuccessPage from "@/pages/SuccessPage";
 import NotFound from "@/pages/not-found";
 import type { FundraiserPlan, PlannerFormData } from "@/lib/types";
 import type { calculatePlan } from "@/lib/calculator";
+import { getStoredPlan } from "@/lib/unlock";
 
 const queryClient = new QueryClient();
 
 function AppRoutes() {
   const [plan, setPlan] = useState<FundraiserPlan | null>(null);
   const [formData, setFormData] = useState<PlannerFormData | null>(null);
-  const [, setLocation] = useState("/");
+
+  // On mount, restore plan from localStorage so returning users (e.g. after a
+  // Stripe redirect → /success → /results) find their plan in the results page
+  // without having to rebuild it.
+  useEffect(() => {
+    if (!plan) {
+      const saved = getStoredPlan();
+      if (saved) {
+        setPlan(saved.plan);
+        setFormData(saved.formData);
+      }
+    }
+  }, []);
 
   const handlePlanReady = (newPlan: ReturnType<typeof calculatePlan>, form: PlannerFormData) => {
     setPlan(newPlan);
@@ -49,6 +63,7 @@ function AppRoutes() {
         }
       </Route>
       <Route path="/print" component={PrintPage} />
+      <Route path="/success" component={SuccessPage} />
       <Route component={NotFound} />
     </Switch>
   );

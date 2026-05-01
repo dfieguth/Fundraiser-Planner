@@ -8,6 +8,7 @@ import {
   Clock, Users, Mail, FileText, ChevronRight,
 } from "lucide-react";
 import { PAYMENT_LINKS, ENABLE_DEMO_UNLOCK } from "@/config/paymentLinks";
+import { getUnlocked, setUnlocked, savePlanBeforePayment } from "@/lib/unlock";
 
 // ── FREE PREVIEW LIMITS ───────────────────────────────────────
 // Change these numbers to adjust what the free preview shows.
@@ -24,59 +25,38 @@ function fmt(n: number) {
   return n.toLocaleString("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 });
 }
 
-// ── UNLOCK HELPER ────────────────────────────────────────────
-// MVP unlock flow: this is based on post-payment redirect and is not server-verified.
-// For higher-volume sales, replace with Stripe webhook verification.
-//
-// Currently unlock state lives in sessionStorage only — it resets when the
-// browser tab closes and cannot be forged across sessions in a meaningful way
-// for a simple redirect-based flow. This is acceptable for early MVP volume.
-// If you add a URL-param unlock (?unlocked=true after Stripe redirect), read
-// that param here and write it to sessionStorage so the state persists within
-// the session.
-const UNLOCK_KEY = "ffm_unlocked";
-
-function getUnlocked(): boolean {
-  try {
-    return sessionStorage.getItem(UNLOCK_KEY) === "true";
-  } catch {
-    return false;
-  }
-}
-
-function setUnlocked() {
-  try {
-    sessionStorage.setItem(UNLOCK_KEY, "true");
-  } catch {
-    // ignore
-  }
-}
-
 export default function ResultsPage({ plan, formData, onReset }: ResultsPageProps) {
   const [copied, setCopied] = useState(false);
+  // getUnlocked reads localStorage via the shared helper (see src/lib/unlock.ts).
   const [unlocked, setUnlockedState] = useState<boolean>(getUnlocked);
   const [activeTab, setActiveTab] = useState<"shopping" | "supplies" | "timeline" | "volunteers" | "email">("shopping");
 
   const profit = plan.estimatedProfit;
   const profitStatus = profit[1] < 0 ? "loss" : profit[0] < 0 ? "risky" : "good";
 
+  // Demo-mode unlock — only reachable when ENABLE_DEMO_UNLOCK = true.
   const handleDemoUnlock = () => {
     setUnlocked();
     setUnlockedState(true);
-    // Also persist plan so the print page picks up unlock status.
-    try {
-      sessionStorage.setItem("ffm_plan", JSON.stringify({ plan, formData }));
-    } catch {
-      // ignore
+    // savePlanBeforePayment also syncs to sessionStorage so PrintPage finds it.
+    savePlanBeforePayment(plan, formData);
+  };
+
+  // Payment CTA click — save plan before navigating to Stripe/Gumroad.
+  // The user leaves the app in the same tab; on return they land on /success
+  // where the unlock is applied. No target="_blank" so the redirect flow works.
+  const handlePaymentCTAClick = () => {
+    savePlanBeforePayment(plan, formData);
+    const link = PAYMENT_LINKS.fullEventPack;
+    if (link) {
+      window.location.href = link;
     }
   };
 
   const handlePrintClick = () => {
-    try {
-      sessionStorage.setItem("ffm_plan", JSON.stringify({ plan, formData }));
-    } catch {
-      // ignore
-    }
+    // sessionStorage is kept in sync by savePlanBeforePayment/setUnlocked,
+    // but write it again here as a safety net for the same-session print flow.
+    savePlanBeforePayment(plan, formData);
   };
 
   const copyEmailBlurb = () => {
@@ -270,23 +250,23 @@ export default function ResultsPage({ plan, formData, onReset }: ResultsPageProp
             </div>
 
             <div className="locked-cta-group">
-              <a
-                href={PAYMENT_LINKS.fullEventPack ?? "#"}
+              {/* Payment CTA — saves plan to localStorage before navigating to Stripe/Gumroad.
+                  No target="_blank" so the Stripe redirect comes back to /success in the same tab. */}
+              <button
+                onClick={handlePaymentCTAClick}
                 className="btn-locked-cta"
-                target="_blank"
-                rel="noopener noreferrer"
                 data-testid="button-unlock-paid"
               >
                 Get the Full Event Pack — $19
                 <ChevronRight className="w-5 h-5 ml-1" />
-              </a>
+              </button>
               <p className="locked-cta-note">
                 One-time purchase. Instant access. No account required.
               </p>
 
               {/* ── DEMO UNLOCK ──────────────────────────────────────
-                  Visible only when ENABLE_DEMO_UNLOCK = true in paymentLinks.ts.
-                  Remove or set to false before going live.
+                  Only visible when ENABLE_DEMO_UNLOCK = true in paymentLinks.ts.
+                  Set to false before going live.
               ─────────────────────────────────────────────────── */}
               {ENABLE_DEMO_UNLOCK && (
                 <button
@@ -511,7 +491,7 @@ export default function ResultsPage({ plan, formData, onReset }: ResultsPageProp
             )}
           </section>
 
-          {/* Bottom CTA — only shown when unlocked */}
+          {/* Bottom CTA */}
           <div className="results-footer">
             <div className="results-footer-inner">
               <div>

@@ -22,8 +22,19 @@ export const PAYMENT_LINKS = {
   // $9 Printable Plan — replace with your Stripe/Gumroad link
   printablePlan: "https://placeholder.example.com/printable-plan",
 
-  // $19 Full Event Pack — replace with your Stripe/Gumroad link
-  // ↑ This is the primary paid product. Paste your link here.
+  // $19 Full Event Pack — replace with your Stripe/Gumroad link.
+  // This is the primary paid product. Paste your link here.
+  //
+  // POST-PAYMENT REDIRECT SETUP:
+  // Set your Stripe Payment Link or Gumroad product's success/redirect URL to:
+  //   https://[your-app-domain]/success?unlock=full-event-pack
+  //
+  // Stripe: Dashboard → Payment Links → [your link] → After payment → Confirmation page
+  //   → Set to "Redirect to your website" → URL: https://[your-domain]/success?unlock=full-event-pack
+  //
+  // Gumroad: Product settings → Redirect URL → https://[your-domain]/success?unlock=full-event-pack
+  //
+  // The app reads the ?unlock=full-event-pack param on /success and grants access.
   fullEventPack: "https://placeholder.example.com/full-event-pack",
 
   // $49 Custom Plan — replace with your Stripe/Gumroad link or calendar booking link

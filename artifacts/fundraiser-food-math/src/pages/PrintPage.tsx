@@ -1,10 +1,13 @@
 import { useEffect, useState } from "react";
 import type { FundraiserPlan, PlannerFormData } from "@/lib/types";
 import { PAYMENT_LINKS } from "@/config/paymentLinks";
+import { getUnlocked, getStoredPlan } from "@/lib/unlock";
 
 // ── Print-friendly plan page ──────────────────────────────────
-// Loaded in a new tab; data is passed via sessionStorage.
-// Unlock state is also read from sessionStorage ("ffm_unlocked").
+// Opened in a new tab from the Results page.
+// Plan data is read from sessionStorage (written by savePlanBeforePayment/
+// ResultsPage). Unlock state is read from localStorage via getUnlocked()
+// (see src/lib/unlock.ts).
 // User can print to PDF from the browser (Ctrl+P / Cmd+P).
 
 function fmt(n: number) {
@@ -16,13 +19,21 @@ export default function PrintPage() {
   const [unlocked, setUnlocked] = useState(false);
 
   useEffect(() => {
+    // Read unlock state from localStorage via shared helper.
+    setUnlocked(getUnlocked());
+
     try {
+      // Prefer sessionStorage (written by ResultsPage for same-tab access).
+      // Fall back to localStorage plan if sessionStorage is empty
+      // (e.g. opened in a new tab after a page reload).
       const raw = sessionStorage.getItem("ffm_plan");
       if (raw) {
         const parsed = JSON.parse(raw) as { plan: FundraiserPlan; formData: PlannerFormData };
         setPlan(parsed.plan);
+      } else {
+        const saved = getStoredPlan();
+        if (saved) setPlan(saved.plan);
       }
-      setUnlocked(sessionStorage.getItem("ffm_unlocked") === "true");
     } catch {
       // ignore parse errors
     }
