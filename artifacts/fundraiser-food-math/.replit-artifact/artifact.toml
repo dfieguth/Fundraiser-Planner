@@ -1,0 +1,31 @@
+kind = "web"
+previewPath = "/"
+title = "Fundraiser Food Math"
+version = "1.0.0"
+id = "artifacts/fundraiser-food-math"
+router = "path"
+
+[[integratedSkills]]
+name = "react-vite"
+version = "1.0.0"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 19397
+
+[services.development]
+run = "pnpm --filter @workspace/fundraiser-food-math run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/fundraiser-food-math", "run", "build" ]
+publicDir = "artifacts/fundraiser-food-math/dist/public"
+serve = "static"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "19397"
+BASE_PATH = "/"
