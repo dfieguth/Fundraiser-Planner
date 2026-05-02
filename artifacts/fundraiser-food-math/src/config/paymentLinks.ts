@@ -78,7 +78,7 @@ export const PAYMENT_LINKS = {
 // before going live.
 // ============================================================
 
-export const SUPPORT_EMAIL = "support@example.com";
+export const SUPPORT_EMAIL = "devin@ghfc.org";
 
 /**
  * Builds a URL-encoded mailto link for the support email.
@@ -111,7 +111,7 @@ export function isConfigured(link: string | null | undefined): link is string {
 // completely — no visible trace remains in the UI.
 // ============================================================
 
-export const ENABLE_DEMO_UNLOCK = true;
+export const ENABLE_DEMO_UNLOCK = false;
 
 // ============================================================
 // PRICING DISPLAY CONFIG
