@@ -1,4 +1,17 @@
 // ============================================================
+// BACKEND READINESS NOTE
+//
+// Current MVP launch uses a client-side post-payment redirect unlock:
+//   Stripe → /success?unlock=full-event-pack → localStorage flag set → plan unlocked.
+//
+// The backend webhook route at /api/stripe/webhook exists only as future
+// infrastructure. It is NOT required for launch and does NOT affect the
+// current unlock flow in any way.
+//
+// See artifacts/api-server/src/routes/stripe.ts for the future secure flow.
+// ============================================================
+
+// ============================================================
 // LAUNCH CHECKLIST
 // Complete every item below before going live:
 //
