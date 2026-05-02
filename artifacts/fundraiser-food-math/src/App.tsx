@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Switch, Route, Router as WouterRouter } from "wouter";
+import { Switch, Route, Router as WouterRouter, useLocation } from "wouter";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -19,6 +19,7 @@ const queryClient = new QueryClient();
 function AppRoutes() {
   const [plan, setPlan] = useState<FundraiserPlan | null>(null);
   const [formData, setFormData] = useState<PlannerFormData | null>(null);
+  const [, setLocation] = useLocation();
 
   // On mount, restore plan from localStorage so returning users (e.g. after a
   // Stripe redirect → /success → /results) find their plan in the results page
@@ -34,18 +35,21 @@ function AppRoutes() {
   }, []);
 
   const handlePlanReady = (newPlan: ReturnType<typeof calculatePlan>, form: PlannerFormData) => {
-    // Persist to localStorage before the hard-navigate so the useEffect
-    // restore on mount finds the plan even after a full page reload.
+    // Persist to localStorage so the plan survives a browser refresh of /results
+    // and the Stripe redirect round-trip (page reload → useEffect restore).
     savePlanBeforePayment(newPlan, form);
+    // Update state first, then navigate client-side so the React component tree
+    // stays mounted and the /results route sees the new plan immediately —
+    // no full-page reload, no race between render and useEffect restore.
     setPlan(newPlan);
     setFormData(form);
-    window.location.href = "/results";
+    setLocation("/results");
   };
 
   const handleReset = () => {
     setPlan(null);
     setFormData(null);
-    window.location.href = "/planner";
+    setLocation("/planner");
   };
 
   return (
