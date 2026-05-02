@@ -1,4 +1,4 @@
-import { PRICING_TIERS } from "@/config/paymentLinks";
+import { PRICING_TIERS, isConfigured } from "@/config/paymentLinks";
 import { ArrowRight, Utensils, Calculator, Printer, Check, Users, Clock, LayoutList } from "lucide-react";
 import { Link } from "wouter";
 
@@ -93,12 +93,12 @@ export default function LandingPage() {
                     </li>
                   ))}
                 </ul>
-                {tier.link ? (
+                {isConfigured(tier.link) ? (
                   <a href={tier.link} className="pricing-cta" target="_blank" rel="noopener noreferrer" data-testid={`link-pricing-cta-${tier.id}`}>
                     {tier.cta}
                   </a>
                 ) : (
-                  <Link href="/planner" className="pricing-cta pricing-cta--free" data-testid={`button-pricing-cta-${tier.id}`}>
+                  <Link href="/planner" className={`pricing-cta${tier.id === "free" ? " pricing-cta--free" : ""}`} data-testid={`button-pricing-cta-${tier.id}`}>
                     {tier.cta}
                   </Link>
                 )}

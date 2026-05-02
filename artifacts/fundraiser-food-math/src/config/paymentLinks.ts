@@ -1,4 +1,19 @@
 // ============================================================
+// LAUNCH CHECKLIST
+// Complete every item below before going live:
+//
+//  [ ] Replace SUPPORT_EMAIL with your real support address
+//  [ ] Replace PAYMENT_LINKS.fullEventPack with your real Stripe or Gumroad link
+//  [ ] Set ENABLE_DEMO_UNLOCK to false
+//  [ ] In your Stripe Payment Link settings:
+//        After payment → Confirmation page → Redirect to your website
+//        URL: https://[your-domain]/success?unlock=full-event-pack
+//      Or in Gumroad:
+//        Product settings → Redirect URL → https://[your-domain]/success?unlock=full-event-pack
+//  [ ] Test a full purchase flow in the same browser tab before launch
+// ============================================================
+
+// ============================================================
 // PAYMENT LINKS CONFIGURATION
 // Replace the placeholder URLs below with your actual
 // Stripe Payment Links or Gumroad product links.
@@ -59,6 +74,16 @@ export const SUPPORT_EMAIL = "support@example.com";
  */
 export function buildSupportMailto(subject: string, body: string): string {
   return `mailto:${SUPPORT_EMAIL}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+}
+
+/**
+ * Returns true only when a payment link has been replaced with a real URL.
+ * Placeholder links (placeholder.example.com) and null are both treated as
+ * not configured — the UI should fall back to the planner instead of
+ * navigating to a dead link.
+ */
+export function isConfigured(link: string | null | undefined): link is string {
+  return typeof link === "string" && !link.includes("placeholder.example.com");
 }
 
 // ============================================================
