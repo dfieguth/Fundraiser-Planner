@@ -43,6 +43,16 @@
 // parameter or sessionStorage flag for high-stakes gating.
 // ============================================================
 
+// ── Stripe test / live switch ────────────────────────────────
+// Set USE_STRIPE_TEST_MODE = true to send buyers to the Stripe test
+// payment link. Set to false before going live.
+//
+// BEFORE GOING LIVE: set USE_STRIPE_TEST_MODE = false
+// ─────────────────────────────────────────────────────────────
+export const LIVE_FULL_EVENT_PACK_LINK = "https://buy.stripe.com/28E7sF4DPgWw8pVgvE9EI00";
+export const TEST_FULL_EVENT_PACK_LINK = "PASTE_TEST_STRIPE_PAYMENT_LINK_HERE";
+export const USE_STRIPE_TEST_MODE = true;
+
 export const PAYMENT_LINKS = {
   // Free tier — no payment needed, just scroll to planner
   free: null,
@@ -50,24 +60,18 @@ export const PAYMENT_LINKS = {
   // $9 Printable Plan — replace with your Stripe/Gumroad link
   printablePlan: "https://placeholder.example.com/printable-plan",
 
-  // $19 Full Event Pack — replace with your Stripe/Gumroad link.
-  // This is the primary paid product. Paste your link here.
+  // $19 Full Event Pack.
+  // Automatically uses TEST_FULL_EVENT_PACK_LINK when USE_STRIPE_TEST_MODE is true,
+  // and LIVE_FULL_EVENT_PACK_LINK when false.
   //
-  // POST-PAYMENT REDIRECT SETUP:
-  // Set your Stripe Payment Link or Gumroad product's success/redirect URL to:
-  //   https://[your-app-domain]/success?unlock=full-event-pack
-  //
+  // POST-PAYMENT REDIRECT SETUP (both test and live links):
   // Stripe: Dashboard → Payment Links → [your link] → After payment → Confirmation page
   //   → Set to "Redirect to your website" → URL: https://[your-domain]/success?unlock=full-event-pack
-  //
-  // Gumroad: Product settings → Redirect URL → https://[your-domain]/success?unlock=full-event-pack
-  //
-  // The app reads the ?unlock=full-event-pack param on /success and grants access.
-  fullEventPack: "https://buy.stripe.com/28E7sF4DPgWw8pVgvE9EI00",
+  fullEventPack: USE_STRIPE_TEST_MODE ? TEST_FULL_EVENT_PACK_LINK : LIVE_FULL_EVENT_PACK_LINK,
 
   // $49 Custom Plan — replace with your Stripe/Gumroad link or calendar booking link
   customPlan: "https://placeholder.example.com/custom-plan",
-} as const;
+};
 
 // ============================================================
 // SUPPORT EMAIL
