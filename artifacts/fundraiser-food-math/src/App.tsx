@@ -12,6 +12,7 @@ import NotFound from "@/pages/not-found";
 import type { FundraiserPlan, PlannerFormData } from "@/lib/types";
 import type { calculatePlan } from "@/lib/calculator";
 import { getStoredPlan } from "@/lib/unlock";
+import { USE_STRIPE_TEST_MODE } from "@/config/paymentLinks";
 
 const queryClient = new QueryClient();
 
@@ -73,6 +74,11 @@ function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
+        {USE_STRIPE_TEST_MODE && (
+          <div className="test-mode-banner" data-testid="test-mode-banner">
+            Test mode: checkout uses Stripe test payments.
+          </div>
+        )}
         <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, "")}>
           <AppRoutes />
         </WouterRouter>

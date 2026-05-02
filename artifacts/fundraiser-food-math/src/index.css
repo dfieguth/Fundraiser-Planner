@@ -803,6 +803,12 @@
     @apply underline underline-offset-2 hover:opacity-75 transition-opacity;
   }
 
+  /* ── Test mode banner ── */
+  .test-mode-banner {
+    @apply w-full bg-yellow-400 text-yellow-900 text-xs font-medium text-center py-1.5 px-4;
+    letter-spacing: 0.01em;
+  }
+
   /* ── Results page disclaimer ── */
   .results-disclaimer {
     @apply text-xs text-muted-foreground text-center italic px-4 pb-1 max-w-2xl mx-auto;
