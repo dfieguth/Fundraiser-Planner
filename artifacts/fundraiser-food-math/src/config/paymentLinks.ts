@@ -18,6 +18,7 @@
 //  [ ] Replace SUPPORT_EMAIL with your real support address
 //  [ ] Replace PAYMENT_LINKS.fullEventPack with your real Stripe or Gumroad link
 //  [ ] Set ENABLE_DEMO_UNLOCK to false
+//  [ ] Set USE_STRIPE_TEST_MODE = false before going live
 //  [ ] In your Stripe Payment Link settings:
 //        After payment → Confirmation page → Redirect to your website
 //        URL: https://[your-domain]/success?unlock=full-event-pack
