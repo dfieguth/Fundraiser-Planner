@@ -803,6 +803,11 @@
     @apply underline underline-offset-2 hover:opacity-75 transition-opacity;
   }
 
+  /* ── Results page disclaimer ── */
+  .results-disclaimer {
+    @apply text-xs text-muted-foreground text-center italic px-4 pb-1 max-w-2xl mx-auto;
+  }
+
   /* ── Locked row in free preview table ── */
   .table-locked-row td {
     @apply bg-secondary/40 border-0 py-3 px-4;

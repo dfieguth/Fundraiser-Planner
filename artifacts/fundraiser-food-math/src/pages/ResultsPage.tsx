@@ -150,6 +150,9 @@ export default function ResultsPage({ plan, formData, onReset }: ResultsPageProp
         </div>
       </div>
 
+      {/* Disclaimer — always visible */}
+      <p className="results-disclaimer" data-testid="results-disclaimer">{plan.disclaimer}</p>
+
       {/* Shopping List Preview — always visible, limited */}
       <section className="results-section" data-testid="section-preview">
         <h2 className="section-heading">Shopping List Preview</h2>

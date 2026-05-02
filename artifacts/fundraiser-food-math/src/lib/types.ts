@@ -65,14 +65,14 @@ export interface SupplyItem {
 export interface PrepStep {
   time: string;
   task: string;
-  who: string; // "Adult Volunteer" | "Parent Oversight" etc.
+  who: string; // "Adult Volunteer" | "Parent Oversight" | "Student Volunteer" etc.
   duration: string;
 }
 
 export interface VolunteerRole {
   role: string;
   count: number;
-  type: "Adult Volunteer" | "Parent Oversight" | "Student Volunteer";
+  type: "Adult Volunteer" | "Parent Volunteer" | "Parent Oversight" | "Student Volunteer";
   duties: string[];
 }
 
@@ -102,4 +102,5 @@ export interface FundraiserPlan {
   volunteerPlan: VolunteerRole[];
   riskWarnings: RiskWarning[];
   emailBlurb: string;
+  disclaimer: string;
 }
