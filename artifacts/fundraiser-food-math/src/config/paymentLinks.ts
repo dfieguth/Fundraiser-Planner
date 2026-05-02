@@ -51,7 +51,7 @@
 // BEFORE GOING LIVE: set USE_STRIPE_TEST_MODE = false
 // ─────────────────────────────────────────────────────────────
 export const LIVE_FULL_EVENT_PACK_LINK = "https://buy.stripe.com/28E7sF4DPgWw8pVgvE9EI00";
-export const TEST_FULL_EVENT_PACK_LINK = "PASTE_TEST_STRIPE_PAYMENT_LINK_HERE";
+export const TEST_FULL_EVENT_PACK_LINK = "https://buy.stripe.com/test_28E7sF4DPgWw8pVgvE9EI00";
 export const USE_STRIPE_TEST_MODE = true;
 
 export const PAYMENT_LINKS = {
