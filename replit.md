@@ -63,9 +63,10 @@ The app uses a free preview / paid full plan model — no accounts, no database,
 - **Set `ENABLE_DEMO_UNLOCK = false` before going live**
 
 ### Unlock State
-- Stored in `sessionStorage` under key `ffm_unlocked`
-- Lasts for the browser tab session only (resets on close)
+- Stored in `localStorage` under key `ffm_unlocked`
+- Persists across tab close, reload, and Stripe redirect round-trips
 - The print page reads this key to decide whether to show the full plan or the locked message
+- `sessionStorage["ffm_plan"]` is used to pass plan data to the print page (same-session access), with a `localStorage` fallback via `getStoredPlan()`
 
 ## Volunteer Terminology
 
