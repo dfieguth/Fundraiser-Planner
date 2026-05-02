@@ -11,7 +11,7 @@ import SuccessPage from "@/pages/SuccessPage";
 import NotFound from "@/pages/not-found";
 import type { FundraiserPlan, PlannerFormData } from "@/lib/types";
 import type { calculatePlan } from "@/lib/calculator";
-import { getStoredPlan } from "@/lib/unlock";
+import { getStoredPlan, savePlanBeforePayment } from "@/lib/unlock";
 import { USE_STRIPE_TEST_MODE } from "@/config/paymentLinks";
 
 const queryClient = new QueryClient();
@@ -34,6 +34,9 @@ function AppRoutes() {
   }, []);
 
   const handlePlanReady = (newPlan: ReturnType<typeof calculatePlan>, form: PlannerFormData) => {
+    // Persist to localStorage before the hard-navigate so the useEffect
+    // restore on mount finds the plan even after a full page reload.
+    savePlanBeforePayment(newPlan, form);
     setPlan(newPlan);
     setFormData(form);
     window.location.href = "/results";
