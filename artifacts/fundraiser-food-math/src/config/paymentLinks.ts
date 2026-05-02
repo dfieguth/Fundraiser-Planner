@@ -52,6 +52,15 @@ export const PAYMENT_LINKS = {
 
 export const SUPPORT_EMAIL = "support@example.com";
 
+/**
+ * Builds a URL-encoded mailto link for the support email.
+ * Subject and body are encoded with encodeURIComponent so special
+ * characters (spaces, newlines, em-dashes, etc.) are safe in all clients.
+ */
+export function buildSupportMailto(subject: string, body: string): string {
+  return `mailto:${SUPPORT_EMAIL}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+}
+
 // ============================================================
 // DEMO UNLOCK FLAG
 //

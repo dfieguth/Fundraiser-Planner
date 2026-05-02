@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { CheckCircle2, AlertCircle, ArrowLeft, FileText } from "lucide-react";
 import { setUnlocked, getStoredPlan, FULL_PACK_UNLOCK_VALUE } from "@/lib/unlock";
-import { SUPPORT_EMAIL } from "@/config/paymentLinks";
+import { buildSupportMailto } from "@/config/paymentLinks";
 
 // ── /success route ────────────────────────────────────────────
 // Stripe or Gumroad redirects here after payment.
@@ -92,7 +92,14 @@ export default function SuccessPage() {
           </p>
           <p className="success-note">
             If you have trouble,{" "}
-            <a href={`mailto:${SUPPORT_EMAIL}`} className="success-support-link" data-testid="link-support-no-plan">
+            <a
+              href={buildSupportMailto(
+                "Full Event Pack \u2014 Plan Not Found",
+                "Hi, I purchased the Full Event Pack, but my saved plan was not found after payment.\n\nEvent name:\nEmail used for payment:\nApproximate payment time:\n\nPlease help me unlock or rebuild my plan."
+              )}
+              className="success-support-link"
+              data-testid="link-support-no-plan"
+            >
               contact us
             </a>{" "}
             and we'll help.
@@ -117,7 +124,14 @@ export default function SuccessPage() {
         <p className="success-desc">
           This page is only accessible after completing a purchase. If you believe you
           already paid,{" "}
-          <a href={`mailto:${SUPPORT_EMAIL}`} className="success-support-link" data-testid="link-support-unconfirmed">
+          <a
+            href={buildSupportMailto(
+              "Full Event Pack \u2014 Order Help",
+              "Hi, I may have purchased the Full Event Pack, but the app could not confirm my payment link.\n\nEvent name:\nEmail used for payment:\nApproximate payment time:\n\nPlease help me access my full plan."
+            )}
+            className="success-support-link"
+            data-testid="link-support-unconfirmed"
+          >
             contact us
           </a>{" "}
           and we'll help unlock your plan.
