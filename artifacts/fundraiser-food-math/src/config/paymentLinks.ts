@@ -63,7 +63,7 @@ export const PAYMENT_LINKS = {
   // Gumroad: Product settings → Redirect URL → https://[your-domain]/success?unlock=full-event-pack
   //
   // The app reads the ?unlock=full-event-pack param on /success and grants access.
-  fullEventPack: "https://placeholder.example.com/full-event-pack",
+  fullEventPack: "https://buy.stripe.com/28E7sF4DPgWw8pVgvE9EI00",
 
   // $49 Custom Plan — replace with your Stripe/Gumroad link or calendar booking link
   customPlan: "https://placeholder.example.com/custom-plan",
