@@ -171,16 +171,37 @@ export default function PrintPage() {
   const mealLabel = MEAL_LABELS[plan.summary.mealType] ?? plan.summary.mealType;
   const checklist  = buildDayOfChecklist(plan.summary.mealType);
 
+  const top5Items = [...plan.shoppingList]
+    .sort((a, b) => b.estimatedCost[1] - a.estimatedCost[1])
+    .slice(0, 5);
+
+  function printExecSummary() {
+    const prevTitle = document.title;
+    document.title = `${plan?.summary.eventName || "Fundraiser"} — Executive Summary`;
+    document.body.classList.add("printing-exec");
+    window.print();
+    document.body.classList.remove("printing-exec");
+    document.title = prevTitle;
+  }
+
   return (
     <div className="print-page" data-testid="print-page">
 
       {/* ── Toolbar (hidden during print) ── */}
       <div className="no-print print-toolbar">
-        <button onClick={() => window.print()} className="btn-primary" data-testid="button-print-action">
-          Print or Save as PDF
-        </button>
+        <div className="print-toolbar-actions">
+          <button onClick={() => window.print()} className="btn-primary" data-testid="button-print-action">
+            Print or Save as PDF
+          </button>
+          <button onClick={printExecSummary} className="btn-secondary" data-testid="button-exec-summary">
+            Print Executive Summary
+          </button>
+        </div>
         <a href="/" className="btn-secondary" data-testid="button-back-home">Back to Home</a>
       </div>
+
+      {/* ── Full plan (hidden in exec print mode) ── */}
+      <div className="print-full-plan">
 
       {/* ── Document header ── */}
       <div className="print-header">
@@ -556,6 +577,120 @@ export default function PrintPage() {
           Watch your local prices and adjust quantities for your actual event.
         </p>
       </div>
+
+      </div>{/* end .print-full-plan */}
+
+      {/* ── Executive Summary (one-page, exec print mode only) ── */}
+      <div className="exec-summary" data-testid="exec-summary">
+
+        <div className="exec-header">
+          <div className="exec-brand">Fundraiser Food Math · Executive Summary</div>
+          <h1 className="exec-title">{plan.summary.eventName || "Fundraiser Plan"}</h1>
+          <p className="exec-subtitle">
+            {mealLabel} · {plan.summary.orgType} · {plan.summary.attendance} guests ·{" "}
+            ${plan.summary.mealPrice}/person suggested
+          </p>
+        </div>
+
+        <div className="exec-financials">
+          <div className="exec-fin-card">
+            <div className="exec-fin-label">Expected Revenue</div>
+            <div className="exec-fin-value">{fmt(plan.estimatedRevenue)}</div>
+          </div>
+          <div className="exec-fin-card">
+            <div className="exec-fin-label">Est. Food Cost</div>
+            <div className="exec-fin-value">{fmt(plan.costRange[0])} – {fmt(plan.costRange[1])}</div>
+          </div>
+          <div className="exec-fin-card">
+            <div className="exec-fin-label">Est. Net Profit</div>
+            <div className="exec-fin-value">{fmt(plan.estimatedProfit[0])} – {fmt(plan.estimatedProfit[1])}</div>
+          </div>
+        </div>
+
+        <div className="exec-body">
+          <div className="exec-col">
+            <div className="exec-block">
+              <div className="exec-block-title">Event Details</div>
+              <table className="exec-table">
+                <tbody>
+                  {formData && (
+                    <>
+                      <tr>
+                        <td className="exec-key">Serving Window</td>
+                        <td>{formatTime12(formData.serveStartTime)} – {formatTime12(formData.serveEndTime)}</td>
+                      </tr>
+                      <tr>
+                        <td className="exec-key">Prep Starts</td>
+                        <td>{formatTime12(formData.prepStartTime)}</td>
+                      </tr>
+                      <tr>
+                        <td className="exec-key">Suggested Price</td>
+                        <td>${plan.summary.mealPrice} per person</td>
+                      </tr>
+                      <tr>
+                        <td className="exec-key">Adult Volunteers</td>
+                        <td>{formData.adultVolunteers}</td>
+                      </tr>
+                      <tr>
+                        <td className="exec-key">Student Helpers</td>
+                        <td>{formData.studentVolunteers}</td>
+                      </tr>
+                    </>
+                  )}
+                  <tr>
+                    <td className="exec-key">Store Preference</td>
+                    <td>{plan.summary.storePreference}</td>
+                  </tr>
+                  <tr>
+                    <td className="exec-key">Audience Mix</td>
+                    <td>{plan.summary.adults} adults · {plan.summary.kids} kids</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <div className="exec-block">
+              <div className="exec-block-title">Top Shopping Items by Cost</div>
+              <table className="exec-table">
+                <tbody>
+                  {top5Items.map((item, i) => (
+                    <tr key={i}>
+                      <td>{item.item}</td>
+                      <td className="exec-cost">
+                        {fmt(item.estimatedCost[0])} – {fmt(item.estimatedCost[1])}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div className="exec-col">
+            <div className="exec-block">
+              <div className="exec-block-title">Main Execution Risk</div>
+              <p className="exec-text">{plan.strategySummary.mainExecutionRisk}</p>
+            </div>
+            <div className="exec-block">
+              <div className="exec-block-title">Recommended Leader Focus</div>
+              <p className="exec-text">{plan.strategySummary.recommendedFocus}</p>
+            </div>
+            <div className="exec-block">
+              <div className="exec-block-title">Main Profit Driver</div>
+              <p className="exec-text">{plan.strategySummary.mainProfitDriver}</p>
+            </div>
+          </div>
+        </div>
+
+        <div className="exec-disclaimer">
+          <strong>Generated by Fundraiser Food Math</strong> · fundraiserfoodmath.com
+          {" · "}
+          {plan.disclaimer
+            ?? "These are planning estimates. Adjust for your group, appetite, store prices, and local context."}
+        </div>
+
+      </div>{/* end .exec-summary */}
+
     </div>
   );
 }

@@ -1362,6 +1362,69 @@
     page-break-inside: auto;
   }
 
+  /* ── Executive Summary print mode ── */
+  .exec-summary {
+    display: none;
+  }
+  .print-full-plan {}
+  .print-toolbar-actions {
+    @apply flex gap-3;
+  }
+  .exec-header {
+    @apply text-center mb-5 pb-4 border-b-2 border-black;
+  }
+  .exec-brand {
+    @apply text-xs font-bold uppercase tracking-widest text-gray-500 mb-2;
+  }
+  .exec-title {
+    @apply text-3xl font-extrabold mb-1;
+  }
+  .exec-subtitle {
+    @apply text-sm text-gray-600;
+  }
+  .exec-financials {
+    @apply grid grid-cols-3 border border-gray-300 mb-5;
+  }
+  .exec-fin-card {
+    @apply p-3 text-center border-r border-gray-300 last:border-r-0;
+  }
+  .exec-fin-label {
+    @apply text-xs font-bold uppercase tracking-wider text-gray-500 mb-1;
+  }
+  .exec-fin-value {
+    @apply text-xl font-bold font-mono;
+  }
+  .exec-body {
+    @apply grid grid-cols-2 gap-5 mb-5;
+  }
+  .exec-col {}
+  .exec-block {
+    @apply mb-4;
+  }
+  .exec-block-title {
+    @apply text-xs font-bold uppercase tracking-wider border-b border-gray-300 pb-1 mb-2 text-gray-700;
+  }
+  .exec-table {
+    @apply w-full text-sm;
+  }
+  .exec-table td {
+    @apply py-1 align-top;
+  }
+  .exec-key {
+    @apply font-semibold text-gray-600 pr-3;
+    width: 45%;
+    white-space: nowrap;
+  }
+  .exec-cost {
+    @apply text-right font-mono text-xs;
+  }
+  .exec-text {
+    @apply text-sm leading-snug m-0;
+  }
+  .exec-disclaimer {
+    @apply text-xs text-gray-500 text-center pt-3 border-t border-gray-300 italic leading-relaxed;
+  }
+
   /* ── @media print — final output rules ── */
   @media print {
     /* Hide all interactive / navigation elements */
@@ -1435,5 +1498,29 @@
 
     /* Summary grid — remove borders that look harsh in B&W */
     .print-summary-card   { border-right-color: #bbb !important; }
+
+    /* ── Executive Summary print mode ── */
+    /* Default print (full plan): keep exec summary hidden */
+    .exec-summary { display: none !important; }
+
+    /* Exec print mode: show only the exec summary, hide the full plan */
+    body.printing-exec .print-full-plan { display: none !important; }
+    body.printing-exec .exec-summary    { display: block !important; }
+
+    /* Smaller font to fit on one page */
+    body.printing-exec .print-page {
+      font-size: 10pt;
+      line-height: 1.4;
+    }
+
+    /* B&W exec summary colors */
+    body.printing-exec .exec-brand        { color: #444 !important; }
+    body.printing-exec .exec-subtitle     { color: #555 !important; }
+    body.printing-exec .exec-fin-label    { color: #555 !important; }
+    body.printing-exec .exec-block-title  { color: #444 !important; border-bottom-color: #999 !important; }
+    body.printing-exec .exec-key          { color: #333 !important; }
+    body.printing-exec .exec-disclaimer   { color: #555 !important; border-top-color: #ccc !important; }
+    body.printing-exec .exec-financials   { border-color: #aaa !important; }
+    body.printing-exec .exec-fin-card     { border-right-color: #aaa !important; }
   }
 }
