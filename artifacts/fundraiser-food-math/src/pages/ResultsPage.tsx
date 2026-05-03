@@ -60,7 +60,9 @@ export default function ResultsPage({ plan, formData, onReset }: ResultsPageProp
   const safeStrategySummary = plan?.strategySummary;
   const safeProfitStrategy = plan?.profitStrategy;
   const safeSetupLayout = Array.isArray(plan?.setupLayout) ? plan.setupLayout : [];
-  const safeLeftoverPlan = plan?.leftoverPlan;
+  const safeShoppingListGrouped = Array.isArray(plan?.shoppingListGrouped) ? plan.shoppingListGrouped : [];
+  const safeRiskPlan = Array.isArray(plan?.riskPlan) ? plan.riskPlan : [];
+  const safeLeftoverPlan = plan?.leftoverPlan ?? null;
   const safeCommsPack = plan?.commsPack;
   const safeVolunteerBriefing = plan?.volunteerBriefing ?? "";
   const safeEmailBlurb = plan?.emailBlurb ?? "";
@@ -284,7 +286,7 @@ export default function ResultsPage({ plan, formData, onReset }: ResultsPageProp
       <section className="results-section" data-testid="section-preview">
         <h2 className="section-heading">Shopping List Preview</h2>
         <p className="section-note">
-          Showing {previewItems.length} of {plan.shoppingList.length} items.
+          Showing {previewItems.length} of {safeShoppingList.length} items.
           {!unlocked && " The complete grouped list is included in the Full Event Pack."}
         </p>
         <div className="table-wrap">
@@ -493,7 +495,7 @@ export default function ResultsPage({ plan, formData, onReset }: ResultsPageProp
                   </tr>
                 </thead>
                 <tbody>
-                  {plan.foodQuantities.map((q, i) => (
+                  {safeFoodQuantities.map((q, i) => (
                     <tr key={i} data-testid={`row-food-${i}`}>
                       <td>{q.ingredient}</td>
                       <td><strong>{q.quantity}</strong></td>
@@ -526,9 +528,9 @@ export default function ResultsPage({ plan, formData, onReset }: ResultsPageProp
             {activeTab === "shopping" && (
               <div className="tab-content" data-testid="tab-content-shopping">
                 <p className="tab-intro">
-                  Store preference: <strong>{plan.summary.storePreference}</strong>. Prices are estimates and vary by store and region.
+                  Store preference: <strong>{plan?.summary?.storePreference ?? "—"}</strong>. Prices are estimates and vary by store and region.
                 </p>
-                {plan.shoppingListGrouped.length > 0 ? (
+                {safeShoppingListGrouped.length > 0 ? (
                   <div className="table-wrap">
                     <table className="data-table" data-testid="table-shopping-list">
                       <thead>
@@ -540,7 +542,7 @@ export default function ResultsPage({ plan, formData, onReset }: ResultsPageProp
                         </tr>
                       </thead>
                       <tbody>
-                        {plan.shoppingListGrouped.map((group) => (
+                        {safeShoppingListGrouped.map((group) => (
                           <>
                             <tr key={`group-${group.label}`} className="shopping-group-row">
                               <td colSpan={4} className="shopping-group-header-cell">{group.label}</td>
@@ -557,7 +559,7 @@ export default function ResultsPage({ plan, formData, onReset }: ResultsPageProp
                         ))}
                         <tr className="table-total">
                           <td colSpan={2}><strong>Total Food Cost Estimate</strong></td>
-                          <td colSpan={2}><strong>{fmt(plan.costRange[0])} – {fmt(plan.costRange[1])}</strong></td>
+                          <td colSpan={2}><strong>{fmt(safeCostRange[0])} – {fmt(safeCostRange[1])}</strong></td>
                         </tr>
                       </tbody>
                     </table>
@@ -574,7 +576,7 @@ export default function ResultsPage({ plan, formData, onReset }: ResultsPageProp
                         </tr>
                       </thead>
                       <tbody>
-                        {plan.shoppingList.map((item, i) => (
+                        {safeShoppingList.map((item, i) => (
                           <tr key={i} data-testid={`row-shopping-${i}`}>
                             <td>{item.item}</td>
                             <td><strong>{item.quantity}</strong></td>
@@ -584,7 +586,7 @@ export default function ResultsPage({ plan, formData, onReset }: ResultsPageProp
                         ))}
                         <tr className="table-total">
                           <td colSpan={2}><strong>Total Food Cost Estimate</strong></td>
-                          <td colSpan={2}><strong>{fmt(plan.costRange[0])} – {fmt(plan.costRange[1])}</strong></td>
+                          <td colSpan={2}><strong>{fmt(safeCostRange[0])} – {fmt(safeCostRange[1])}</strong></td>
                         </tr>
                       </tbody>
                     </table>
@@ -605,7 +607,7 @@ export default function ResultsPage({ plan, formData, onReset }: ResultsPageProp
                       </tr>
                     </thead>
                     <tbody>
-                      {plan.suppliesList.map((item, i) => (
+                      {safeSuppliesList.map((item, i) => (
                         <tr key={i} data-testid={`row-supply-${i}`}>
                           <td>{item.item}</td>
                           <td><strong>{item.quantity}</strong></td>
@@ -625,7 +627,7 @@ export default function ResultsPage({ plan, formData, onReset }: ResultsPageProp
             {activeTab === "timeline" && (
               <div className="tab-content" data-testid="tab-content-timeline">
                 <div className="timeline-list">
-                  {plan.prepTimeline.map((step, i) => (
+                  {safePrepTimeline.map((step, i) => (
                     <div key={i} className="timeline-item" data-testid={`timeline-step-${i}`}>
                       <div className="timeline-time">{step.time}</div>
                       <div className="timeline-dot" />
@@ -657,7 +659,7 @@ export default function ResultsPage({ plan, formData, onReset }: ResultsPageProp
             {activeTab === "volunteers" && (
               <div className="tab-content" data-testid="tab-content-volunteers">
                 <div className="volunteer-grid">
-                  {plan.volunteerPlan.map((role, i) => (
+                  {safeVolunteerPlan.map((role, i) => (
                     <div key={i} className="volunteer-card" data-testid={`volunteer-role-${i}`}>
                       <div className="volunteer-card-header">
                         <h3 className="volunteer-role">{role.role}</h3>
@@ -693,7 +695,7 @@ export default function ResultsPage({ plan, formData, onReset }: ResultsPageProp
                         </tr>
                       </thead>
                       <tbody>
-                        {plan.volunteerPlan.flatMap((role) =>
+                        {safeVolunteerPlan.flatMap((role) =>
                           Array.from({ length: role.count }).map((_, j) => (
                             <tr key={`${role.role}-${j}`}>
                               <td className="signup-blank">___________________</td>
@@ -714,7 +716,7 @@ export default function ResultsPage({ plan, formData, onReset }: ResultsPageProp
               <div className="tab-content" data-testid="tab-content-email">
                 <p className="tab-intro">Copy this email to send to your community for volunteer sign-ups.</p>
                 <div className="email-blurb-wrap">
-                  <pre className="email-blurb" data-testid="text-email-blurb">{plan.emailBlurb}</pre>
+                  <pre className="email-blurb" data-testid="text-email-blurb">{safeEmailBlurb}</pre>
                   <button
                     onClick={copyEmailBlurb}
                     className={`copy-btn ${copied ? "copy-btn--copied" : ""}`}
@@ -799,7 +801,7 @@ export default function ResultsPage({ plan, formData, onReset }: ResultsPageProp
             <div className="briefing-wrap">
               <pre className="briefing-pre" data-testid="text-briefing">{safeVolunteerBriefing}</pre>
               <button
-                onClick={() => copyText("briefing", plan.volunteerBriefing)}
+                onClick={() => copyText("briefing", safeVolunteerBriefing)}
                 className={`copy-btn ${copiedKey === "briefing" ? "copy-btn--copied" : ""}`}
                 data-testid="button-copy-briefing"
               >
@@ -817,7 +819,7 @@ export default function ResultsPage({ plan, formData, onReset }: ResultsPageProp
               Station-by-station layout for your meal type. Walk this with your Setup Crew before guests arrive.
             </p>
             <div className="setup-stations">
-              {plan.setupLayout.map((station, i) => (
+              {safeSetupLayout.map((station, i) => (
                 <div key={i} className="setup-station" data-testid={`setup-station-${i}`}>
                   <div className="setup-station-pos">{station.position}</div>
                   <div>
@@ -869,7 +871,7 @@ export default function ResultsPage({ plan, formData, onReset }: ResultsPageProp
               <div className="leftover-block">
                 <div className="leftover-block-title">Can Be Saved</div>
                 <ul className="leftover-list leftover-list--save">
-                  {plan.leftoverPlan.canSave.map((item, i) => (
+                  {(safeLeftoverPlan?.canSave ?? []).map((item, i) => (
                     <li key={i}>{item}</li>
                   ))}
                 </ul>
@@ -877,31 +879,31 @@ export default function ResultsPage({ plan, formData, onReset }: ResultsPageProp
               <div className="leftover-block leftover-block--discard">
                 <div className="leftover-block-title">Must Be Discarded</div>
                 <ul className="leftover-list leftover-list--discard">
-                  {plan.leftoverPlan.discard.map((item, i) => (
+                  {(safeLeftoverPlan?.discard ?? []).map((item, i) => (
                     <li key={i}>{item}</li>
                   ))}
                 </ul>
               </div>
               <div className="leftover-block">
                 <div className="leftover-block-title">How to Package</div>
-                <p className="leftover-text">{plan.leftoverPlan.packaging}</p>
+                <p className="leftover-text">{safeLeftoverPlan?.packaging ?? "—"}</p>
               </div>
               <div className="leftover-block">
                 <div className="leftover-block-title">Who Makes the Call</div>
-                <p className="leftover-text">{plan.leftoverPlan.whoDecides}</p>
+                <p className="leftover-text">{safeLeftoverPlan?.whoDecides ?? "—"}</p>
               </div>
             </div>
           </section>
 
           {/* Risk Plan with Fixes */}
-          {plan.riskPlan.length > 0 && (
+          {safeRiskPlan.length > 0 && (
             <section className="results-section" data-testid="section-risk-plan">
               <h2 className="section-heading">Risk Plan</h2>
               <p className="section-note">
                 Every risk flag for your event, paired with a specific, actionable fix.
               </p>
               <div className="risk-plan-list">
-                {plan.riskPlan.map((item, i) => (
+                {safeRiskPlan.map((item, i) => (
                   <div key={i} className={`risk-plan-item risk-plan-item--${item.level}`} data-testid={`risk-plan-${i}`}>
                     <div className="risk-plan-warning">
                       <span className="warning-icon">
@@ -967,13 +969,13 @@ export default function ResultsPage({ plan, formData, onReset }: ResultsPageProp
             </div>
 
             {(() => {
-              const att = plan.summary.attendance || 1;
+              const att = safeAttendance || 1;
               const sensRevenue = sensitivityPrice * att;
-              const sensProfitLow = sensRevenue - plan.costRange[1];
-              const sensProfitHigh = sensRevenue - plan.costRange[0];
+              const sensProfitLow = sensRevenue - safeCostRange[1];
+              const sensProfitHigh = sensRevenue - safeCostRange[0];
               const sensProfitPerGuestMid = ((sensProfitLow + sensProfitHigh) / 2) / att;
-              const breakEvenLow = sensitivityPrice > 0 ? Math.ceil(plan.costRange[0] / sensitivityPrice) : null;
-              const breakEvenHigh = sensitivityPrice > 0 ? Math.ceil(plan.costRange[1] / sensitivityPrice) : null;
+              const breakEvenLow = sensitivityPrice > 0 ? Math.ceil(safeCostRange[0] / sensitivityPrice) : null;
+              const breakEvenHigh = sensitivityPrice > 0 ? Math.ceil(safeCostRange[1] / sensitivityPrice) : null;
               const profitColor =
                 sensProfitHigh < 0 ? "loss" : sensProfitLow < 0 ? "risky" : "good";
               const guidanceLevel =
@@ -994,7 +996,7 @@ export default function ResultsPage({ plan, formData, onReset }: ResultsPageProp
                     </div>
                     <div className="sensitivity-card">
                       <div className="sensitivity-card-label">Est. Food Cost</div>
-                      <div className="sensitivity-card-value">{fmt(plan.costRange[0])} – {fmt(plan.costRange[1])}</div>
+                      <div className="sensitivity-card-value">{fmt(safeCostRange[0])} – {fmt(safeCostRange[1])}</div>
                       <div className="sensitivity-card-note">Unchanged from your plan</div>
                     </div>
                     <div className="sensitivity-card">

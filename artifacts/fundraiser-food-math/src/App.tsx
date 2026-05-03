@@ -66,7 +66,10 @@ function AppRoutes() {
           ) : (
             <div className="empty-state">
               <h2>No plan found.</h2>
-              <p>Please <a href="/planner">build a plan first</a>.</p>
+              <p>
+                Your plan may have expired or this page was opened directly.{" "}
+                <a href="/planner">Build a plan</a> to get started.
+              </p>
             </div>
           )
         }

@@ -503,14 +503,14 @@ export default function PrintPage() {
       <div className="print-section print-page-break">
         <SectionTitle>Parent &amp; Student Communication Pack</SectionTitle>
         {[
-          { label: "Event Announcement",    text: plan.commsPack.announcement },
-          { label: "Volunteer Request",     text: plan.commsPack.volunteerRequest },
-          { label: "Day-Before Reminder",   text: plan.commsPack.dayBeforeReminder },
-          { label: "Thank-You Message",     text: plan.commsPack.thankYou },
+          { label: "Event Announcement",    text: plan.commsPack?.announcement ?? "" },
+          { label: "Volunteer Request",     text: plan.commsPack?.volunteerRequest ?? "" },
+          { label: "Day-Before Reminder",   text: plan.commsPack?.dayBeforeReminder ?? "" },
+          { label: "Thank-You Message",     text: plan.commsPack?.thankYou ?? "" },
         ].map(({ label, text }) => (
           <div key={label} className="print-comms-block">
             <p className="print-comms-label">{label}</p>
-            <pre className="print-email">{text}</pre>
+            <pre className="print-email">{text || "—"}</pre>
           </div>
         ))}
       </div>
@@ -518,7 +518,7 @@ export default function PrintPage() {
       {/* ── 13. Volunteer Briefing ── */}
       <div className="print-section">
         <SectionTitle>Volunteer Briefing Script</SectionTitle>
-        <pre className="print-email">{plan.volunteerBriefing}</pre>
+        <pre className="print-email">{plan.volunteerBriefing ?? ""}</pre>
       </div>
 
       {/* ── 14. Leftover Plan ── */}
@@ -527,16 +527,16 @@ export default function PrintPage() {
         <KVTable rows={[
           ["Can Be Saved",
             <ul className="print-kv-list">
-              {plan.leftoverPlan.canSave.map((item, i) => <li key={i}>{item}</li>)}
+              {(plan.leftoverPlan?.canSave ?? []).map((item, i) => <li key={i}>{item}</li>)}
             </ul>
           ],
           ["Must Discard",
             <ul className="print-kv-list">
-              {plan.leftoverPlan.discard.map((item, i) => <li key={i}>{item}</li>)}
+              {(plan.leftoverPlan?.discard ?? []).map((item, i) => <li key={i}>{item}</li>)}
             </ul>
           ],
-          ["Packaging",   plan.leftoverPlan.packaging],
-          ["Who Decides", plan.leftoverPlan.whoDecides],
+          ["Packaging",   plan.leftoverPlan?.packaging ?? "—"],
+          ["Who Decides", plan.leftoverPlan?.whoDecides ?? "—"],
         ]} />
       </div>
 

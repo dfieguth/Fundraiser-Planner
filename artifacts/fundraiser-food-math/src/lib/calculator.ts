@@ -27,7 +27,9 @@ function rangeAdd(a: [number, number], b: [number, number]): [number, number] {
 }
 
 function addMinutes(timeStr: string, minutes: number): string {
+  if (!timeStr || !timeStr.includes(":")) return "00:00";
   const [h, m] = timeStr.split(":").map(Number);
+  if (isNaN(h) || isNaN(m)) return "00:00";
   const total = h * 60 + m + minutes;
   const nh = Math.floor(total / 60) % 24;
   const nm = total % 60;
@@ -35,15 +37,19 @@ function addMinutes(timeStr: string, minutes: number): string {
 }
 
 function formatTime(timeStr: string): string {
+  if (!timeStr || !timeStr.includes(":")) return "";
   const [h, m] = timeStr.split(":").map(Number);
+  if (isNaN(h) || isNaN(m)) return "";
   const period = h >= 12 ? "PM" : "AM";
   const hour = h % 12 || 12;
   return `${hour}:${String(m).padStart(2, "0")} ${period}`;
 }
 
 function minutesBetween(start: string, end: string): number {
+  if (!start || !end || !start.includes(":") || !end.includes(":")) return 0;
   const [sh, sm] = start.split(":").map(Number);
   const [eh, em] = end.split(":").map(Number);
+  if (isNaN(sh) || isNaN(sm) || isNaN(eh) || isNaN(em)) return 0;
   return (eh * 60 + em) - (sh * 60 + sm);
 }
 
@@ -828,12 +834,30 @@ function buildShoppingListGrouped(shoppingList: ShoppingItem[]): ShoppingGroup[]
 
 // ── Main Calculator ───────────────────────────────────────────
 
-export function calculatePlan(form: PlannerFormData): FundraiserPlan {
-  const meal = MEAL_ASSUMPTIONS[form.mealType];
+export function calculatePlan(rawForm: PlannerFormData): FundraiserPlan {
+  // ── Input sanitization ──────────────────────────────────────
+  // Guard against NaN, 0, or out-of-range values that can reach the
+  // calculator via localStorage restore or edge-case form state.
+  const form: PlannerFormData = {
+    ...rawForm,
+    attendance: Math.max(1, Math.round(Number(rawForm.attendance) || 1)),
+    mealPrice: Math.max(0, Number(rawForm.mealPrice) || 0),
+    adultPercent: Math.max(0, Math.min(100, Number(rawForm.adultPercent) || 0)),
+    kidPercent: Math.max(0, Math.min(100, Number(rawForm.kidPercent) || 0)),
+    adultVolunteers: Math.max(0, Math.round(Number(rawForm.adultVolunteers) || 0)),
+    studentVolunteers: Math.max(0, Math.round(Number(rawForm.studentVolunteers) || 0)),
+    eventName: rawForm.eventName?.trim() || "Untitled Event",
+    mealType: rawForm.mealType || "custom",
+    prepStartTime: rawForm.prepStartTime || "10:00",
+    serveStartTime: rawForm.serveStartTime || "12:00",
+    serveEndTime: rawForm.serveEndTime || "14:00",
+  };
+
+  const meal = MEAL_ASSUMPTIONS[form.mealType] ?? MEAL_ASSUMPTIONS["custom"]!;
 
   const adults = Math.round(form.attendance * (form.adultPercent / 100));
   const kids = form.attendance - adults;
-  const kidPercent = Math.round((kids / form.attendance) * 100);
+  const kidPercent = form.attendance > 0 ? Math.round((kids / form.attendance) * 100) : 0;
 
   // Total individual servings including waste/overage buffer
   const totalServings = Math.ceil(
