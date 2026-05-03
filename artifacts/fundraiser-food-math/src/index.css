@@ -894,6 +894,162 @@
     @apply text-xs text-muted-foreground;
   }
 
+  /* ── Full Event Pack section styles ── */
+
+  .strategy-grid {
+    @apply grid md:grid-cols-2 gap-4;
+  }
+  .strategy-card {
+    @apply bg-card border rounded-xl p-5 shadow-sm;
+  }
+  .strategy-card-label {
+    @apply text-xs font-bold uppercase tracking-wider text-muted-foreground mb-2;
+  }
+  .strategy-card-value {
+    @apply text-sm text-foreground leading-relaxed;
+  }
+
+  .profit-strategy-block {
+    @apply bg-card border rounded-xl p-6 shadow-sm flex flex-col gap-5;
+  }
+  .profit-row {
+    @apply flex flex-col gap-1.5;
+  }
+  .profit-row-label {
+    @apply text-xs font-bold uppercase tracking-wider text-muted-foreground;
+  }
+  .profit-row-value {
+    @apply text-sm text-foreground leading-relaxed;
+  }
+  .profit-upsell-list {
+    @apply list-disc list-inside text-sm text-foreground space-y-1 ml-1;
+  }
+  .profit-signage-list {
+    @apply flex flex-col gap-2 mt-0.5;
+  }
+  .profit-signage-item {
+    @apply text-sm italic bg-secondary/50 border rounded-lg px-3 py-2 text-foreground;
+  }
+
+  .briefing-wrap {
+    @apply relative bg-card border rounded-xl p-6 shadow-sm max-w-3xl;
+  }
+  .briefing-pre {
+    @apply text-sm font-mono whitespace-pre-wrap text-foreground/80 leading-relaxed pr-10;
+  }
+
+  .setup-stations {
+    @apply bg-card border rounded-xl overflow-hidden shadow-sm;
+  }
+  .setup-station {
+    @apply flex items-start gap-4 px-5 py-4 border-b last:border-0 border-border/50;
+  }
+  .setup-station-pos {
+    @apply flex-shrink-0 w-8 h-8 rounded-full bg-accent/15 text-accent font-bold text-sm flex items-center justify-center;
+  }
+  .setup-station-label {
+    @apply font-semibold text-foreground text-sm;
+  }
+  .setup-station-detail {
+    @apply text-xs text-muted-foreground mt-0.5 leading-relaxed;
+  }
+
+  .comms-grid {
+    @apply grid md:grid-cols-2 gap-4;
+  }
+  .comms-block {
+    @apply relative bg-card border rounded-xl p-5 pb-14 shadow-sm;
+  }
+  .comms-block-title {
+    @apply text-xs font-bold uppercase tracking-wider text-muted-foreground mb-3;
+  }
+  .comms-pre {
+    @apply text-sm font-mono whitespace-pre-wrap text-foreground/80 leading-relaxed;
+  }
+
+  .leftover-grid {
+    @apply grid md:grid-cols-2 gap-4;
+  }
+  .leftover-block {
+    @apply bg-card border rounded-xl p-5 shadow-sm;
+  }
+  .leftover-block--discard {
+    @apply border-destructive/20 bg-destructive/5;
+  }
+  .leftover-block-title {
+    @apply text-xs font-bold uppercase tracking-wider text-muted-foreground mb-3;
+  }
+  .leftover-list {
+    @apply list-disc list-inside text-sm space-y-1.5 ml-1 text-foreground;
+  }
+  .leftover-list--discard {
+    @apply text-destructive/90;
+  }
+  .leftover-text {
+    @apply text-sm text-foreground leading-relaxed;
+  }
+
+  .risk-plan-list {
+    @apply flex flex-col gap-4;
+  }
+  .risk-plan-item {
+    @apply bg-card border rounded-xl p-5 shadow-sm;
+  }
+  .risk-plan-item--error {
+    @apply border-destructive/30 bg-destructive/5;
+  }
+  .risk-plan-item--warning {
+    @apply border-amber-200 bg-amber-50/50 dark:border-amber-900/50 dark:bg-amber-950/20;
+  }
+  .risk-plan-item--info {
+    @apply border-blue-200 bg-blue-50/50 dark:border-blue-900/50 dark:bg-blue-950/20;
+  }
+  .risk-plan-warning {
+    @apply flex items-start gap-3 mb-3;
+  }
+  .risk-plan-fix {
+    @apply flex items-start gap-3 pt-3 border-t border-border/50;
+  }
+  .risk-fix-label {
+    @apply flex-shrink-0 text-xs font-bold text-green-700 dark:text-green-400 bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-800 rounded px-2 py-0.5 mt-0.5;
+  }
+  .risk-fix-text {
+    @apply text-sm text-foreground leading-relaxed;
+  }
+
+  /* Shopping list grouped header row */
+  .shopping-group-row td {
+    @apply py-0;
+  }
+  .shopping-group-header-cell {
+    @apply bg-secondary/60 px-4 py-2 text-xs font-bold uppercase tracking-wider text-muted-foreground;
+  }
+
+  /* Timeline leader notes and watch-outs */
+  .timeline-leader-note {
+    @apply mt-2 text-xs bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 text-blue-800 dark:text-blue-400 rounded-lg px-3 py-2 leading-relaxed;
+  }
+  .timeline-watch-out {
+    @apply mt-1.5 text-xs bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 text-amber-800 dark:text-amber-500 rounded-lg px-3 py-2 leading-relaxed;
+  }
+
+  /* Print page additions */
+  .print-strategy-grid {
+    @apply grid grid-cols-2 gap-3 mb-2;
+  }
+  .print-strategy-card {
+    @apply border rounded p-3;
+  }
+  .print-strategy-label {
+    @apply text-xs font-bold uppercase tracking-wider text-gray-500 mb-1;
+  }
+  .print-risk-item {
+    @apply border-l-4 pl-3 py-2 mb-3;
+  }
+  .print-risk-fix {
+    @apply text-sm mt-1;
+  }
+
   @media print {
     .no-print {
       display: none !important;

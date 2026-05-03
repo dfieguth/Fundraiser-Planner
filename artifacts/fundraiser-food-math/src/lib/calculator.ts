@@ -6,7 +6,9 @@
 
 import type {
   PlannerFormData, FundraiserPlan, ShoppingItem,
-  SupplyItem, PrepStep, VolunteerRole, RiskWarning,
+  SupplyItem, PrepStep, VolunteerRole, RiskWarning, RiskPlanItem,
+  StrategySection, ProfitStrategy, SetupStation,
+  LeftoverPlan, CommsPack, ShoppingGroup,
 } from "./types";
 import { MEAL_ASSUMPTIONS } from "./mealAssumptions";
 
@@ -49,6 +51,16 @@ function fmt$(n: number): string {
   return `$${Math.round(n).toLocaleString()}`;
 }
 
+// ── Risk helper ───────────────────────────────────────────────
+// Produces both a warning banner and a risk plan item (with fix) together.
+function buildRisk(
+  level: RiskWarning["level"],
+  message: string,
+  fix: string,
+): { warning: RiskWarning; plan: RiskPlanItem } {
+  return { warning: { level, message }, plan: { level, warning: message, fix } };
+}
+
 // ── Volunteer plan by meal type ──────────────────────────────
 //
 // Approved role types: "Adult Volunteer" | "Parent Volunteer" |
@@ -58,7 +70,6 @@ function fmt$(n: number): string {
 //   Student Runner, Cleanup Team, Setup Crew, Cashier /
 //   Donation Table — never use "Parent Helper."
 //
-// Counts scale from attendance and the actual volunteer inputs.
 
 function buildVolunteerPlan(
   form: PlannerFormData,
@@ -342,6 +353,479 @@ function buildVolunteerPlan(
   return allRoles;
 }
 
+// ── Full Event Pack generators ────────────────────────────────
+
+function buildStrategySummary(form: PlannerFormData): StrategySection {
+  const strategies: Record<string, StrategySection> = {
+    hotdogs: {
+      bestFit: "Hot dog fundraisers work best at outdoor events, sports games, and casual community socials. They are fast to serve and easy to scale.",
+      mainProfitDriver: "High volume at low cost. Hot dogs are inexpensive per serving, so profit grows with attendance and a fair donation price.",
+      mainExecutionRisk: "Grill capacity. One standard grill handles 90–120 hot dogs per hour. If you are serving 150+ guests, plan for a second grill or staggered cooking.",
+      recommendedFocus: "Stage buns, condiments, and foil pans before doors open. Keep Student Runners restocking stations continuously — a stalled condiment table kills line speed.",
+    },
+    burgers: {
+      bestFit: "Burger fundraisers work well at family events, church potlucks, and school spirit nights where guests expect a satisfying sit-down or casual meal.",
+      mainProfitDriver: "A higher suggested donation ($12–$15) is easier to justify for burgers. Guests perceive them as a full meal compared to simpler options.",
+      mainExecutionRisk: "Assembly bottleneck. Grilling and building burgers are two separate stations. If the assembly crew can't keep pace with the grill, food backs up and guests wait.",
+      recommendedFocus: "Assign a dedicated Assembly Station with pre-staged ingredients. The Grill Master should never touch a bun — handoff to assembly and move on to the next batch.",
+    },
+    bakedPotatoes: {
+      bestFit: "Baked potato dinners work best at sit-down church fundraiser nights, school dinner events, and fall or winter events where a hearty meal feels appropriate.",
+      mainProfitDriver: "Potatoes are inexpensive, and a topping bar feels generous to guests without adding much cost. A $10–$12 suggested donation covers costs well.",
+      mainExecutionRisk: "Oven timing. Potatoes need 60–75 minutes to bake and cannot be rushed. Running out of finished potatoes mid-event is the leading failure point for this meal.",
+      recommendedFocus: "Pre-bake as many potatoes as possible before the event. Have a warm-holding system ready (coolers lined with towels or a low oven at 200°F) before the first guest arrives.",
+    },
+    breakfastBurritos: {
+      bestFit: "Breakfast burritos are popular at morning church events, Saturday school spirit breakfasts, and sports team fundraisers where the crowd arrives early.",
+      mainProfitDriver: "A steady assembly line keeps output high. Adding a $1–$2 coffee or juice station dramatically increases per-person revenue with minimal added labor.",
+      mainExecutionRisk: "Multi-station coordination. Eggs, sausage, hash browns, and assembly must stay in sync. A delay at any one station stalls the entire line.",
+      recommendedFocus: "Assemble and wrap one test burrito before service starts to confirm flow. Assign one person per station and do not rotate — speed comes from staying in one role.",
+    },
+    tacos: {
+      bestFit: "Taco fundraisers are broadly popular and work well for churches, schools, sports teams, and community events. A self-serve taco bar is easy to manage and feels festive.",
+      mainProfitDriver: "The self-serve taco bar reduces labor and speeds service. Low meat cost per taco and a $10–$12 suggested donation produces a strong profit margin.",
+      mainExecutionRisk: "Running out of seasoned meat mid-service. When the meat tray empties and the next batch is not ready, the entire taco bar stalls and guests wait.",
+      recommendedFocus: "Always keep a second batch of meat cooking or warm-holding in reserve. Never let the serving tray go below one-quarter full before a replacement is ready.",
+    },
+    spaghetti: {
+      bestFit: "Spaghetti dinners are a classic church and school fundraiser format. They work well for sit-down events with tables, a family-friendly atmosphere, and an organized serving line.",
+      mainProfitDriver: "Pasta is one of the least expensive main ingredients at scale. With a $12–$15 suggested donation, a spaghetti dinner can produce a strong profit margin.",
+      mainExecutionRisk: "Pasta timing and warm-holding. Overcooked pasta becomes mushy quickly. Running out of sauce while pasta is ready — or vice versa — disrupts the serving line.",
+      recommendedFocus: "Designate one person solely to pasta water management. Stagger cooking in 15-minute intervals. Keep sauce at 170°F in a separate roaster — never mix until plating.",
+    },
+    pancakes: {
+      bestFit: "Pancake breakfasts are well-suited to Saturday mornings, pre-game church breakfasts, and community events where a low-cost, family-friendly meal draws a wide crowd.",
+      mainProfitDriver: "Pancake ingredients cost very little per serving. Adding sausage links and a coffee or juice option delivers a significant revenue lift with minimal added complexity.",
+      mainExecutionRisk: "Griddle capacity. One large electric griddle produces 80–100 pancakes per hour. Underestimating griddle count creates long lines and frustrated guests.",
+      recommendedFocus: "Assign dedicated Griddle Operators who never leave their station. Assign batter delivery and syrup restock to Student Runners so operators can focus entirely on cooking.",
+    },
+    custom: {
+      bestFit: "Custom meal estimates are based on general event assumptions. Accuracy depends on your specific recipe, cooking method, and ingredients.",
+      mainProfitDriver: "Profit depends on your actual food costs and pricing. Use the cost estimate as a starting point and verify against your recipe quantities.",
+      mainExecutionRisk: "The main risk is underestimating prep time or ingredient quantities for a custom menu. Build in extra buffer time and buy 10–15% more than you think you need.",
+      recommendedFocus: "Do a practice cook before the event if you have not made this dish at scale. Quantities and timing change significantly when cooking for a large group.",
+    },
+  };
+  return strategies[form.mealType] ?? strategies["custom"]!;
+}
+
+function buildProfitStrategy(
+  form: PlannerFormData,
+  totalCostRange: [number, number],
+  estimatedProfit: [number, number],
+): ProfitStrategy {
+  const org = form.orgType === "Other" ? "your group" : form.orgType;
+
+  // Price check message
+  let priceCheck: string;
+  if (estimatedProfit[1] < 0) {
+    const needed = Math.ceil(totalCostRange[1] / form.attendance) + 2;
+    priceCheck = `Your suggested donation of ${fmt$(form.mealPrice)}/person will likely not cover your costs. Consider raising the price to at least ${fmt$(needed)}/person to break even, or look for donated supplies to reduce costs.`;
+  } else if (estimatedProfit[0] < 0) {
+    priceCheck = `Your price of ${fmt$(form.mealPrice)}/person is workable if attendance meets your goal, but there is little margin for error. Watch supply costs closely and aim to beat your attendance target by 10–15%.`;
+  } else if (form.mealPrice < 8) {
+    const extra = Math.round((form.mealPrice + 2) * form.attendance - form.mealPrice * form.attendance);
+    priceCheck = `Your price of ${fmt$(form.mealPrice)}/person is on the low end for a food fundraiser. Raising the price by $2 per person would add approximately ${fmt$(extra)} to your total at your current attendance goal.`;
+  } else {
+    priceCheck = `Your suggested donation of ${fmt$(form.mealPrice)}/person is a reasonable amount for this type of event. You are in a solid range — focus on attendance and keeping supply costs tight.`;
+  }
+
+  // Upsell ideas per meal type
+  const upsellMap: Record<string, string[]> = {
+    hotdogs: [
+      "Offer a small bag of chips for $1–$2 per guest.",
+      "Sell canned soda or bottled water at $1 each.",
+      "Add a dessert table (cookies, brownies) for a $1–$2 donation.",
+    ],
+    burgers: [
+      "Bundle chips and a drink as a combo for a higher suggested donation.",
+      "Sell brownies, cookies, or dessert for $1–$2 extra.",
+      "Offer bottled water or lemonade near the exit.",
+    ],
+    bakedPotatoes: [
+      "Offer a cup of soup as a side for an extra $1–$2 donation.",
+      "Sell dessert pie slices for $2–$3 each.",
+      "Add coffee or hot cider — ideal for fall and winter events.",
+    ],
+    breakfastBurritos: [
+      "Add a coffee station — even a freewill offering adds $1–$2 per person on average.",
+      "Sell orange juice or a bottled drink at $1–$2.",
+      "Offer a breakfast pastry or muffin as a side.",
+    ],
+    tacos: [
+      "Sell horchata, agua fresca, or lemonade for $1–$2.",
+      "Offer chips and salsa as a $1 side at the table.",
+      "Add churros, cookies, or a dessert table for $1–$2.",
+    ],
+    spaghetti: [
+      "Sell dessert — pie, cookies, or brownies — for $2–$3 each.",
+      "Offer iced tea or lemonade for $1 per cup.",
+      "Consider a silent auction or raffle table to increase total giving beyond the meal.",
+    ],
+    pancakes: [
+      "Add a coffee station — even a freewill offering generates meaningful extra revenue.",
+      "Sell orange juice or bottled drinks for $1 each.",
+      "Run a raffle or silent auction alongside the breakfast to boost total fundraising.",
+    ],
+    custom: [
+      "Add a drink station — water, lemonade, or coffee — for a $1 suggested donation.",
+      "Sell dessert or baked goods to supplement meal revenue.",
+      "Consider a raffle or silent auction item alongside the meal.",
+    ],
+  };
+
+  // Pricing model per org type
+  const pricingModelMap: Record<string, string> = {
+    "Church": "Suggested Donation works well for church events — it avoids pressure while still generating solid revenue. Place a clearly labeled donation box or basket near the serving line.",
+    "School": "Fixed Price is the clearest choice for school events. Pre-sell tickets through teachers or online to confirm attendance numbers and reduce day-of payment hassles.",
+    "Sports Team": "Pre-sold tickets work well for sports team fundraisers. Sell tickets at practice in the days before — it confirms your attendance count and speeds up the day-of process.",
+    "Nonprofit": "A Suggested Donation model gives guests flexibility. Place a clearly visible donation box near the exit — guests who have just eaten tend to be more generous.",
+    "Other": "Choose the model that fits your community: fixed price for simplicity, suggested donation for flexibility, or a basket at the exit.",
+  };
+
+  return {
+    priceCheck,
+    upsellIdeas: upsellMap[form.mealType] ?? upsellMap["custom"]!,
+    donationTableNote: "Place the donation table near the exit, not the entrance. Guests who have just eaten tend to give more generously than guests who have not yet eaten. Use a clear sign with your suggested donation amount.",
+    signageLines: [
+      `Suggested Donation: ${fmt$(form.mealPrice)} per person · Kids under 10 eat free`,
+      `Every plate supports ${org} — thank you for being here!`,
+      `Help us reach our goal — ${fmt$(form.attendance * form.mealPrice)} raised means a successful event.`,
+    ],
+    pricingModel: pricingModelMap[form.orgType] ?? pricingModelMap["Other"]!,
+  };
+}
+
+function buildVolunteerBriefing(
+  mealType: string,
+  mealName: string,
+  form: PlannerFormData,
+  volunteerPlan: VolunteerRole[],
+  serveStart: string,
+  prepStart: string,
+): string {
+  const hour = parseInt(serveStart.split(":")[0], 10);
+  const timeOfDay = hour < 12 ? "morning" : hour < 17 ? "afternoon" : "evening";
+  const org = form.orgType === "Other" ? "our group" : form.orgType;
+
+  const flowMap: Record<string, string> = {
+    hotdogs: `Guests walk up to the grill station for a hot dog, then move to the bun and condiment station to build their plate. Keep the line moving — aim for under 60 seconds per guest.`,
+    burgers: `Guests receive a cooked patty at the grill hand-off point, then move to the assembly station to build their burger with toppings. Assembly Team: keep the line moving and portions consistent.`,
+    bakedPotatoes: `Guests receive one hot baked potato at the start of the line, then move through the topping bar to customize their plate. The topping bar is self-serve — one Attendant keeps it stocked and clean.`,
+    breakfastBurritos: `Guests move through the assembly line: eggs at the first station, filling at the second, cheese and wrap at the third. Each station adds one component and hands off to the next. Speed at every station matters.`,
+    tacos: `Guests pick up a plate, select shells or tortillas, then move down the taco bar to add meat and toppings at their own pace. The Meat Station is the most critical — keep it stocked at all times.`,
+    spaghetti: `Guests receive a bowl with pasta and sauce at the serving station, then move to the garlic bread and condiment area. Servers should plate pasta and sauce together — do not send guests with plain pasta looking for sauce.`,
+    pancakes: `Guests receive hot pancakes fresh from the griddle, then move to the syrup and topping station, then to sausage. The Griddle Operator should never stop — finished pancakes go straight to the pickup station.`,
+    custom: `Guests move through your serving line in order. Make sure each station is clearly labeled and has a volunteer assigned to it at all times during service.`,
+  };
+
+  const rolesText = volunteerPlan.map(r => `  • ${r.role} (${r.type}): ${r.count} volunteer${r.count !== 1 ? "s" : ""}`).join("\n");
+
+  return `Good ${timeOfDay}, ${form.eventName} team!
+
+Thank you for being here. Today we're raising money for ${org} by serving ${mealName} to ${form.attendance} guests. Our suggested donation is ${fmt$(form.mealPrice)} per person — every plate helps.
+
+YOUR ROLE TODAY
+${rolesText}
+
+HOW TODAY WORKS
+  • Doors open at ${formatTime(serveStart)}. Guests will move through the serving line in order.
+  • ${flowMap[mealType] ?? flowMap["custom"]!}
+  • Student Runners: your job is to keep stations stocked. Check napkins, utensils, and condiments every 10–15 minutes. Restock before things run out — not after.
+  • Cleanup Team: do not wait until the end to start. Clear and wipe tables during service.
+  • Cashier / Donation Table: stay at your station. Only volunteers assigned to cash should handle the donation box or register.
+
+FOOD SAFETY REMINDERS
+  • Keep gloves on whenever you are handling food.
+  • Hot food stays hot: 140°F or above at all times.
+  • Cold food stays cold: 40°F or below at all times.
+  • If food has been sitting out for more than 2 hours, check with an adult before serving it.
+  • When in doubt — throw it out. No exceptions.
+
+QUESTIONS?
+Check with your assigned Adult Volunteer. If you are not sure what to do, ask before acting. Let's make this a great event for ${org}!`.trim();
+}
+
+function buildSetupLayout(mealType: string): SetupStation[] {
+  const layouts: Record<string, SetupStation[]> = {
+    hotdogs: [
+      { position: "1", label: "Welcome / Donation Table", detail: "Position near the entrance. Every guest should pass it when arriving." },
+      { position: "2", label: "Grill Station", detail: "Outdoor or well-ventilated area. Stage fuel, tongs, and foil pans nearby." },
+      { position: "3", label: "Bun & Condiment Station", detail: "Ketchup, mustard, relish, onion, chili, cheese — pre-staged in squeeze bottles and pans." },
+      { position: "4", label: "Drink Station", detail: "Water, soda, or juice — keep this separate from the food line to avoid crowding." },
+      { position: "5", label: "Seating Area", detail: "Tables set with napkins and any event decorations before guests arrive." },
+      { position: "6", label: "Trash & Recycling", detail: "Two labeled bins at or near each exit. Monitor and change bags throughout service." },
+    ],
+    burgers: [
+      { position: "1", label: "Welcome / Donation Table", detail: "Near the entrance. Keep donation visible and clearly signed." },
+      { position: "2", label: "Grill Station", detail: "Manage patty output — the Grill Master signals assembly when each batch is done." },
+      { position: "3", label: "Assembly Station", detail: "Buns, cheese, lettuce, tomato, onion, condiments — a dedicated crew builds each burger." },
+      { position: "4", label: "Pickup / Hand-Off", detail: "Where assembled burgers are placed on trays for the Serving Team to distribute." },
+      { position: "5", label: "Drink Station", detail: "Water, soda, or lemonade — separate from the food line." },
+      { position: "6", label: "Seating Area", detail: "Set with napkins and utensils before service begins." },
+      { position: "7", label: "Trash & Recycling", detail: "Two labeled bins near exits. Student Runners monitor throughout service." },
+    ],
+    bakedPotatoes: [
+      { position: "1", label: "Welcome / Donation Table", detail: "Near the entrance. Keep donation sign clearly visible." },
+      { position: "2", label: "Potato Station", detail: "Hot potatoes transferred from oven to warm-holding. One potato per guest." },
+      { position: "3", label: "Topping Bar", detail: "Butter, sour cream, shredded cheese, bacon bits, chives — each clearly labeled." },
+      { position: "4", label: "Drink Station", detail: "Water, coffee, or lemonade — separate from the food line." },
+      { position: "5", label: "Seating Area", detail: "Set with forks, napkins, and any event materials in advance." },
+      { position: "6", label: "Trash & Recycling", detail: "Two labeled bins near exits." },
+    ],
+    breakfastBurritos: [
+      { position: "1", label: "Welcome / Donation Table", detail: "Near the entrance. Clearly signed with suggested donation amount." },
+      { position: "2", label: "Egg & Griddle Station", detail: "Continuous egg scrambling — never let this station sit empty during service." },
+      { position: "3", label: "Sausage & Hash Brown Station", detail: "Warm-holding in foil pans. Replenish every 20–30 minutes." },
+      { position: "4", label: "Assembly & Wrapping Station", detail: "2–3 people folding and foil-wrapping burritos in sequence." },
+      { position: "5", label: "Salsa & Hot Sauce Bar", detail: "Self-serve, clearly labeled. Include mild, medium, and hot options if possible." },
+      { position: "6", label: "Drink Station", detail: "Coffee carafes, orange juice pitchers — keep them refilled throughout service." },
+      { position: "7", label: "Seating Area", detail: "Set with napkins and any event materials before guests arrive." },
+      { position: "8", label: "Trash & Recycling", detail: "Two labeled bins near exits." },
+    ],
+    tacos: [
+      { position: "1", label: "Welcome / Donation Table", detail: "Near the entrance — every guest passes it on the way in." },
+      { position: "2", label: "Meat Station", detail: "Seasoned taco meat in a covered serving pan. Replenish before it drops below one-quarter full." },
+      { position: "3", label: "Shell & Tortilla Station", detail: "Hard shells in a holder, warm flour tortillas in foil pans." },
+      { position: "4", label: "Taco Bar", detail: "Cheese, lettuce, tomato, onion, cilantro, sour cream, salsa, lime, hot sauce — each labeled." },
+      { position: "5", label: "Drink Station", detail: "Water, lemonade, or horchata — separate from the taco bar." },
+      { position: "6", label: "Seating Area", detail: "Set with extra napkins — tacos are messy!" },
+      { position: "7", label: "Trash & Recycling", detail: "Two labeled bins near exits. Cleanup Team monitors continuously." },
+    ],
+    spaghetti: [
+      { position: "1", label: "Welcome / Donation Table", detail: "Near the entrance. Clearly signed with event name and suggested donation." },
+      { position: "2", label: "Pasta Station", detail: "Pasta served from electric roaster — one portion per bowl, consistent scoops." },
+      { position: "3", label: "Sauce Station", detail: "Meat sauce ladled over pasta. Keep sauce at 170°F and stir frequently." },
+      { position: "4", label: "Garlic Bread Station", detail: "Pre-sliced, in foil pans — keep warm in a low oven until service begins." },
+      { position: "5", label: "Parmesan & Condiment Bar", detail: "Self-serve shakers of parmesan, red pepper flakes, and any other condiments." },
+      { position: "6", label: "Drink Station", detail: "Lemonade, iced tea, or water — separate from the serving line." },
+      { position: "7", label: "Seating Area", detail: "Set with forks, napkins, and bowls before guests arrive." },
+      { position: "8", label: "Trash & Recycling", detail: "Two labeled bins near exits." },
+    ],
+    pancakes: [
+      { position: "1", label: "Welcome / Donation Table", detail: "Near the entrance. Sign clearly displays the suggested donation amount." },
+      { position: "2", label: "Griddle Station", detail: "Continuous operation — the Griddle Operator never stops during service." },
+      { position: "3", label: "Pancake Pickup", detail: "Finished pancakes plated immediately as they come off the griddle." },
+      { position: "4", label: "Syrup, Butter & Toppings Bar", detail: "Maple syrup, butter, whipped topping, powdered sugar — self-serve." },
+      { position: "5", label: "Sausage Station", detail: "Pre-cooked sausage links in warm-holding foil pan. Serve with tongs." },
+      { position: "6", label: "Drink Station", detail: "Coffee carafes and orange juice pitchers. Keep refilled throughout." },
+      { position: "7", label: "Seating Area", detail: "Set with forks, napkins, and syrup at each table before guests arrive." },
+      { position: "8", label: "Trash & Recycling", detail: "Two labeled bins near exits." },
+    ],
+    custom: [
+      { position: "1", label: "Welcome / Donation Table", detail: "Near the entrance so every guest sees it when arriving." },
+      { position: "2", label: "Main Cooking / Prep Station", detail: "Your primary food prep area. Label it clearly and keep it staffed at all times." },
+      { position: "3", label: "Serving Station", detail: "Where guests receive their food. Keep portions consistent and the line moving." },
+      { position: "4", label: "Condiment / Extras Station", detail: "Any sauces, toppings, or sides guests can add. Clearly label each item." },
+      { position: "5", label: "Drink Station", detail: "Water, lemonade, or other beverages — separate from the food line." },
+      { position: "6", label: "Seating Area", detail: "Set with napkins and utensils before guests arrive." },
+      { position: "7", label: "Trash & Recycling", detail: "Two labeled bins near exits. Monitor throughout service." },
+    ],
+  };
+  return layouts[mealType] ?? layouts["custom"]!;
+}
+
+function buildLeftoverPlan(mealType: string): LeftoverPlan {
+  const plans: Record<string, LeftoverPlan> = {
+    hotdogs: {
+      canSave: [
+        "Unopened hot dog packages (refrigerate, use within 5 days)",
+        "Sealed bun packages (room temp, use within 2–3 days)",
+        "Sealed condiment bottles (store per label instructions)",
+      ],
+      discard: [
+        "Any cooked hot dogs held at room temperature for more than 2 hours",
+        "Opened buns that have been sitting out and are stale or moist",
+        "Chili or cheese topping held unrefrigerated for more than 2 hours",
+      ],
+      packaging: "Return uncooked hot dogs to their original sealed packaging and refrigerate immediately. Label with today's date.",
+      whoDecides: "The Adult Volunteer who managed the grill station makes all leftover calls.",
+    },
+    burgers: {
+      canSave: [
+        "Raw uncooked ground beef — refrigerate immediately, use within 1–2 days",
+        "Sealed bun packages (room temp, use within 2–3 days)",
+        "Sealed condiment bottles and sealed produce (refrigerate)",
+      ],
+      discard: [
+        "Any cooked patties that have been out for more than 2 hours",
+        "Opened tomato, lettuce, or onion that has been sitting out for more than 2 hours",
+        "Any patty that smells off or was not kept at proper temperature",
+      ],
+      packaging: "Wrap raw ground beef tightly, refrigerate same day. Seal and store unused buns at room temperature.",
+      whoDecides: "The Adult Volunteer at the grill makes all final leftover decisions.",
+    },
+    bakedPotatoes: {
+      canSave: [
+        "Uncut baked potatoes — wrap each in foil, refrigerate, good for 3–5 days",
+        "Unopened sour cream and butter containers (refrigerate)",
+        "Sealed cheese bags and unused dry toppings",
+      ],
+      discard: [
+        "Potatoes that were cut open but not served",
+        "Sour cream, butter, or shredded cheese that sat out for more than 2 hours",
+        "Any dairy product that smells or looks off",
+      ],
+      packaging: "Wrap each unserved uncut potato in foil and label with the date. Transfer opened sour cream and cheese to sealed containers and refrigerate immediately.",
+      whoDecides: "The Adult Volunteer at the topping bar makes all leftover calls.",
+    },
+    breakfastBurritos: {
+      canSave: [
+        "Foil-wrapped assembled burritos — refrigerate immediately, reheat to 165°F before eating, good for 1 day",
+        "Sealed salsa jars (refrigerate after opening)",
+        "Unopened cheese bags (refrigerate)",
+        "Sealed uncooked sausage in original packaging (refrigerate)",
+      ],
+      discard: [
+        "Scrambled eggs held at room temperature for more than 2 hours (serious food safety risk)",
+        "Any burrito that cannot be confirmed refrigerated within 2 hours of cooking",
+        "Cooked hash browns held unrefrigerated for more than 2 hours",
+      ],
+      packaging: "Label each foil-wrapped burrito with the date and contents. Refrigerate immediately after service — these are great reheated the next morning.",
+      whoDecides: "The Adult Volunteer at the egg and griddle station has final authority on food safety calls.",
+    },
+    tacos: {
+      canSave: [
+        "Leftover cooked taco meat — transfer to sealed container, refrigerate, use within 2–3 days",
+        "Sealed seasoning packets and unopened shells or tortillas",
+        "Sealed cheese, sour cream, and salsa jars (refrigerate opened containers)",
+      ],
+      discard: [
+        "Cooked seasoned meat held at room temperature for more than 2 hours",
+        "Shredded lettuce or diced tomato that has wilted or been out for more than 2 hours",
+        "Any topping that smells off or was improperly held",
+      ],
+      packaging: "Transfer leftover taco meat to a sealed storage container and refrigerate within 30 minutes of service ending. Use within 2–3 days — excellent for tacos, nachos, or burritos.",
+      whoDecides: "The Adult Volunteer at the meat station makes all food safety decisions.",
+    },
+    spaghetti: {
+      canSave: [
+        "Leftover meat sauce — refrigerate immediately, good for 3–4 days, or freeze for up to 3 months",
+        "Cooked pasta tossed with a small amount of olive oil — refrigerate, good for 3–5 days",
+        "Sealed garlic bread packages and uncooked pasta boxes",
+      ],
+      discard: [
+        "Pasta or sauce held for more than 2 hours without proper temperature control",
+        "Dressed salad that has wilted or been out too long",
+        "Do not mix leftover pasta and sauce — store them separately",
+      ],
+      packaging: "Transfer pasta and sauce into separate labeled sealed containers. To reheat: warm sauce to 165°F in a pot; reheat pasta separately in boiling water or microwave with a splash of water.",
+      whoDecides: "The Adult Volunteer at the pasta station is responsible for leftover storage decisions.",
+    },
+    pancakes: {
+      canSave: [
+        "Remaining dry pancake mix in a sealed bag (room temp, use by package date)",
+        "Sealed maple syrup bottles (room temp)",
+        "Mixed batter in a sealed container (refrigerate, use within 24 hours)",
+        "Uncooked sausage links in sealed packaging (refrigerate)",
+      ],
+      discard: [
+        "Cooked pancakes that have been sitting out for more than 2 hours",
+        "Cooked sausage links held out for more than 2 hours",
+        "Any mixed batter left unrefrigerated for more than 2 hours",
+      ],
+      packaging: "Pour unused batter into a sealed container, label with the date, and refrigerate. It is good for the next morning. Label remaining dry mix with the date it was opened.",
+      whoDecides: "The Adult Volunteer at the griddle station has final authority on what gets saved versus discarded.",
+    },
+    custom: {
+      canSave: [
+        "Sealed, unopened ingredients stored per their package instructions",
+        "Cooked food refrigerated within 2 hours (suitable for next-day use)",
+      ],
+      discard: [
+        "Any cooked food held at room temperature for more than 2 hours without proper temperature control",
+        "Food that smells, looks, or feels questionable — when in doubt, throw it out",
+      ],
+      packaging: "Transfer leftover cooked food to labeled sealed containers and refrigerate immediately after service ends. Label with the date.",
+      whoDecides: "The Adult Volunteer who managed cooking makes all final food safety decisions.",
+    },
+  };
+  return plans[mealType] ?? plans["custom"]!;
+}
+
+function buildCommsPack(
+  mealName: string,
+  form: PlannerFormData,
+  volunteerPlan: VolunteerRole[],
+  serveStart: string,
+  serveEnd: string,
+  prepStart: string,
+): CommsPack {
+  const org = form.orgType === "Other" ? "our group" : form.orgType;
+  const rolesText = volunteerPlan.map(r => `  • ${r.role} (${r.type}) — ${r.count} needed`).join("\n");
+
+  const announcement = `${form.eventName} — ${mealName} Fundraiser!
+
+Join us for our ${mealName} fundraiser! This is a great opportunity to support ${org} while enjoying a delicious meal with your community.
+
+  When: ${formatTime(serveStart)} – ${formatTime(serveEnd)}
+  Suggested Donation: ${fmt$(form.mealPrice)} per person
+  We're expecting ${form.attendance} guests.
+
+Come out, eat well, and help us reach our goal. Every plate makes a difference.
+
+See you there!
+— The ${form.eventName} Team`.trim();
+
+  const volunteerRequest = `Hi everyone,
+
+We need volunteers to help make ${form.eventName} a success!
+
+We're looking for adults and students to help with cooking, serving, setup, and cleanup. If you can help out, please plan to arrive by ${formatTime(prepStart)}.
+
+Roles we need to fill:
+${rolesText}
+
+Reply to this message or contact your group leader to sign up. Every hand matters!
+
+Thank you for supporting ${org}!`.trim();
+
+  const dayBeforeReminder = `Quick reminder: ${form.eventName} is TOMORROW!
+
+If you're VOLUNTEERING: please arrive by ${formatTime(prepStart)} ready to help set up and prep.
+If you're ATTENDING: doors open at ${formatTime(serveStart)}.
+
+What to bring: your appetite and a suggested donation of ${fmt$(form.mealPrice)} per person.
+
+We're looking forward to a great event — see you there!
+— The ${form.eventName} Team`.trim();
+
+  const thankYou = `Thank you from ${form.eventName}!
+
+Our ${mealName} fundraiser is a wrap — and it was a success thanks to you.
+
+Whether you cooked, served, cleaned up, donated, or simply showed up and supported us — your contribution makes a real difference for ${org}.
+
+We are grateful for this community. Stay tuned for more updates!
+
+— The ${form.eventName} Team`.trim();
+
+  return { announcement, volunteerRequest, dayBeforeReminder, thankYou };
+}
+
+function buildShoppingListGrouped(shoppingList: ShoppingItem[]): ShoppingGroup[] {
+  const LABEL_MAP: Record<string, string> = {
+    protein: "Proteins & Main Items",
+    carb: "Bread, Grains & Tortillas",
+    dairy: "Dairy",
+    produce: "Produce",
+    condiment: "Toppings & Condiments",
+    other: "Drinks & Other Items",
+  };
+  const ORDER = ["protein", "carb", "dairy", "produce", "condiment", "other"];
+
+  const groups: Record<string, ShoppingItem[]> = {};
+  for (const item of shoppingList) {
+    const key = item.category ?? "other";
+    if (!groups[key]) groups[key] = [];
+    groups[key].push(item);
+  }
+
+  return ORDER
+    .filter(k => (groups[k]?.length ?? 0) > 0)
+    .map(k => ({ label: LABEL_MAP[k] ?? k, items: groups[k] }));
+}
+
 // ── Main Calculator ───────────────────────────────────────────
 
 export function calculatePlan(form: PlannerFormData): FundraiserPlan {
@@ -351,8 +835,7 @@ export function calculatePlan(form: PlannerFormData): FundraiserPlan {
   const kids = form.attendance - adults;
   const kidPercent = Math.round((kids / form.attendance) * 100);
 
-  // Total individual servings (e.g. number of hot dogs, tacos, etc.)
-  // including the waste/overage buffer
+  // Total individual servings including waste/overage buffer
   const totalServings = Math.ceil(
     (adults * meal.adultServings + kids * meal.kidServings) * meal.wasteBuffer
   );
@@ -397,6 +880,7 @@ export function calculatePlan(form: PlannerFormData): FundraiserPlan {
       notes: ing.category === "condiment"
         ? "May have leftovers — saves money at your next event"
         : undefined,
+      category: ing.category,
     };
   });
 
@@ -414,11 +898,7 @@ export function calculatePlan(form: PlannerFormData): FundraiserPlan {
       ? `${packages} pack${packages > 1 ? "s" : ""} (${totalUnits} units)`
       : "As needed / already owned";
 
-    return {
-      item: sup.name,
-      quantity: quantityStr,
-      estimatedCost: itemCost,
-    };
+    return { item: sup.name, quantity: quantityStr, estimatedCost: itemCost };
   });
 
   // Add a misc contingency buffer (5%)
@@ -447,206 +927,237 @@ export function calculatePlan(form: PlannerFormData): FundraiserPlan {
       task: "Volunteer arrival & venue setup — tables, chairs, signage, stations",
       who: "Adult Volunteer",
       duration: "30 min",
+      leaderNote: "Do a quick station walkthrough with all volunteers before anything else. Everyone should know their role before setup begins.",
+      watchOut: "Volunteers arriving late can cascade into a rushed kitchen. Set a firm arrival time and follow up the day before.",
     },
     {
       time: formatTime(addMinutes(prepStart, 30)),
       task: `Unpack and stage all ingredients and supplies — ${meal.displayName} station layout`,
       who: "Adult Volunteer",
       duration: "20 min",
+      leaderNote: "Stage each station completely before moving to the next one. A half-staged condiment station will cause confusion during service.",
+      watchOut: "Do not start cooking until all supply stations are staged. Cooking before stations are set up leads to food sitting out while guests wait.",
     },
     {
       time: formatTime(addMinutes(prepStart, 50)),
       task: `Begin cooking and prep — ${meal.prepNotes}`,
       who: "Parent Oversight",
       duration: `${Math.max(0, prepMins - 65)} min`,
+      leaderNote: "Assign one adult to track cooking progress and communicate expected readiness to the Serving Team.",
+      watchOut: "Do not let the first batch of food sit out for more than 30 minutes before service opens. Stagger batches to stay fresh.",
     },
     {
       time: formatTime(addMinutes(serveStart, -15)),
       task: "Final readiness check — food temperatures verified, supply stations fully stocked, serving line staged",
       who: "Adult Volunteer",
       duration: "15 min",
+      leaderNote: "Use a quick verbal check: ask each station lead 'Are you ready?' before opening doors. Fix any gaps before the first guest arrives.",
+      watchOut: "Opening doors before you are fully ready is the most common cause of a chaotic start. Hold the line until you are confident.",
     },
     {
       time: formatTime(serveStart),
       task: `Doors open — begin serving. ${meal.cookNote}`,
       who: "All Volunteers",
       duration: `${serveDuration} min`,
+      leaderNote: "Position yourself where you can see the full serving line. Your job during service is to spot bottlenecks and fix them before they cause a backup.",
+      watchOut: "The first 15 minutes of service set the tone for the whole event. If the line slows, identify the bottleneck and redirect a volunteer immediately.",
     },
     {
       time: formatTime(addMinutes(serveStart, Math.floor(serveDuration / 2))),
       task: "Mid-service check: restock supplies, replenish food, empty trash, briefly check in with team",
       who: "Student Runner",
       duration: "10 min",
+      leaderNote: "Walk every station during this check. Ask each volunteer what they need. Do not rely on volunteers to speak up on their own.",
+      watchOut: "Mid-service is when food supplies tend to run low. If you are near the bottom on any main ingredient, start the next batch or warm-holding unit now.",
     },
     {
       time: formatTime(serveEnd),
       task: "Service ends — announce close to guests, begin breakdown and cleanup",
       who: "All Volunteers",
       duration: "30–45 min",
+      leaderNote: "Give guests a 10-minute and 5-minute verbal warning before close. This avoids people rushing the line at the last minute.",
+      watchOut: "Do not discard any food until an adult has assessed what can be safely stored. See the Leftover Plan for guidance.",
     },
     {
       time: formatTime(addMinutes(serveEnd, 30)),
       task: "Leftover food stored safely, venue cleaned, borrowed equipment returned or packed",
       who: "Adult Volunteer",
       duration: "15–30 min",
+      leaderNote: "Walk the full venue after cleanup to check for forgotten equipment, trash, and personal items. Leave the space better than you found it.",
+      watchOut: "Return any borrowed items (roasters, tables, extension cords) the same day. Lost equipment creates friction with future venues and partners.",
     },
   ];
 
   // ── Volunteer Plan ────────────────────────────────────────
   const volunteerPlan: VolunteerRole[] = buildVolunteerPlan(form, meal.cookingComplexity);
 
-  // ── Risk Warnings ─────────────────────────────────────────
-  const riskWarnings: RiskWarning[] = [];
+  // ── Risk Warnings + Plan ───────────────────────────────────
+  const risks: Array<{ warning: RiskWarning; plan: RiskPlanItem }> = [];
   const totalVolunteers = form.adultVolunteers + form.studentVolunteers;
   const volunteerRatio = form.attendance / Math.max(totalVolunteers, 1);
 
-  // — No adult volunteers at all
   if (form.adultVolunteers === 0) {
-    riskWarnings.push({
-      level: "error",
-      message: "No Adult Volunteers are listed. Food fundraisers require at least 1–2 adults for cooking oversight, food safety, and cash handling. Please add adult volunteers before finalizing your plan.",
-    });
+    risks.push(buildRisk(
+      "error",
+      "No Adult Volunteers are listed. Food fundraisers require at least 1–2 adults for cooking oversight, food safety, and cash handling. Please add adult volunteers before finalizing your plan.",
+      "Recruit at least 2 adults before the event. At minimum you need one adult managing cooking and one adult at the donation table. Do not proceed with zero adult volunteers.",
+    ));
   }
 
-  // — No student volunteers (informational nudge)
   if (form.studentVolunteers === 0 && form.attendance > 40) {
-    riskWarnings.push({
-      level: "info",
-      message: `No Student Runners or student volunteers are listed. For ${form.attendance} guests, student helpers are valuable for restocking supplies, running items between stations, and managing cleanup. Consider recruiting ${Math.ceil(form.attendance / 50)} to ${Math.ceil(form.attendance / 35)} student volunteers.`,
-    });
+    risks.push(buildRisk(
+      "info",
+      `No Student Runners or student volunteers are listed. For ${form.attendance} guests, student helpers are valuable for restocking supplies, running items between stations, and managing cleanup. Consider recruiting ${Math.ceil(form.attendance / 50)} to ${Math.ceil(form.attendance / 35)} student volunteers.`,
+      "Ask your group leader for a list of students who can volunteer. Even 2–3 student runners significantly reduce adult workload and keep stations stocked.",
+    ));
   }
 
-  // — Dangerously low total volunteers
   if (totalVolunteers < 3 && form.attendance > 30) {
-    riskWarnings.push({
-      level: "error",
-      message: `Only ${totalVolunteers} volunteer${totalVolunteers !== 1 ? "s" : ""} for ${form.attendance} guests. This is not enough to safely run this event. Aim for at least 1 volunteer per 15–20 guests (${Math.ceil(form.attendance / 20)}–${Math.ceil(form.attendance / 15)} for this crowd).`,
-    });
+    risks.push(buildRisk(
+      "error",
+      `Only ${totalVolunteers} volunteer${totalVolunteers !== 1 ? "s" : ""} for ${form.attendance} guests. This is not enough to safely run this event. Aim for at least 1 volunteer per 15–20 guests (${Math.ceil(form.attendance / 20)}–${Math.ceil(form.attendance / 15)} for this crowd).`,
+      "Send an urgent volunteer request to parents and your community. Post on social media or your group's messaging platform. Consider postponing if you cannot reach minimum staffing before the event.",
+    ));
   } else if (volunteerRatio > 25) {
-    riskWarnings.push({
-      level: "warning",
-      message: `Your volunteer-to-guest ratio is 1:${Math.round(volunteerRatio)}. A stretched team leads to long lines and service gaps. Aim for 1 volunteer per 15–20 guests — this event would ideally have ${Math.ceil(form.attendance / 20)}–${Math.ceil(form.attendance / 15)} volunteers.`,
-    });
+    risks.push(buildRisk(
+      "warning",
+      `Your volunteer-to-guest ratio is 1:${Math.round(volunteerRatio)}. A stretched team leads to long lines and service gaps. Aim for 1 volunteer per 15–20 guests — this event would ideally have ${Math.ceil(form.attendance / 20)}–${Math.ceil(form.attendance / 15)} volunteers.`,
+      "Reach out to other parent groups, community members, or last-minute recruits. Assign double-duty to capable volunteers — a Student Runner can also help with setup before service begins.",
+    ));
   } else if (volunteerRatio > 18) {
-    riskWarnings.push({
-      level: "info",
-      message: `Volunteer-to-guest ratio is 1:${Math.round(volunteerRatio)}. You're in an acceptable range, but recruiting ${Math.ceil(form.attendance / 15) - totalVolunteers} more volunteers would give you a comfortable buffer.`,
-    });
+    risks.push(buildRisk(
+      "info",
+      `Volunteer-to-guest ratio is 1:${Math.round(volunteerRatio)}. You're in an acceptable range, but recruiting ${Math.ceil(form.attendance / 15) - totalVolunteers} more volunteers would give you a comfortable buffer.`,
+      "Even one or two additional student volunteers for restocking and cleanup gives you meaningful extra capacity. Ask for a few more recruits before the event.",
+    ));
   }
 
-  // — Prep time warnings
   if (prepMins <= 0) {
-    riskWarnings.push({
-      level: "error",
-      message: "Prep start time is at or after serve start time. There is no time to prepare food before guests arrive. Please adjust your schedule.",
-    });
+    risks.push(buildRisk(
+      "error",
+      "Prep start time is at or after serve start time. There is no time to prepare food before guests arrive. Please adjust your schedule.",
+      "Move your prep start time to at least 90–120 minutes before serving begins. If the serve time is fixed, pre-cook as much as possible the day or morning before.",
+    ));
   } else if (prepMins < 60) {
-    riskWarnings.push({
-      level: "error",
-      message: `Only ${prepMins} minutes of prep time before serving begins. For ${form.attendance} guests${meal.cookingComplexity !== "low" ? " and a meal with multiple cooking components" : ""}, plan for at least 90–120 minutes of prep. Adjust your prep start time.`,
-    });
+    risks.push(buildRisk(
+      "error",
+      `Only ${prepMins} minutes of prep time before serving begins. For ${form.attendance} guests${meal.cookingComplexity !== "low" ? " and a meal with multiple cooking components" : ""}, plan for at least 90–120 minutes of prep. Adjust your prep start time.`,
+      "Start prep at least 90 minutes before doors open. Use the extra time to stage stations, verify temperatures, and run a brief team briefing before the first guest arrives.",
+    ));
   } else if (prepMins < 90 && meal.cookingComplexity === "high") {
-    riskWarnings.push({
-      level: "warning",
-      message: `${meal.displayName} is a high-complexity meal with multiple simultaneous cooking components. You have ${prepMins} minutes of prep — plan for at least 120 minutes. Consider starting prep earlier to avoid a rushed opening.`,
-    });
+    risks.push(buildRisk(
+      "warning",
+      `${meal.displayName} is a high-complexity meal with multiple simultaneous cooking components. You have ${prepMins} minutes of prep — plan for at least 120 minutes. Consider starting prep earlier to avoid a rushed opening.`,
+      "Schedule a 2-hour minimum prep window for this meal type. Assign each cooking component its own dedicated adult volunteer to stay on schedule and avoid bottlenecks.",
+    ));
   } else if (prepMins < 75 && meal.cookingComplexity === "medium") {
-    riskWarnings.push({
-      level: "warning",
-      message: `${meal.displayName} benefits from at least 90 minutes of prep time. You currently have ${prepMins} minutes — consider starting 15–20 minutes earlier.`,
-    });
+    risks.push(buildRisk(
+      "warning",
+      `${meal.displayName} benefits from at least 90 minutes of prep time. You currently have ${prepMins} minutes — consider starting 15–20 minutes earlier.`,
+      "Start 15–20 minutes earlier to give yourself a comfortable buffer. Use the extra time for a final readiness walkthrough before doors open.",
+    ));
   }
 
-  // — Short serve window
   if (serveDuration <= 0) {
-    riskWarnings.push({
-      level: "error",
-      message: "Serve end time is at or before serve start time. Please check your serving window.",
-    });
+    risks.push(buildRisk(
+      "error",
+      "Serve end time is at or before serve start time. Please check your serving window.",
+      "Update your serve end time to be at least 60–90 minutes after your serve start time.",
+    ));
   } else if (serveDuration < 60 && form.attendance > 100) {
-    riskWarnings.push({
-      level: "warning",
-      message: `Your serving window is only ${serveDuration} minutes for ${form.attendance} guests — less than 1 minute per guest. Extend to at least 90 minutes or add a second serving line to maintain flow.`,
-    });
+    risks.push(buildRisk(
+      "warning",
+      `Your serving window is only ${serveDuration} minutes for ${form.attendance} guests — less than 1 minute per guest. Extend to at least 90 minutes or add a second serving line to maintain flow.`,
+      "Open a second serving line to handle the crowd, or extend the closing time. A compressed window with a large crowd leads to long lines and stressed volunteers.",
+    ));
   } else if (serveDuration < 90 && form.attendance > 200) {
-    riskWarnings.push({
-      level: "warning",
-      message: `${form.attendance} guests in a ${serveDuration}-minute window is a tight pace. For crowds over 200, a 90–120 minute serving window reduces line pressure and keeps volunteers from being overwhelmed.`,
-    });
+    risks.push(buildRisk(
+      "warning",
+      `${form.attendance} guests in a ${serveDuration}-minute window is a tight pace. For crowds over 200, a 90–120 minute serving window reduces line pressure and keeps volunteers from being overwhelmed.`,
+      "Set up two parallel serving lines before guests arrive. Stage both lines identically — food, condiments, utensils — so both can operate simultaneously from the start.",
+    ));
   }
 
-  // — Profit warnings
   if (estimatedProfit[1] < 0) {
-    riskWarnings.push({
-      level: "error",
-      message: `At ${fmt$(form.mealPrice)}/person and estimated costs of ${fmt$(totalCostRange[0])}–${fmt$(totalCostRange[1])}, this event will likely not break even. Consider raising the donation/meal price, finding donated supplies, or reducing your menu scope.`,
-    });
+    risks.push(buildRisk(
+      "error",
+      `At ${fmt$(form.mealPrice)}/person and estimated costs of ${fmt$(totalCostRange[0])}–${fmt$(totalCostRange[1])}, this event will likely not break even. Consider raising the donation/meal price, finding donated supplies, or reducing your menu scope.`,
+      "Raise the suggested donation by $3–$5 per person, or look for donated ingredients from local businesses and community members. Even partial donations of supplies can shift a loss into a profit.",
+    ));
   } else if (estimatedProfit[0] < 0) {
-    riskWarnings.push({
-      level: "warning",
-      message: `Profit margin is thin — your low-end cost estimate puts you slightly in the red. Watch your supply costs carefully and aim for full attendance. Consider setting an internal goal 10–15% above your stated attendance target.`,
-    });
+    risks.push(buildRisk(
+      "warning",
+      `Profit margin is thin — your low-end cost estimate puts you slightly in the red. Watch your supply costs carefully and aim for full attendance. Consider setting an internal goal 10–15% above your stated attendance target.`,
+      "Purchase supplies at a warehouse store (Costco, Sam's Club) to reduce per-unit costs. Track spending against your cost estimate on the day of shopping — do not overbuy.",
+    ));
   } else if (form.mealPrice < 7) {
-    riskWarnings.push({
-      level: "info",
-      message: `Your suggested donation/price is ${fmt$(form.mealPrice)}, which is on the low end for a food fundraiser. Many groups charge $8–$15 per plate. Raising the price by even $2–$3 per person meaningfully improves your profit margin.`,
-    });
+    risks.push(buildRisk(
+      "info",
+      `Your suggested donation/price is ${fmt$(form.mealPrice)}, which is on the low end for a food fundraiser. Many groups charge $8–$15 per plate. Raising the price by even $2–$3 per person meaningfully improves your profit margin.`,
+      `Raise the suggested donation to at least $8 per person. A $2 increase across ${form.attendance} guests adds ${fmt$(form.attendance * 2)} to your total revenue without requiring more attendance.`,
+    ));
   }
 
-  // — Large attendance warnings (graduated)
   if (form.attendance > 300) {
-    riskWarnings.push({
-      level: "warning",
-      message: `Large event: ${form.attendance} guests. Confirm you have sufficient cooking capacity (grills, griddles, roasters) and a clear backup plan. Consider staging a second cook team and a second serving line. Parking, seating, and restroom access also become important at this scale.`,
-    });
+    risks.push(buildRisk(
+      "warning",
+      `Large event: ${form.attendance} guests. Confirm you have sufficient cooking capacity (grills, griddles, roasters) and a clear backup plan. Consider staging a second cook team and a second serving line. Parking, seating, and restroom access also become important at this scale.`,
+      "Assign a dedicated event coordinator whose only job is to watch traffic flow, cooking supply, and team communication. Do not let the coordinator get pulled into serving or cooking duties.",
+    ));
   } else if (form.attendance > 250) {
-    riskWarnings.push({
-      level: "warning",
-      message: `${form.attendance} guests is a substantial crowd. Two serving lines are strongly recommended above 250 guests. Verify you have enough cooking equipment and cooler space for the full quantity of food.`,
-    });
+    risks.push(buildRisk(
+      "warning",
+      `${form.attendance} guests is a substantial crowd. Two serving lines are strongly recommended above 250 guests. Verify you have enough cooking equipment and cooler space for the full quantity of food.`,
+      "Set up two parallel serving lines before guests arrive. Confirm equipment capacity in advance — you need enough cooking equipment to maintain peak demand for your full serving window.",
+    ));
   } else if (form.attendance > 150) {
-    riskWarnings.push({
-      level: "info",
-      message: `${form.attendance} guests is a sizeable crowd. Make sure your serving line is wide enough and your cooking equipment can maintain pace. A second serving line is often worth setting up above 150 guests.`,
-    });
+    risks.push(buildRisk(
+      "info",
+      `${form.attendance} guests is a sizeable crowd. Make sure your serving line is wide enough and your cooking equipment can maintain pace. A second serving line is often worth setting up above 150 guests.`,
+      "Stage a second serving station in advance, even if you plan to open only one. If lines get long, you can activate the second line immediately without scrambling to set it up.",
+    ));
   }
 
-  // — High kid percentage (affects portions and dietary needs)
   if (kidPercent > 60) {
-    riskWarnings.push({
-      level: "info",
-      message: `${kidPercent}% of your guests are kids or students. Kid portions are smaller, so total food volume is lower — your estimates reflect this. Check whether any kids have food allergies that require a separate option, and label condiments clearly.`,
-    });
+    risks.push(buildRisk(
+      "info",
+      `${kidPercent}% of your guests are kids or students. Kid portions are smaller, so total food volume is lower — your estimates reflect this. Check whether any kids have food allergies that require a separate option, and label condiments clearly.`,
+      "Prepare a simple allergen information card listing common allergens in your menu items. Post it at the serving station so parents can check before their child eats.",
+    ));
   }
 
-  // — Cooking complexity vs. adult volunteer count
   if (meal.cookingComplexity === "high" && form.adultVolunteers < 4) {
-    riskWarnings.push({
-      level: "warning",
-      message: `${meal.displayName} is a high-complexity meal requiring multiple simultaneous cooking stations. With only ${form.adultVolunteers} adult volunteer${form.adultVolunteers !== 1 ? "s" : ""}, you may be short on experienced cooking hands. Plan for at least 3–4 adults who are comfortable managing stovetops, griddles, or roasters at the same time.`,
-    });
+    risks.push(buildRisk(
+      "warning",
+      `${meal.displayName} is a high-complexity meal requiring multiple simultaneous cooking stations. With only ${form.adultVolunteers} adult volunteer${form.adultVolunteers !== 1 ? "s" : ""}, you may be short on experienced cooking hands. Plan for at least 3–4 adults who are comfortable managing stovetops, griddles, or roasters at the same time.`,
+      "Recruit 2–3 more adults with cooking confidence before the event. Assign each adult to one specific cooking station — do not ask anyone to manage multiple stations simultaneously.",
+    ));
   } else if (meal.cookingComplexity === "medium" && form.adultVolunteers < 2) {
-    riskWarnings.push({
-      level: "warning",
-      message: `${meal.displayName} needs at least 2 adult volunteers managing the cooking. With only ${form.adultVolunteers}, you risk a bottleneck. Recruit at least one more adult with cooking experience before the event.`,
-    });
+    risks.push(buildRisk(
+      "warning",
+      `${meal.displayName} needs at least 2 adult volunteers managing the cooking. With only ${form.adultVolunteers}, you risk a bottleneck. Recruit at least one more adult with cooking experience before the event.`,
+      "Recruit one more adult who is comfortable managing the main cooking station. They should be assigned solely to cooking — not split across serving or setup duties.",
+    ));
   }
 
-  // — Custom meal limited accuracy
   if (form.mealType === "custom") {
-    riskWarnings.push({
-      level: "info",
-      message: "Custom meal calculations are rough estimates only. The app cannot calculate specific ingredients for a custom meal — use this plan for supplies and volunteer structure, and calculate your food quantities manually from your recipe.",
-    });
+    risks.push(buildRisk(
+      "info",
+      "Custom meal calculations are rough estimates only. The app cannot calculate specific ingredients for a custom meal — use this plan for supplies and volunteer structure, and calculate your food quantities manually from your recipe.",
+      "Do a test cook of your recipe at 25–50% of the full batch size before the event. This reveals actual timing, portion sizes, and equipment needs at scale.",
+    ));
   }
 
-  // — Adult % + Kid % doesn't total 100%
   if (form.adultPercent + form.kidPercent !== 100) {
-    riskWarnings.push({
-      level: "info",
-      message: `Adult % (${form.adultPercent}%) + Kids % (${form.kidPercent}%) doesn't total 100%. The remainder (${100 - form.adultPercent - form.kidPercent}%) is treated as adults for calculation purposes.`,
-    });
+    risks.push(buildRisk(
+      "info",
+      `Adult % (${form.adultPercent}%) + Kids % (${form.kidPercent}%) doesn't total 100%. The remainder (${100 - form.adultPercent - form.kidPercent}%) is treated as adults for calculation purposes.`,
+      "Update your form to ensure adult percentage + kid percentage equals exactly 100%. This ensures food quantities are calculated correctly for your crowd mix.",
+    ));
   }
+
+  const riskWarnings: RiskWarning[] = risks.map(r => r.warning);
+  const riskPlan: RiskPlanItem[] = risks.map(r => r.plan);
 
   // ── Email Blurb ───────────────────────────────────────────
   const mealName = meal.displayName === "Custom Meal" && form.customMealName
@@ -675,6 +1186,15 @@ Reply to this message to let us know you can help, or sign up using the link bel
 
 Thank you for supporting ${form.eventName}!`.trim();
 
+  // ── Full Event Pack sections ──────────────────────────────
+  const strategySummary = buildStrategySummary(form);
+  const profitStrategy = buildProfitStrategy(form, totalCostRange, estimatedProfit);
+  const volunteerBriefing = buildVolunteerBriefing(form.mealType, mealName, form, volunteerPlan, serveStart, prepStart);
+  const setupLayout = buildSetupLayout(form.mealType);
+  const leftoverPlan = buildLeftoverPlan(form.mealType);
+  const commsPack = buildCommsPack(mealName, form, volunteerPlan, serveStart, serveEnd, prepStart);
+  const shoppingListGrouped = buildShoppingListGrouped(shoppingList);
+
   // ── Assemble Plan ─────────────────────────────────────────
   return {
     summary: {
@@ -689,6 +1209,7 @@ Thank you for supporting ${form.eventName}!`.trim();
     },
     foodQuantities,
     shoppingList,
+    shoppingListGrouped,
     suppliesList,
     costRange: totalCostRange,
     estimatedRevenue,
@@ -696,7 +1217,14 @@ Thank you for supporting ${form.eventName}!`.trim();
     prepTimeline,
     volunteerPlan,
     riskWarnings,
+    riskPlan,
     emailBlurb,
     disclaimer: DISCLAIMER,
+    strategySummary,
+    profitStrategy,
+    volunteerBriefing,
+    setupLayout,
+    leftoverPlan,
+    commsPack,
   };
 }

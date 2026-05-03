@@ -5,7 +5,8 @@ import type { PlannerFormData } from "@/lib/types";
 import {
   ArrowLeft, Printer, RefreshCw, Copy, CheckCircle2,
   AlertTriangle, AlertCircle, Info, Lock, ShoppingCart,
-  Clock, Users, Mail, FileText, ChevronRight,
+  Clock, Users, Mail, FileText, ChevronRight, Lightbulb,
+  TrendingUp, MapPin, Package, MessageSquare, Shield,
 } from "lucide-react";
 import { PAYMENT_LINKS, ENABLE_DEMO_UNLOCK } from "@/config/paymentLinks";
 import { getUnlocked, setUnlocked, savePlanBeforePayment } from "@/lib/unlock";
@@ -27,35 +28,26 @@ function fmt(n: number) {
 
 export default function ResultsPage({ plan, formData, onReset }: ResultsPageProps) {
   const [copied, setCopied] = useState(false);
-  // getUnlocked reads localStorage via the shared helper (see src/lib/unlock.ts).
+  const [copiedKey, setCopiedKey] = useState<string | null>(null);
   const [unlocked, setUnlockedState] = useState<boolean>(getUnlocked);
   const [activeTab, setActiveTab] = useState<"shopping" | "supplies" | "timeline" | "volunteers" | "email">("shopping");
 
   const profit = plan.estimatedProfit;
   const profitStatus = profit[1] < 0 ? "loss" : profit[0] < 0 ? "risky" : "good";
 
-  // Demo-mode unlock — only reachable when ENABLE_DEMO_UNLOCK = true.
   const handleDemoUnlock = () => {
     setUnlocked();
     setUnlockedState(true);
-    // savePlanBeforePayment also syncs to sessionStorage so PrintPage finds it.
     savePlanBeforePayment(plan, formData);
   };
 
-  // Payment CTA click — save plan before navigating to Stripe/Gumroad.
-  // The user leaves the app in the same tab; on return they land on /success
-  // where the unlock is applied. No target="_blank" so the redirect flow works.
   const handlePaymentCTAClick = () => {
     savePlanBeforePayment(plan, formData);
     const link = PAYMENT_LINKS.fullEventPack;
-    if (link) {
-      window.location.href = link;
-    }
+    if (link) window.location.href = link;
   };
 
   const handlePrintClick = () => {
-    // sessionStorage is kept in sync by savePlanBeforePayment/setUnlocked,
-    // but write it again here as a safety net for the same-session print flow.
     savePlanBeforePayment(plan, formData);
   };
 
@@ -63,6 +55,13 @@ export default function ResultsPage({ plan, formData, onReset }: ResultsPageProp
     navigator.clipboard.writeText(plan.emailBlurb).then(() => {
       setCopied(true);
       setTimeout(() => setCopied(false), 2500);
+    });
+  };
+
+  const copyText = (key: string, text: string) => {
+    navigator.clipboard.writeText(text).then(() => {
+      setCopiedKey(key);
+      setTimeout(() => setCopiedKey(null), 2500);
     });
   };
 
@@ -158,7 +157,7 @@ export default function ResultsPage({ plan, formData, onReset }: ResultsPageProp
         <h2 className="section-heading">Shopping List Preview</h2>
         <p className="section-note">
           Showing {previewItems.length} of {plan.shoppingList.length} items.
-          {!unlocked && " The complete list is included in the Full Event Pack."}
+          {!unlocked && " The complete grouped list is included in the Full Event Pack."}
         </p>
         <div className="table-wrap">
           <table className="data-table" data-testid="table-shopping-preview">
@@ -209,7 +208,7 @@ export default function ResultsPage({ plan, formData, onReset }: ResultsPageProp
                 {
                   icon: <ShoppingCart className="w-5 h-5" />,
                   title: "Complete Shopping List",
-                  desc: "Every ingredient and supply with quantities and cost estimates.",
+                  desc: "Every ingredient and supply with quantities, cost estimates, and grouped by category.",
                 },
                 {
                   icon: <FileText className="w-5 h-5" />,
@@ -219,7 +218,7 @@ export default function ResultsPage({ plan, formData, onReset }: ResultsPageProp
                 {
                   icon: <Clock className="w-5 h-5" />,
                   title: "Step-by-Step Prep Timeline",
-                  desc: "Exactly what to do, when to start, and who handles it.",
+                  desc: "Exactly what to do, when to start, who handles it — plus leader notes and watch-out tips for each step.",
                 },
                 {
                   icon: <Users className="w-5 h-5" />,
@@ -241,6 +240,41 @@ export default function ResultsPage({ plan, formData, onReset }: ResultsPageProp
                   title: "Print-Ready Event Plan",
                   desc: "One clean document to hand to your team or keep in your binder.",
                 },
+                {
+                  icon: <Lightbulb className="w-5 h-5" />,
+                  title: "Fundraiser Strategy Summary",
+                  desc: "Best fit assessment, main profit driver, main execution risk, and recommended focus for your specific event.",
+                },
+                {
+                  icon: <TrendingUp className="w-5 h-5" />,
+                  title: "Profit Strategy & Upsell Ideas",
+                  desc: "Price check, upsell suggestions, pricing model recommendation, and copy-ready signage language.",
+                },
+                {
+                  icon: <Users className="w-5 h-5" />,
+                  title: "Volunteer Briefing Script",
+                  desc: "A ready-to-read pre-event briefing for your whole team — food safety, serving flow, and roles.",
+                },
+                {
+                  icon: <MapPin className="w-5 h-5" />,
+                  title: "Event Setup Layout",
+                  desc: "Step-by-step station layout specific to your meal type so your team knows exactly where everything goes.",
+                },
+                {
+                  icon: <Package className="w-5 h-5" />,
+                  title: "Leftover Food Plan",
+                  desc: "What to save, what to discard, how to package it, and who makes the call — specific to your meal.",
+                },
+                {
+                  icon: <MessageSquare className="w-5 h-5" />,
+                  title: "Parent & Student Communication Pack",
+                  desc: "Four ready-to-copy messages: announcement, volunteer request, day-before reminder, and thank-you.",
+                },
+                {
+                  icon: <Shield className="w-5 h-5" />,
+                  title: "Risk Plan with Practical Fixes",
+                  desc: "Every risk flag paired with a specific, actionable fix so you know exactly how to respond.",
+                },
               ].map((f, i) => (
                 <div key={i} className="locked-feature">
                   <div className="locked-feature-icon">{f.icon}</div>
@@ -253,8 +287,6 @@ export default function ResultsPage({ plan, formData, onReset }: ResultsPageProp
             </div>
 
             <div className="locked-cta-group">
-              {/* Payment CTA — saves plan to localStorage before navigating to Stripe/Gumroad.
-                  No target="_blank" so the Stripe redirect comes back to /success in the same tab. */}
               <button
                 onClick={handlePaymentCTAClick}
                 className="btn-locked-cta"
@@ -267,10 +299,6 @@ export default function ResultsPage({ plan, formData, onReset }: ResultsPageProp
                 One-time purchase. Instant access. No account required.
               </p>
 
-              {/* ── DEMO UNLOCK ──────────────────────────────────────
-                  Only visible when ENABLE_DEMO_UNLOCK = true in paymentLinks.ts.
-                  Set to false before going live.
-              ─────────────────────────────────────────────────── */}
               {ENABLE_DEMO_UNLOCK && (
                 <button
                   onClick={handleDemoUnlock}
@@ -339,32 +367,68 @@ export default function ResultsPage({ plan, formData, onReset }: ResultsPageProp
                 <p className="tab-intro">
                   Store preference: <strong>{plan.summary.storePreference}</strong>. Prices are estimates and vary by store and region.
                 </p>
-                <div className="table-wrap">
-                  <table className="data-table" data-testid="table-shopping-list">
-                    <thead>
-                      <tr>
-                        <th>Item</th>
-                        <th>Quantity</th>
-                        <th>Est. Cost Range</th>
-                        <th>Notes</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {plan.shoppingList.map((item, i) => (
-                        <tr key={i} data-testid={`row-shopping-${i}`}>
-                          <td>{item.item}</td>
-                          <td><strong>{item.quantity}</strong></td>
-                          <td>{fmt(item.estimatedCost[0])} – {fmt(item.estimatedCost[1])}</td>
-                          <td className="table-note">{item.notes || "—"}</td>
+                {plan.shoppingListGrouped.length > 0 ? (
+                  <div className="table-wrap">
+                    <table className="data-table" data-testid="table-shopping-list">
+                      <thead>
+                        <tr>
+                          <th>Item</th>
+                          <th>Quantity</th>
+                          <th>Est. Cost Range</th>
+                          <th>Notes</th>
                         </tr>
-                      ))}
-                      <tr className="table-total">
-                        <td colSpan={2}><strong>Total Food Cost Estimate</strong></td>
-                        <td colSpan={2}><strong>{fmt(plan.costRange[0])} – {fmt(plan.costRange[1])}</strong></td>
-                      </tr>
-                    </tbody>
-                  </table>
-                </div>
+                      </thead>
+                      <tbody>
+                        {plan.shoppingListGrouped.map((group) => (
+                          <>
+                            <tr key={`group-${group.label}`} className="shopping-group-row">
+                              <td colSpan={4} className="shopping-group-header-cell">{group.label}</td>
+                            </tr>
+                            {group.items.map((item, i) => (
+                              <tr key={`${group.label}-${i}`} data-testid={`row-shopping-${group.label}-${i}`}>
+                                <td>{item.item}</td>
+                                <td><strong>{item.quantity}</strong></td>
+                                <td>{fmt(item.estimatedCost[0])} – {fmt(item.estimatedCost[1])}</td>
+                                <td className="table-note">{item.notes || "—"}</td>
+                              </tr>
+                            ))}
+                          </>
+                        ))}
+                        <tr className="table-total">
+                          <td colSpan={2}><strong>Total Food Cost Estimate</strong></td>
+                          <td colSpan={2}><strong>{fmt(plan.costRange[0])} – {fmt(plan.costRange[1])}</strong></td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                ) : (
+                  <div className="table-wrap">
+                    <table className="data-table" data-testid="table-shopping-list">
+                      <thead>
+                        <tr>
+                          <th>Item</th>
+                          <th>Quantity</th>
+                          <th>Est. Cost Range</th>
+                          <th>Notes</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {plan.shoppingList.map((item, i) => (
+                          <tr key={i} data-testid={`row-shopping-${i}`}>
+                            <td>{item.item}</td>
+                            <td><strong>{item.quantity}</strong></td>
+                            <td>{fmt(item.estimatedCost[0])} – {fmt(item.estimatedCost[1])}</td>
+                            <td className="table-note">{item.notes || "—"}</td>
+                          </tr>
+                        ))}
+                        <tr className="table-total">
+                          <td colSpan={2}><strong>Total Food Cost Estimate</strong></td>
+                          <td colSpan={2}><strong>{fmt(plan.costRange[0])} – {fmt(plan.costRange[1])}</strong></td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                )}
               </div>
             )}
 
@@ -412,6 +476,16 @@ export default function ResultsPage({ plan, formData, onReset }: ResultsPageProp
                           </span>
                           <span className="timeline-duration">{step.duration}</span>
                         </div>
+                        {step.leaderNote && (
+                          <p className="timeline-leader-note">
+                            <strong>Leader note:</strong> {step.leaderNote}
+                          </p>
+                        )}
+                        {step.watchOut && (
+                          <p className="timeline-watch-out">
+                            <strong>Watch out:</strong> {step.watchOut}
+                          </p>
+                        )}
                       </div>
                     </div>
                   ))}
@@ -493,6 +567,198 @@ export default function ResultsPage({ plan, formData, onReset }: ResultsPageProp
               </div>
             )}
           </section>
+
+          {/* ── NEW FULL EVENT PACK SECTIONS ───────────────────────── */}
+
+          {/* Strategy Summary */}
+          <section className="results-section" data-testid="section-strategy">
+            <h2 className="section-heading">Fundraiser Strategy Summary</h2>
+            <p className="section-note">
+              Tailored to your meal type and event format — what to focus on for a successful event.
+            </p>
+            <div className="strategy-grid">
+              {[
+                { label: "Best Fit for This Event", value: plan.strategySummary.bestFit },
+                { label: "Main Profit Driver", value: plan.strategySummary.mainProfitDriver },
+                { label: "Main Execution Risk", value: plan.strategySummary.mainExecutionRisk },
+                { label: "Recommended Focus", value: plan.strategySummary.recommendedFocus },
+              ].map((card, i) => (
+                <div key={i} className="strategy-card">
+                  <div className="strategy-card-label">{card.label}</div>
+                  <p className="strategy-card-value">{card.value}</p>
+                </div>
+              ))}
+            </div>
+          </section>
+
+          {/* Profit Strategy */}
+          <section className="results-section" data-testid="section-profit">
+            <h2 className="section-heading">Profit Strategy</h2>
+            <p className="section-note">
+              Pricing recommendations, upsell ideas, and signage language for your event.
+            </p>
+            <div className="profit-strategy-block">
+              <div className="profit-row">
+                <div className="profit-row-label">Price Check</div>
+                <p className="profit-row-value">{plan.profitStrategy.priceCheck}</p>
+              </div>
+              <div className="profit-row">
+                <div className="profit-row-label">Recommended Pricing Model</div>
+                <p className="profit-row-value">{plan.profitStrategy.pricingModel}</p>
+              </div>
+              <div className="profit-row">
+                <div className="profit-row-label">Upsell Ideas</div>
+                <ul className="profit-upsell-list">
+                  {plan.profitStrategy.upsellIdeas.map((idea, i) => (
+                    <li key={i}>{idea}</li>
+                  ))}
+                </ul>
+              </div>
+              <div className="profit-row">
+                <div className="profit-row-label">Donation Table Note</div>
+                <p className="profit-row-value">{plan.profitStrategy.donationTableNote}</p>
+              </div>
+              <div className="profit-row">
+                <div className="profit-row-label">Suggested Signage</div>
+                <div className="profit-signage-list">
+                  {plan.profitStrategy.signageLines.map((line, i) => (
+                    <div key={i} className="profit-signage-item">{line}</div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </section>
+
+          {/* Volunteer Briefing */}
+          <section className="results-section" data-testid="section-briefing">
+            <h2 className="section-heading">Volunteer Briefing Script</h2>
+            <p className="section-note">
+              Read this aloud to your whole team before doors open. Copy it to share in advance.
+            </p>
+            <div className="briefing-wrap">
+              <pre className="briefing-pre" data-testid="text-briefing">{plan.volunteerBriefing}</pre>
+              <button
+                onClick={() => copyText("briefing", plan.volunteerBriefing)}
+                className={`copy-btn ${copiedKey === "briefing" ? "copy-btn--copied" : ""}`}
+                data-testid="button-copy-briefing"
+              >
+                {copiedKey === "briefing"
+                  ? <><CheckCircle2 className="w-4 h-4 mr-1" /> Copied!</>
+                  : <><Copy className="w-4 h-4 mr-1" /> Copy</>}
+              </button>
+            </div>
+          </section>
+
+          {/* Setup Layout */}
+          <section className="results-section" data-testid="section-setup">
+            <h2 className="section-heading">Event Setup Layout</h2>
+            <p className="section-note">
+              Station-by-station layout for your meal type. Walk this with your Setup Crew before guests arrive.
+            </p>
+            <div className="setup-stations">
+              {plan.setupLayout.map((station, i) => (
+                <div key={i} className="setup-station" data-testid={`setup-station-${i}`}>
+                  <div className="setup-station-pos">{station.position}</div>
+                  <div>
+                    <div className="setup-station-label">{station.label}</div>
+                    <div className="setup-station-detail">{station.detail}</div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </section>
+
+          {/* Communication Pack */}
+          <section className="results-section" data-testid="section-comms">
+            <h2 className="section-heading">Parent & Student Communication Pack</h2>
+            <p className="section-note">
+              Four ready-to-copy messages for your event. Click Copy on any message to use it.
+            </p>
+            <div className="comms-grid">
+              {([
+                { key: "announcement", label: "Event Announcement", text: plan.commsPack.announcement },
+                { key: "volunteerRequest", label: "Volunteer Request", text: plan.commsPack.volunteerRequest },
+                { key: "dayBefore", label: "Day-Before Reminder", text: plan.commsPack.dayBeforeReminder },
+                { key: "thankYou", label: "Thank-You Message", text: plan.commsPack.thankYou },
+              ]).map(({ key, label, text }) => (
+                <div key={key} className="comms-block" data-testid={`comms-block-${key}`}>
+                  <div className="comms-block-title">{label}</div>
+                  <pre className="comms-pre">{text}</pre>
+                  <button
+                    onClick={() => copyText(key, text)}
+                    className={`copy-btn ${copiedKey === key ? "copy-btn--copied" : ""}`}
+                    data-testid={`button-copy-${key}`}
+                  >
+                    {copiedKey === key
+                      ? <><CheckCircle2 className="w-4 h-4 mr-1" /> Copied!</>
+                      : <><Copy className="w-4 h-4 mr-1" /> Copy</>}
+                  </button>
+                </div>
+              ))}
+            </div>
+          </section>
+
+          {/* Leftover Plan */}
+          <section className="results-section" data-testid="section-leftovers">
+            <h2 className="section-heading">Leftover Food Plan</h2>
+            <p className="section-note">
+              Food safety guidance specific to your meal type. Review this with your Adult Volunteers before the event.
+            </p>
+            <div className="leftover-grid">
+              <div className="leftover-block">
+                <div className="leftover-block-title">Can Be Saved</div>
+                <ul className="leftover-list leftover-list--save">
+                  {plan.leftoverPlan.canSave.map((item, i) => (
+                    <li key={i}>{item}</li>
+                  ))}
+                </ul>
+              </div>
+              <div className="leftover-block leftover-block--discard">
+                <div className="leftover-block-title">Must Be Discarded</div>
+                <ul className="leftover-list leftover-list--discard">
+                  {plan.leftoverPlan.discard.map((item, i) => (
+                    <li key={i}>{item}</li>
+                  ))}
+                </ul>
+              </div>
+              <div className="leftover-block">
+                <div className="leftover-block-title">How to Package</div>
+                <p className="leftover-text">{plan.leftoverPlan.packaging}</p>
+              </div>
+              <div className="leftover-block">
+                <div className="leftover-block-title">Who Makes the Call</div>
+                <p className="leftover-text">{plan.leftoverPlan.whoDecides}</p>
+              </div>
+            </div>
+          </section>
+
+          {/* Risk Plan with Fixes */}
+          {plan.riskPlan.length > 0 && (
+            <section className="results-section" data-testid="section-risk-plan">
+              <h2 className="section-heading">Risk Plan</h2>
+              <p className="section-note">
+                Every risk flag for your event, paired with a specific, actionable fix.
+              </p>
+              <div className="risk-plan-list">
+                {plan.riskPlan.map((item, i) => (
+                  <div key={i} className={`risk-plan-item risk-plan-item--${item.level}`} data-testid={`risk-plan-${i}`}>
+                    <div className="risk-plan-warning">
+                      <span className="warning-icon">
+                        {item.level === "error" ? <AlertCircle className="w-5 h-5 text-destructive" /> :
+                         item.level === "warning" ? <AlertTriangle className="w-5 h-5 text-amber-500" /> :
+                         <Info className="w-5 h-5 text-blue-500" />}
+                      </span>
+                      <span className="text-sm font-medium">{item.warning}</span>
+                    </div>
+                    <div className="risk-plan-fix">
+                      <span className="risk-fix-label">Fix</span>
+                      <p className="risk-fix-text">{item.fix}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </section>
+          )}
 
           {/* Bottom CTA */}
           <div className="results-footer">

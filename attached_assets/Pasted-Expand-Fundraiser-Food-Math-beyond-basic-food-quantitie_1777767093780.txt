@@ -1,0 +1,117 @@
+Expand Fundraiser Food Math beyond basic food quantities into a more complete Full Event Pack.
+
+Goal:
+Make the paid Full Event Pack feel like a complete fundraiser execution plan, not just a shopping calculator.
+
+Do not redesign the whole app.
+Do not change Stripe links.
+Do not change unlock logic.
+Do not add accounts, database, AI, or external APIs.
+
+Add these sections to the full unlocked results and print page:
+
+1. Fundraiser Strategy Summary
+Generate a short summary based on the event:
+- Best fit for this meal type
+- Main profit driver
+- Main execution risk
+- Recommended focus for the leader
+
+Example:
+“For this size event, your main risk is serving speed. Keep the line simple, stage food before guests arrive, and assign Student Runners to restock supplies.”
+
+2. Profit Strategy
+Add practical recommendations:
+- Suggested donation/meal price check
+- Upsell ideas based on meal type
+- Donation table recommendation
+- Suggested signage language
+- Whether to use fixed price, suggested donation, or donation basket
+
+Examples:
+- “Add drinks or dessert as a simple donation upsell.”
+- “Use a visible donation station near the entrance/exit.”
+- “For church events, suggested donation may feel more natural than a hard price.”
+
+3. Volunteer Briefing
+Generate a short copyable briefing the leader can read to volunteers before the event.
+
+Include:
+- Goal of the event
+- Serving flow
+- Food safety reminder
+- Who handles restocking
+- Who handles cleanup
+- Who handles donations/payment
+
+4. Setup Layout Guidance
+Add a simple serving-line layout recommendation based on meal type:
+- Start of line
+- Main food station
+- Toppings/condiments
+- Drinks
+- Donation/payment station
+- Trash/cleanup area
+
+Use text-based guidance only. No diagram needed yet.
+
+5. Timeline With Leader Notes
+Improve the prep timeline so each time block includes:
+- Task
+- Owner/team
+- Leader note
+- Watch-out
+
+6. Leftover Plan
+Add a short leftover guidance section:
+- What can be saved
+- What should be discarded
+- How to package leftovers
+- Who decides what to do with extras
+
+Keep food safety language basic and cautious.
+
+7. Parent/Student Communication Pack
+Add copyable text for:
+- Parent/student announcement
+- Volunteer request message
+- Day-before reminder
+- Thank-you message after the fundraiser
+
+Use warm, practical wording. Avoid sounding overly corporate.
+
+8. Risk Plan
+For each risk warning, add a practical fix.
+
+Example:
+Warning: “Low adult volunteer count.”
+Fix: “Assign adults to cooking, money handling, and oversight. Use students for running, restocking, and cleanup.”
+
+9. Shopping List Improvements
+Add grouping by category:
+- Protein/main items
+- Bread/grains/tortillas
+- Dairy
+- Produce
+- Toppings/condiments
+- Drinks
+- Paper goods
+- Kitchen/service supplies
+
+Do not add live store pricing.
+
+10. Maintain trust language
+Include:
+“These are planning estimates. Adjust for your group, appetite, store prices, and local context.”
+
+11. Verify:
+- Full unlocked results show the new sections
+- Print page includes the new sections cleanly
+- Free preview does not give away the full event pack
+- Mobile layout still works
+- Type check passes
+
+Report:
+- Sections added
+- Files changed
+- Any assumptions made

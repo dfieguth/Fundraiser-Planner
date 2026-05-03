@@ -43,7 +43,6 @@ export interface PlannerFormData {
   adultVolunteers: number;
   studentVolunteers: number;
   notes: string;
-  // For custom meal type
   customMealName?: string;
   customServingSize?: string;
   customIngredients?: string;
@@ -52,8 +51,14 @@ export interface PlannerFormData {
 export interface ShoppingItem {
   item: string;
   quantity: string;
-  estimatedCost: [number, number]; // [low, high]
+  estimatedCost: [number, number];
   notes?: string;
+  category?: string; // ingredient category key for grouping
+}
+
+export interface ShoppingGroup {
+  label: string;      // display name for this category
+  items: ShoppingItem[];
 }
 
 export interface SupplyItem {
@@ -65,8 +70,10 @@ export interface SupplyItem {
 export interface PrepStep {
   time: string;
   task: string;
-  who: string; // "Adult Volunteer" | "Parent Oversight" | "Student Volunteer" etc.
+  who: string;
   duration: string;
+  leaderNote?: string;   // actionable note for the event leader
+  watchOut?: string;     // common failure point to avoid
 }
 
 export interface VolunteerRole {
@@ -79,6 +86,49 @@ export interface VolunteerRole {
 export interface RiskWarning {
   level: "warning" | "error" | "info";
   message: string;
+}
+
+export interface RiskPlanItem {
+  level: "warning" | "error" | "info";
+  warning: string;
+  fix: string;
+}
+
+// ── Full Event Pack sections ──────────────────────────────────
+
+export interface StrategySection {
+  bestFit: string;
+  mainProfitDriver: string;
+  mainExecutionRisk: string;
+  recommendedFocus: string;
+}
+
+export interface ProfitStrategy {
+  priceCheck: string;
+  upsellIdeas: string[];
+  donationTableNote: string;
+  signageLines: string[];
+  pricingModel: string;
+}
+
+export interface SetupStation {
+  position: string;
+  label: string;
+  detail: string;
+}
+
+export interface LeftoverPlan {
+  canSave: string[];
+  discard: string[];
+  packaging: string;
+  whoDecides: string;
+}
+
+export interface CommsPack {
+  announcement: string;
+  volunteerRequest: string;
+  dayBeforeReminder: string;
+  thankYou: string;
 }
 
 export interface FundraiserPlan {
@@ -94,6 +144,7 @@ export interface FundraiserPlan {
   };
   foodQuantities: Array<{ ingredient: string; quantity: string; notes?: string }>;
   shoppingList: ShoppingItem[];
+  shoppingListGrouped: ShoppingGroup[];
   suppliesList: SupplyItem[];
   costRange: [number, number];
   estimatedRevenue: number;
@@ -101,6 +152,14 @@ export interface FundraiserPlan {
   prepTimeline: PrepStep[];
   volunteerPlan: VolunteerRole[];
   riskWarnings: RiskWarning[];
+  riskPlan: RiskPlanItem[];
   emailBlurb: string;
   disclaimer: string;
+  // Full Event Pack sections
+  strategySummary: StrategySection;
+  profitStrategy: ProfitStrategy;
+  volunteerBriefing: string;
+  setupLayout: SetupStation[];
+  leftoverPlan: LeftoverPlan;
+  commsPack: CommsPack;
 }
