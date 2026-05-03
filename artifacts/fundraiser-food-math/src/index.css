@@ -1263,36 +1263,177 @@
     @apply mt-1.5 text-xs bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 text-amber-800 dark:text-amber-500 rounded-lg px-3 py-2 leading-relaxed;
   }
 
-  /* Print page additions */
+  /* ── Print page component styles ── */
   .print-strategy-grid {
     @apply grid grid-cols-2 gap-3 mb-2;
   }
   .print-strategy-card {
-    @apply border rounded p-3;
+    @apply border border-gray-300 rounded p-3;
   }
   .print-strategy-label {
     @apply text-xs font-bold uppercase tracking-wider text-gray-500 mb-1;
   }
+  .print-strategy-text {
+    @apply text-sm m-0;
+  }
+
+  /* Risk items — colored on screen, dark border in print */
   .print-risk-item {
     @apply border-l-4 pl-3 py-2 mb-3;
   }
+  .print-risk-item--error   { border-left-color: #dc2626; }
+  .print-risk-item--warning { border-left-color: #d97706; }
+  .print-risk-item--info    { border-left-color: #2563eb; }
+  .print-risk-warning {
+    @apply m-0 mb-1 text-sm font-semibold;
+  }
   .print-risk-fix {
-    @apply text-sm mt-1;
+    @apply text-sm m-0 text-green-800;
   }
 
+  /* Key-value table (Event Overview, Assumptions, Profit Strategy, Leftover) */
+  .print-kv-table {}
+  .print-kv-label {
+    @apply font-bold text-sm align-top;
+    width: 22%;
+    white-space: nowrap;
+  }
+  .print-kv-list {
+    @apply m-0 pl-5 text-sm;
+  }
+
+  /* Sub-headings within a section */
+  .print-sub-heading {
+    @apply text-xs font-bold uppercase tracking-wider text-gray-500 mb-2 mt-4 first:mt-0;
+  }
+
+  /* Shopping list category row */
+  .print-table-category-row td {
+    @apply font-bold text-xs uppercase tracking-wide text-gray-600 py-1 px-2;
+    background: #f3f4f6;
+  }
+  .print-table-total-row td {
+    @apply font-bold border-t-2 border-black pt-2;
+  }
+
+  /* Prep timeline notes column */
+  .print-timeline-notes {
+    @apply text-xs text-gray-700 align-top;
+  }
+  .print-timeline-watchout {
+    @apply block mt-1 text-amber-800;
+  }
+
+  /* Comms pack */
+  .print-comms-block {
+    @apply mb-6;
+  }
+  .print-comms-label {
+    @apply font-bold text-xs uppercase tracking-wider text-gray-500 mb-1;
+  }
+
+  /* Sign-up sheet rows */
+  .print-signup-row {
+    height: 30px;
+  }
+
+  /* Day-of checklist */
+  .print-checklist-table {}
+  .print-checklist-check-col {
+    width: 2rem;
+    text-align: center;
+  }
+  .print-checklist-box {
+    @apply text-center text-lg font-light text-gray-400;
+    width: 2rem;
+  }
+  .print-checklist-row td {
+    @apply py-2 text-sm;
+  }
+
+  /* Small helper note below sections */
+  .print-assumption-note {
+    @apply text-xs text-gray-500 mt-3 italic;
+  }
+
+  /* Allow page breaks inside large sections (tables) */
+  .print-section--breakable {
+    break-inside: auto;
+    page-break-inside: auto;
+  }
+
+  /* ── @media print — final output rules ── */
   @media print {
-    .no-print {
-      display: none !important;
+    /* Hide all interactive / navigation elements */
+    .no-print             { display: none !important; }
+    .test-mode-banner     { display: none !important; }
+
+    /* Page margins for PDF / print output */
+    @page {
+      margin: 0.55in 0.6in;
     }
+
+    body { background: white !important; }
+
     .print-page {
       padding: 0;
-      max-w: none;
+      max-width: 100%;
+      font-size: 11pt;
+      line-height: 1.5;
     }
+
+    /* Avoid awkward breaks inside key sections */
+    .print-section {
+      break-inside: avoid;
+      page-break-inside: avoid;
+    }
+
+    /* Large sections (tables) are allowed to break across pages */
+    .print-section--breakable {
+      break-inside: auto;
+      page-break-inside: auto;
+    }
+
+    /* Explicit page breaks */
     .print-page-break {
       page-break-before: always;
+      break-before: page;
     }
-    body {
-      background: white;
+
+    /* Table rows stay together; headers repeat on each page */
+    .print-table thead { display: table-header-group; }
+    .print-table tr    { break-inside: avoid; page-break-inside: avoid; }
+
+    /* Risk items & checklist rows stay together */
+    .print-risk-item    { break-inside: avoid; page-break-inside: avoid; }
+    .print-checklist-row { break-inside: avoid; page-break-inside: avoid; }
+
+    /* B&W risk border colors */
+    .print-risk-item--error   { border-left-color: #111 !important; }
+    .print-risk-item--warning { border-left-color: #555 !important; }
+    .print-risk-item--info    { border-left-color: #999 !important; }
+    .print-risk-fix           { color: #333 !important; }
+
+    /* B&W shopping category rows */
+    .print-table-category-row td {
+      background: #efefef !important;
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
     }
+
+    /* Remove screen-only colors */
+    .print-brand,
+    .print-meta           { color: #444 !important; }
+    .print-label          { color: #555 !important; }
+    .print-section-title  { border-bottom-color: #000 !important; }
+    .print-kv-label       { color: #111 !important; }
+    .print-comms-label    { color: #555 !important; }
+    .print-sub-heading    { color: #555 !important; }
+    .print-timeline-watchout { color: #333 !important; }
+    .print-assumption-note { color: #555 !important; }
+    .print-email          { background: white !important; border-color: #ccc !important; }
+
+    /* Summary grid — remove borders that look harsh in B&W */
+    .print-summary-card   { border-right-color: #bbb !important; }
   }
 }

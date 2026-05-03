@@ -5,17 +5,97 @@ import { getUnlocked, getStoredPlan } from "@/lib/unlock";
 
 // ── Print-friendly plan page ──────────────────────────────────
 // Opened in a new tab from the Results page.
-// Plan data is read from sessionStorage (written by savePlanBeforePayment/
-// ResultsPage). Unlock state is read from localStorage via getUnlocked()
-// (see src/lib/unlock.ts).
-// User can print to PDF from the browser (Ctrl+P / Cmd+P).
+// Plan data is read from sessionStorage (written by savePlanBeforePayment /
+// ResultsPage). Unlock state is read from localStorage via getUnlocked().
 
 function fmt(n: number) {
   return n.toLocaleString("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 });
 }
 
+function formatTime12(t: string): string {
+  if (!t) return "";
+  const [h, m] = t.split(":").map(Number);
+  const period = h >= 12 ? "PM" : "AM";
+  const hour = h % 12 || 12;
+  return `${hour}:${String(m).padStart(2, "0")} ${period}`;
+}
+
+const MEAL_LABELS: Record<string, string> = {
+  hotdogs: "Hot Dogs",
+  burgers: "Burgers",
+  bakedPotatoes: "Baked Potatoes",
+  breakfastBurritos: "Breakfast Burritos",
+  tacos: "Tacos",
+  spaghetti: "Spaghetti",
+  pancakes: "Pancakes",
+  custom: "Custom Meal",
+};
+
+function buildDayOfChecklist(mealType: string): string[] {
+  const mealPrepItem: Partial<Record<string, string>> = {
+    hotdogs:          "Light grill(s) at least 30 min before serving; bring to medium-high heat",
+    burgers:          "Light grill(s) at least 30 min before serving; form all patties before doors open",
+    bakedPotatoes:    "Load first oven batch — potatoes need 60–75 min and cannot be rushed",
+    breakfastBurritos:"Begin egg, sausage, and hash brown prep at least 60 min before serving",
+    spaghetti:        "Start pasta water and begin warming sauce at least 90 min before serving",
+    pancakes:         "Preheat electric griddle and mix first batter batch 30 min before serving",
+    tacos:            "Begin browning and seasoning taco meat at least 45 min before serving",
+    custom:           "Begin all food prep per your recipe's required lead time",
+  };
+
+  const needsTempMonitor = ["hotdogs", "burgers", "tacos", "breakfastBurritos", "spaghetti", "bakedPotatoes"].includes(mealType);
+
+  const items = [
+    "Confirm all adult volunteers are present — have a backup contact list ready",
+    "Confirm all student helpers are present and paired with adult supervisors",
+    "Confirm all ingredients and supplies are on site",
+    mealPrepItem[mealType] ?? "Begin all food prep per your recipe's required lead time",
+    "Set up serving line — tables, covers, serving utensils, napkins, and plates",
+    "Set up donation / payment station with secure cash box or card reader",
+    "Brief all volunteers on their roles (use the Volunteer Briefing Script in this plan)",
+    "Assign Student Runners to their stations",
+    "Check all hot foods reach 165°F before opening the serving line",
+    "Open serving line at the scheduled start time",
+    "Restock condiments, napkins, and utensils continuously throughout service",
+    "Alert the cooking crew before food at the serving line runs low",
+    ...(needsTempMonitor ? ["Check food temperatures every 30 min during service — hold at 140°F or above"] : []),
+    "Guide guests to the shortest queue and keep the line moving",
+    "Close the serving line at the scheduled end time",
+    "Package or discard leftovers per the Leftover Plan in this document",
+    "Collect and secure all donations and cash immediately after service ends",
+    "Clean the kitchen and serving area — Cleanup Team per the Volunteer Plan",
+    "Thank all volunteers personally before they leave",
+    "Count donations and compare result against the estimated profit in this plan",
+  ];
+
+  return items.filter(Boolean) as string[];
+}
+
+// ── Shared sub-components ─────────────────────────────────────
+
+function SectionTitle({ children }: { children: React.ReactNode }) {
+  return <h2 className="print-section-title">{children}</h2>;
+}
+
+function KVTable({ rows }: { rows: Array<[string, React.ReactNode]> }) {
+  return (
+    <table className="print-table print-kv-table">
+      <tbody>
+        {rows.map(([key, val]) => (
+          <tr key={key}>
+            <td className="print-kv-label">{key}</td>
+            <td>{val}</td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  );
+}
+
+// ── Main page ─────────────────────────────────────────────────
 export default function PrintPage() {
   const [plan, setPlan] = useState<FundraiserPlan | null>(null);
+  const [formData, setFormData] = useState<PlannerFormData | null>(null);
   const [unlocked, setUnlocked] = useState(false);
 
   useEffect(() => {
@@ -25,9 +105,13 @@ export default function PrintPage() {
       if (raw) {
         const parsed = JSON.parse(raw) as { plan: FundraiserPlan; formData: PlannerFormData };
         setPlan(parsed.plan);
+        setFormData(parsed.formData ?? null);
       } else {
         const saved = getStoredPlan();
-        if (saved) setPlan(saved.plan);
+        if (saved) {
+          setPlan(saved.plan);
+          setFormData(saved.formData ?? null);
+        }
       }
     } catch {
       // ignore parse errors
@@ -76,133 +160,130 @@ export default function PrintPage() {
             >
               Get the Full Event Pack — $19
             </a>
-            <a href="/results" className="btn-secondary" data-testid="button-back-results">
-              Back to Results
-            </a>
+            <a href="/results" className="btn-secondary" data-testid="button-back-results">Back to Results</a>
           </div>
-          <p className="print-locked-note">
-            One-time purchase. No account required. Instant access.
-          </p>
+          <p className="print-locked-note">One-time purchase. No account required. Instant access.</p>
         </div>
       </div>
     );
   }
 
-  // Unlocked — show the full printable plan
+  const mealLabel = MEAL_LABELS[plan.summary.mealType] ?? plan.summary.mealType;
+  const checklist  = buildDayOfChecklist(plan.summary.mealType);
+
   return (
     <div className="print-page" data-testid="print-page">
+
+      {/* ── Toolbar (hidden during print) ── */}
       <div className="no-print print-toolbar">
         <button onClick={() => window.print()} className="btn-primary" data-testid="button-print-action">
-          Print / Save as PDF
+          Print or Save as PDF
         </button>
         <a href="/" className="btn-secondary" data-testid="button-back-home">Back to Home</a>
       </div>
 
-      {/* Header */}
+      {/* ── Document header ── */}
       <div className="print-header">
         <div className="print-brand">Fundraiser Food Math</div>
-        <h1 className="print-title">{plan.summary.eventName}</h1>
+        <h1 className="print-title">{plan.summary.eventName || "Fundraiser Plan"}</h1>
         <p className="print-meta">
-          {plan.summary.mealType} · {plan.summary.attendance} guests ·
-          {" "}{plan.summary.orgType} · Store: {plan.summary.storePreference}
+          {mealLabel} · {plan.summary.attendance} guests · {plan.summary.orgType}
         </p>
       </div>
 
-      {/* Summary */}
+      {/* ── 1. Event Overview ── */}
+      <div className="print-section">
+        <SectionTitle>Event Overview</SectionTitle>
+        <KVTable rows={[
+          ["Event Name",      plan.summary.eventName || "—"],
+          ["Organization",    plan.summary.orgType],
+          ["Meal Type",       mealLabel],
+          ["Attendance",      `${plan.summary.attendance} guests (${plan.summary.adults} adults, ${plan.summary.kids} kids)`],
+          ["Store Preference",plan.summary.storePreference],
+          ...(formData?.notes ? [["Notes", formData.notes] as [string, React.ReactNode]] : []),
+        ]} />
+      </div>
+
+      {/* ── 2. Key Assumptions ── */}
+      {formData && (
+        <div className="print-section">
+          <SectionTitle>Key Assumptions</SectionTitle>
+          <KVTable rows={[
+            ["Serving Window",   `${formatTime12(formData.serveStartTime)} – ${formatTime12(formData.serveEndTime)}`],
+            ["Prep Start",       formatTime12(formData.prepStartTime)],
+            ["Suggested Price",  `$${formData.mealPrice} per person`],
+            ["Audience Mix",     `${formData.adultPercent}% adults · ${formData.kidPercent}% kids`],
+            ["Adult Volunteers", String(formData.adultVolunteers)],
+            ["Student Volunteers", String(formData.studentVolunteers)],
+          ]} />
+          <p className="print-assumption-note">
+            These inputs drive all quantities, timelines, and estimates in this plan.
+            Adjust values if your situation changes before the event.
+          </p>
+        </div>
+      )}
+
+      {/* ── 3. Revenue / Cost / Profit ── */}
       <div className="print-summary-grid">
         <div className="print-summary-card">
           <div className="print-label">Expected Revenue</div>
           <div className="print-value">{fmt(plan.estimatedRevenue)}</div>
         </div>
         <div className="print-summary-card">
-          <div className="print-label">Est. Cost Range</div>
+          <div className="print-label">Est. Food Cost</div>
           <div className="print-value">{fmt(plan.costRange[0])} – {fmt(plan.costRange[1])}</div>
         </div>
         <div className="print-summary-card">
-          <div className="print-label">Est. Profit</div>
+          <div className="print-label">Est. Net Profit</div>
           <div className="print-value">{fmt(plan.estimatedProfit[0])} – {fmt(plan.estimatedProfit[1])}</div>
         </div>
         <div className="print-summary-card">
-          <div className="print-label">Attendance</div>
-          <div className="print-value">{plan.summary.adults} adults + {plan.summary.kids} kids</div>
+          <div className="print-label">Guests</div>
+          <div className="print-value">{plan.summary.adults}A + {plan.summary.kids}K</div>
         </div>
       </div>
 
-      {/* Strategy Summary */}
+      {/* ── 4. Strategy Summary ── */}
       <div className="print-section">
-        <h2 className="print-section-title">Fundraiser Strategy Summary</h2>
+        <SectionTitle>Fundraiser Strategy Summary</SectionTitle>
         <div className="print-strategy-grid">
           {[
-            { label: "Best Fit", value: plan.strategySummary.bestFit },
-            { label: "Main Profit Driver", value: plan.strategySummary.mainProfitDriver },
+            { label: "Best Fit",            value: plan.strategySummary.bestFit },
+            { label: "Main Profit Driver",  value: plan.strategySummary.mainProfitDriver },
             { label: "Main Execution Risk", value: plan.strategySummary.mainExecutionRisk },
-            { label: "Recommended Focus", value: plan.strategySummary.recommendedFocus },
-          ].map((card, i) => (
-            <div key={i} className="print-strategy-card">
+            { label: "Recommended Focus",   value: plan.strategySummary.recommendedFocus },
+          ].map((card) => (
+            <div key={card.label} className="print-strategy-card">
               <div className="print-strategy-label">{card.label}</div>
-              <p style={{ fontSize: "0.8rem", margin: 0 }}>{card.value}</p>
+              <p className="print-strategy-text">{card.value}</p>
             </div>
           ))}
         </div>
       </div>
 
-      {/* Risk Warnings */}
-      {plan.riskWarnings.length > 0 && (
-        <div className="print-section">
-          <h2 className="print-section-title">Risks & Notes</h2>
-          {plan.riskWarnings.map((w, i) => (
-            <p key={i} className={`print-warning print-warning--${w.level}`}>
-              {w.level === "error" ? "[!] " : w.level === "warning" ? "[!] " : "[i] "}{w.message}
-            </p>
-          ))}
-        </div>
-      )}
+      {/* ── 5. Shopping List (grouped by category) ── */}
+      <div className="print-section print-section--breakable">
+        <SectionTitle>Shopping List</SectionTitle>
 
-      {/* Risk Plan with Fixes */}
-      {plan.riskPlan.length > 0 && (
-        <div className="print-section">
-          <h2 className="print-section-title">Risk Plan with Fixes</h2>
-          {plan.riskPlan.map((item, i) => (
-            <div
-              key={i}
-              className="print-risk-item"
-              style={{
-                borderLeftColor: item.level === "error" ? "#ef4444" : item.level === "warning" ? "#f59e0b" : "#3b82f6",
-              }}
-            >
-              <p style={{ margin: "0 0 4px 0", fontSize: "0.82rem", fontWeight: 600 }}>
-                {item.level === "error" ? "[!] " : item.level === "warning" ? "[!] " : "[i] "}{item.warning}
-              </p>
-              <p className="print-risk-fix" style={{ margin: 0, color: "#166534" }}>
-                Fix: {item.fix}
-              </p>
-            </div>
-          ))}
-        </div>
-      )}
-
-      {/* Food Quantities */}
-      <div className="print-section">
-        <h2 className="print-section-title">Food Quantity Plan</h2>
-        <table className="print-table">
+        {/* Food Quantity Estimates */}
+        <p className="print-sub-heading">Ingredient Quantities</p>
+        <table className="print-table" style={{ marginBottom: "1.25rem" }}>
           <thead>
-            <tr><th>Ingredient</th><th>Quantity</th><th>Notes</th></tr>
+            <tr><th>Ingredient</th><th>Quantity Needed</th><th>Notes</th></tr>
           </thead>
           <tbody>
             {plan.foodQuantities.map((q, i) => (
               <tr key={i}>
                 <td>{q.ingredient}</td>
                 <td><strong>{q.quantity}</strong></td>
-                <td>{q.notes || ""}</td>
+                <td>{q.notes ?? ""}</td>
               </tr>
             ))}
           </tbody>
         </table>
-      </div>
 
-      {/* Shopping List — grouped by category */}
-      <div className="print-section">
-        <h2 className="print-section-title">Shopping List</h2>
+        {/* Shopping list grouped */}
+        <p className="print-sub-heading">Store Shopping List</p>
         {plan.shoppingListGrouped.length > 0 ? (
           <table className="print-table">
             <thead>
@@ -211,34 +292,21 @@ export default function PrintPage() {
             <tbody>
               {plan.shoppingListGrouped.map((group) => (
                 <>
-                  <tr key={`group-${group.label}`}>
-                    <td
-                      colSpan={4}
-                      style={{
-                        background: "#f3f4f6",
-                        fontWeight: 700,
-                        fontSize: "0.7rem",
-                        textTransform: "uppercase",
-                        letterSpacing: "0.08em",
-                        color: "#6b7280",
-                        padding: "6px 8px",
-                      }}
-                    >
-                      {group.label}
-                    </td>
+                  <tr key={`cat-${group.label}`} className="print-table-category-row">
+                    <td colSpan={4}>{group.label}</td>
                   </tr>
                   {group.items.map((item, i) => (
                     <tr key={i}>
                       <td>{item.item}</td>
                       <td>{item.quantity}</td>
                       <td>{fmt(item.estimatedCost[0])} – {fmt(item.estimatedCost[1])}</td>
-                      <td>{item.notes || ""}</td>
+                      <td>{item.notes ?? ""}</td>
                     </tr>
                   ))}
                 </>
               ))}
-              <tr>
-                <td colSpan={2}><strong>Total Food Cost</strong></td>
+              <tr className="print-table-total-row">
+                <td colSpan={2}><strong>Total Food Cost Estimate</strong></td>
                 <td colSpan={2}><strong>{fmt(plan.costRange[0])} – {fmt(plan.costRange[1])}</strong></td>
               </tr>
             </tbody>
@@ -254,11 +322,11 @@ export default function PrintPage() {
                   <td>{item.item}</td>
                   <td>{item.quantity}</td>
                   <td>{fmt(item.estimatedCost[0])} – {fmt(item.estimatedCost[1])}</td>
-                  <td>{item.notes || ""}</td>
+                  <td>{item.notes ?? ""}</td>
                 </tr>
               ))}
-              <tr>
-                <td colSpan={2}><strong>Total Food Cost</strong></td>
+              <tr className="print-table-total-row">
+                <td colSpan={2}><strong>Total Food Cost Estimate</strong></td>
                 <td colSpan={2}><strong>{fmt(plan.costRange[0])} – {fmt(plan.costRange[1])}</strong></td>
               </tr>
             </tbody>
@@ -266,12 +334,12 @@ export default function PrintPage() {
         )}
       </div>
 
-      {/* Supplies */}
+      {/* ── 6. Supplies List ── */}
       <div className="print-section">
-        <h2 className="print-section-title">Supplies List</h2>
+        <SectionTitle>Supplies List</SectionTitle>
         <table className="print-table">
           <thead>
-            <tr><th>Supply</th><th>Quantity</th><th>Est. Cost</th></tr>
+            <tr><th>Supply Item</th><th>Quantity</th><th>Est. Cost</th></tr>
           </thead>
           <tbody>
             {plan.suppliesList.map((item, i) => (
@@ -289,12 +357,12 @@ export default function PrintPage() {
         </table>
       </div>
 
-      {/* Prep Timeline with leader notes */}
-      <div className="print-section print-page-break">
-        <h2 className="print-section-title">Prep Timeline</h2>
+      {/* ── 7. Prep Timeline ── */}
+      <div className="print-section print-section--breakable print-page-break">
+        <SectionTitle>Prep Timeline</SectionTitle>
         <table className="print-table">
           <thead>
-            <tr><th>Time</th><th>Task</th><th>Who</th><th>Duration</th><th>Leader Note</th></tr>
+            <tr><th>Time</th><th>Task</th><th>Who</th><th>Duration</th><th>Leader Notes</th></tr>
           </thead>
           <tbody>
             {plan.prepTimeline.map((step, i) => (
@@ -303,9 +371,11 @@ export default function PrintPage() {
                 <td>{step.task}</td>
                 <td>{step.who}</td>
                 <td>{step.duration}</td>
-                <td style={{ fontSize: "0.78rem", color: "#374151" }}>
-                  {step.leaderNote || ""}
-                  {step.watchOut ? <span style={{ display: "block", color: "#92400e", marginTop: "2px" }}>Watch: {step.watchOut}</span> : null}
+                <td className="print-timeline-notes">
+                  {step.leaderNote ?? ""}
+                  {step.watchOut
+                    ? <span className="print-timeline-watchout">Watch: {step.watchOut}</span>
+                    : null}
                 </td>
               </tr>
             ))}
@@ -313,9 +383,9 @@ export default function PrintPage() {
         </table>
       </div>
 
-      {/* Volunteer Plan */}
+      {/* ── 8. Volunteer Role Plan ── */}
       <div className="print-section">
-        <h2 className="print-section-title">Volunteer Plan</h2>
+        <SectionTitle>Volunteer Role Plan</SectionTitle>
         <table className="print-table">
           <thead>
             <tr><th>Role</th><th>Type</th><th>#</th><th>Duties</th></tr>
@@ -333,9 +403,9 @@ export default function PrintPage() {
         </table>
       </div>
 
-      {/* Sign-Up Sheet */}
+      {/* ── Volunteer Sign-Up Sheet ── */}
       <div className="print-section print-page-break">
-        <h2 className="print-section-title">Volunteer Sign-Up Sheet</h2>
+        <SectionTitle>Volunteer Sign-Up Sheet</SectionTitle>
         <table className="print-table">
           <thead>
             <tr>
@@ -349,7 +419,7 @@ export default function PrintPage() {
           <tbody>
             {plan.volunteerPlan.flatMap((role) =>
               Array.from({ length: Math.max(role.count, 2) }).map((_, j) => (
-                <tr key={`${role.role}-${j}`} style={{ height: "30px" }}>
+                <tr key={`${role.role}-${j}`} className="print-signup-row">
                   <td></td>
                   <td>{role.role}</td>
                   <td>{role.type}</td>
@@ -362,9 +432,9 @@ export default function PrintPage() {
         </table>
       </div>
 
-      {/* Event Setup Layout */}
+      {/* ── 9. Setup Layout ── */}
       <div className="print-section">
-        <h2 className="print-section-title">Event Setup Layout</h2>
+        <SectionTitle>Event Setup Layout</SectionTitle>
         <table className="print-table">
           <thead>
             <tr><th>#</th><th>Station</th><th>Setup Notes</th></tr>
@@ -381,102 +451,110 @@ export default function PrintPage() {
         </table>
       </div>
 
-      {/* Profit Strategy */}
+      {/* ── 10. Profit Strategy ── */}
       <div className="print-section">
-        <h2 className="print-section-title">Profit Strategy</h2>
-        <table className="print-table">
-          <tbody>
-            <tr>
-              <td style={{ width: "22%", fontWeight: 700, fontSize: "0.8rem" }}>Price Check</td>
-              <td>{plan.profitStrategy.priceCheck}</td>
-            </tr>
-            <tr>
-              <td style={{ fontWeight: 700, fontSize: "0.8rem" }}>Pricing Model</td>
-              <td>{plan.profitStrategy.pricingModel}</td>
-            </tr>
-            <tr>
-              <td style={{ fontWeight: 700, fontSize: "0.8rem" }}>Upsell Ideas</td>
-              <td>{plan.profitStrategy.upsellIdeas.join(" · ")}</td>
-            </tr>
-            <tr>
-              <td style={{ fontWeight: 700, fontSize: "0.8rem" }}>Donation Table</td>
-              <td>{plan.profitStrategy.donationTableNote}</td>
-            </tr>
-            <tr>
-              <td style={{ fontWeight: 700, fontSize: "0.8rem" }}>Suggested Signs</td>
-              <td>{plan.profitStrategy.signageLines.join(" / ")}</td>
-            </tr>
-          </tbody>
-        </table>
+        <SectionTitle>Profit Strategy</SectionTitle>
+        <KVTable rows={[
+          ["Price Check",      plan.profitStrategy.priceCheck],
+          ["Pricing Model",    plan.profitStrategy.pricingModel],
+          ["Upsell Ideas",     plan.profitStrategy.upsellIdeas.join(" · ")],
+          ["Donation Station", plan.profitStrategy.donationTableNote],
+          ["Suggested Signs",  plan.profitStrategy.signageLines.join(" / ")],
+        ]} />
       </div>
 
-      {/* Leftover Plan */}
-      <div className="print-section">
-        <h2 className="print-section-title">Leftover Food Plan</h2>
-        <table className="print-table">
-          <tbody>
-            <tr>
-              <td style={{ width: "20%", fontWeight: 700, fontSize: "0.8rem", verticalAlign: "top" }}>Can Be Saved</td>
-              <td>
-                <ul style={{ margin: 0, paddingLeft: "1.2em", fontSize: "0.85rem" }}>
-                  {plan.leftoverPlan.canSave.map((item, i) => <li key={i}>{item}</li>)}
-                </ul>
-              </td>
-            </tr>
-            <tr>
-              <td style={{ fontWeight: 700, fontSize: "0.8rem", verticalAlign: "top" }}>Must Discard</td>
-              <td>
-                <ul style={{ margin: 0, paddingLeft: "1.2em", fontSize: "0.85rem" }}>
-                  {plan.leftoverPlan.discard.map((item, i) => <li key={i}>{item}</li>)}
-                </ul>
-              </td>
-            </tr>
-            <tr>
-              <td style={{ fontWeight: 700, fontSize: "0.8rem" }}>Packaging</td>
-              <td>{plan.leftoverPlan.packaging}</td>
-            </tr>
-            <tr>
-              <td style={{ fontWeight: 700, fontSize: "0.8rem" }}>Who Decides</td>
-              <td>{plan.leftoverPlan.whoDecides}</td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
+      {/* ── 11. Risk Plan with Fixes ── */}
+      {plan.riskPlan.length > 0 && (
+        <div className="print-section">
+          <SectionTitle>Risk Plan with Fixes</SectionTitle>
+          {plan.riskPlan.map((item, i) => (
+            <div key={i} className={`print-risk-item print-risk-item--${item.level}`}>
+              <p className="print-risk-warning">
+                {item.level === "error" ? "▲ " : item.level === "warning" ? "▲ " : "● "}{item.warning}
+              </p>
+              <p className="print-risk-fix">Fix: {item.fix}</p>
+            </div>
+          ))}
+        </div>
+      )}
 
-      {/* Volunteer Briefing Script */}
+      {/* ── 12. Parent & Student Communication Pack ── */}
       <div className="print-section print-page-break">
-        <h2 className="print-section-title">Volunteer Briefing Script</h2>
-        <pre className="print-email">{plan.volunteerBriefing}</pre>
-      </div>
-
-      {/* Communication Pack */}
-      <div className="print-section">
-        <h2 className="print-section-title">Parent &amp; Student Communication Pack</h2>
+        <SectionTitle>Parent &amp; Student Communication Pack</SectionTitle>
         {[
-          { label: "Event Announcement", text: plan.commsPack.announcement },
-          { label: "Volunteer Request", text: plan.commsPack.volunteerRequest },
-          { label: "Day-Before Reminder", text: plan.commsPack.dayBeforeReminder },
-          { label: "Thank-You Message", text: plan.commsPack.thankYou },
+          { label: "Event Announcement",    text: plan.commsPack.announcement },
+          { label: "Volunteer Request",     text: plan.commsPack.volunteerRequest },
+          { label: "Day-Before Reminder",   text: plan.commsPack.dayBeforeReminder },
+          { label: "Thank-You Message",     text: plan.commsPack.thankYou },
         ].map(({ label, text }) => (
-          <div key={label} style={{ marginBottom: "1.5rem" }}>
-            <p style={{ fontWeight: 700, fontSize: "0.85rem", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: "6px", color: "#6b7280" }}>
-              {label}
-            </p>
-            <pre className="print-email" style={{ marginBottom: 0 }}>{text}</pre>
+          <div key={label} className="print-comms-block">
+            <p className="print-comms-label">{label}</p>
+            <pre className="print-email">{text}</pre>
           </div>
         ))}
       </div>
 
-      {/* Email Blurb */}
+      {/* ── 13. Volunteer Briefing ── */}
       <div className="print-section">
-        <h2 className="print-section-title">Volunteer Recruitment Email</h2>
-        <pre className="print-email">{plan.emailBlurb}</pre>
+        <SectionTitle>Volunteer Briefing Script</SectionTitle>
+        <pre className="print-email">{plan.volunteerBriefing}</pre>
       </div>
 
-      {/* Footer */}
+      {/* ── 14. Leftover Plan ── */}
+      <div className="print-section">
+        <SectionTitle>Leftover Food Plan</SectionTitle>
+        <KVTable rows={[
+          ["Can Be Saved",
+            <ul className="print-kv-list">
+              {plan.leftoverPlan.canSave.map((item, i) => <li key={i}>{item}</li>)}
+            </ul>
+          ],
+          ["Must Discard",
+            <ul className="print-kv-list">
+              {plan.leftoverPlan.discard.map((item, i) => <li key={i}>{item}</li>)}
+            </ul>
+          ],
+          ["Packaging",   plan.leftoverPlan.packaging],
+          ["Who Decides", plan.leftoverPlan.whoDecides],
+        ]} />
+      </div>
+
+      {/* ── 15. Day-of Checklist ── */}
+      <div className="print-section print-page-break">
+        <SectionTitle>Day-of Checklist</SectionTitle>
+        <table className="print-table print-checklist-table">
+          <thead>
+            <tr>
+              <th className="print-checklist-check-col">✓</th>
+              <th>Item</th>
+            </tr>
+          </thead>
+          <tbody>
+            {checklist.map((item, i) => (
+              <tr key={i} className="print-checklist-row">
+                <td className="print-checklist-box">□</td>
+                <td>{item}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+        <p className="print-assumption-note">
+          Check off each item before, during, and after your event.
+          Add your own notes in the margins for items specific to your venue.
+        </p>
+      </div>
+
+      {/* ── Footer ── */}
       <div className="print-footer">
-        <p>Generated by Fundraiser Food Math · fundraiserfoodmath.com</p>
-        <p>{plan.disclaimer ?? "These are planning estimates. Adjust for your group, appetite, store prices, and local context."}</p>
+        <p><strong>Generated by Fundraiser Food Math</strong> · fundraiserfoodmath.com</p>
+        <p>
+          {plan.disclaimer
+            ?? "These are planning estimates. Adjust for your group, appetite, store prices, and local context."}
+        </p>
+        <p>
+          All cost ranges are estimates based on bulk-store pricing as of the plan date.
+          Watch your local prices and adjust quantities for your actual event.
+        </p>
       </div>
     </div>
   );
