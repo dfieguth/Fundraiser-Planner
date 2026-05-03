@@ -893,6 +893,8 @@ export default function ResultsPage({ plan, formData, onReset }: ResultsPageProp
               const sensProfitLow = sensRevenue - plan.costRange[1];
               const sensProfitHigh = sensRevenue - plan.costRange[0];
               const sensProfitPerGuestMid = ((sensProfitLow + sensProfitHigh) / 2) / att;
+              const breakEvenLow = sensitivityPrice > 0 ? Math.ceil(plan.costRange[0] / sensitivityPrice) : null;
+              const breakEvenHigh = sensitivityPrice > 0 ? Math.ceil(plan.costRange[1] / sensitivityPrice) : null;
               const profitColor =
                 sensProfitHigh < 0 ? "loss" : sensProfitLow < 0 ? "risky" : "good";
               const guidanceLevel =
@@ -929,6 +931,16 @@ export default function ResultsPage({ plan, formData, onReset }: ResultsPageProp
                   <p className={`sensitivity-guidance sensitivity-guidance--${guidanceLevel}`} data-testid="sensitivity-guidance">
                     {guidanceText}
                   </p>
+                  <div className="sensitivity-breakeven" data-testid="sensitivity-breakeven">
+                    <div className="sensitivity-breakeven-value">
+                      {breakEvenLow !== null && breakEvenHigh !== null
+                        ? `Break-even: ${breakEvenLow}–${breakEvenHigh} paying guests`
+                        : "Enter a price to calculate break-even."}
+                    </div>
+                    <div className="sensitivity-breakeven-note">
+                      This is the estimated number of paying guests needed to cover food and supplies before the fundraiser begins making money.
+                    </div>
+                  </div>
                 </>
               );
             })()}

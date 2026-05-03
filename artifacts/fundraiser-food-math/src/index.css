@@ -776,6 +776,15 @@
   .sensitivity-guidance--high {
     @apply bg-green-50 border-green-200 text-green-700;
   }
+  .sensitivity-breakeven {
+    @apply mt-3 px-4 py-3 rounded-lg bg-muted/50 border border-border;
+  }
+  .sensitivity-breakeven-value {
+    @apply text-sm font-semibold text-foreground;
+  }
+  .sensitivity-breakeven-note {
+    @apply text-xs text-muted-foreground mt-1;
+  }
 
   /* Print Page */
   .print-page {
