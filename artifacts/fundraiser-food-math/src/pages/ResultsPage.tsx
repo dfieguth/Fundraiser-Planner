@@ -71,7 +71,7 @@ export default function ResultsPage({ plan, formData, onReset }: ResultsPageProp
   const [unlocked, setUnlockedState] = useState<boolean>(getUnlocked);
   const [activeTab, setActiveTab] = useState<"shopping" | "supplies" | "timeline" | "volunteers" | "email">("shopping");
 
-  const profit = plan.estimatedProfit;
+  const profit = safeEstimatedProfit;
   const profitStatus = profit[1] < 0 ? "loss" : profit[0] < 0 ? "risky" : "good";
 
   const handleDemoUnlock = () => {
@@ -739,10 +739,10 @@ export default function ResultsPage({ plan, formData, onReset }: ResultsPageProp
             </p>
             <div className="strategy-grid">
               {[
-                { label: "Best Fit for This Event", value: plan.strategySummary.bestFit },
-                { label: "Main Profit Driver", value: plan.strategySummary.mainProfitDriver },
-                { label: "Main Execution Risk", value: plan.strategySummary.mainExecutionRisk },
-                { label: "Recommended Focus", value: plan.strategySummary.recommendedFocus },
+                { label: "Best Fit for This Event", value: safeStrategySummary?.bestFit ?? "—" },
+                { label: "Main Profit Driver", value: safeStrategySummary?.mainProfitDriver ?? "—" },
+                { label: "Main Execution Risk", value: safeStrategySummary?.mainExecutionRisk ?? "—" },
+                { label: "Recommended Focus", value: safeStrategySummary?.recommendedFocus ?? "—" },
               ].map((card, i) => (
                 <div key={i} className="strategy-card">
                   <div className="strategy-card-label">{card.label}</div>
@@ -761,30 +761,30 @@ export default function ResultsPage({ plan, formData, onReset }: ResultsPageProp
             <div className="profit-strategy-block">
               <div className="profit-row">
                 <div className="profit-row-label">Price Check</div>
-                <p className="profit-row-value">{plan.profitStrategy.priceCheck}</p>
+                <p className="profit-row-value">{safeProfitStrategy?.priceCheck ?? "—"}</p>
               </div>
               <div className="profit-row">
                 <div className="profit-row-label">Recommended Pricing Model</div>
-                <p className="profit-row-value">{plan.profitStrategy.pricingModel}</p>
+                <p className="profit-row-value">{safeProfitStrategy?.pricingModel ?? "—"}</p>
               </div>
               <div className="profit-row">
                 <div className="profit-row-label">Upsell Ideas</div>
                 <ul className="profit-upsell-list">
-                  {plan.profitStrategy.upsellIdeas.map((idea, i) => (
+                  {safeProfitStrategy?.upsellIdeas?.map((idea, i) => (
                     <li key={i}>{idea}</li>
-                  ))}
+                  )) ?? null}
                 </ul>
               </div>
               <div className="profit-row">
                 <div className="profit-row-label">Donation Table Note</div>
-                <p className="profit-row-value">{plan.profitStrategy.donationTableNote}</p>
+                <p className="profit-row-value">{safeProfitStrategy?.donationTableNote ?? "—"}</p>
               </div>
               <div className="profit-row">
                 <div className="profit-row-label">Suggested Signage</div>
                 <div className="profit-signage-list">
-                  {plan.profitStrategy.signageLines.map((line, i) => (
+                  {safeProfitStrategy?.signageLines?.map((line, i) => (
                     <div key={i} className="profit-signage-item">{line}</div>
-                  ))}
+                  )) ?? null}
                 </div>
               </div>
             </div>
@@ -797,7 +797,7 @@ export default function ResultsPage({ plan, formData, onReset }: ResultsPageProp
               Read this aloud to your whole team before doors open. Copy it to share in advance.
             </p>
             <div className="briefing-wrap">
-              <pre className="briefing-pre" data-testid="text-briefing">{plan.volunteerBriefing}</pre>
+              <pre className="briefing-pre" data-testid="text-briefing">{safeVolunteerBriefing}</pre>
               <button
                 onClick={() => copyText("briefing", plan.volunteerBriefing)}
                 className={`copy-btn ${copiedKey === "briefing" ? "copy-btn--copied" : ""}`}
@@ -837,10 +837,10 @@ export default function ResultsPage({ plan, formData, onReset }: ResultsPageProp
             </p>
             <div className="comms-grid">
               {([
-                { key: "announcement", label: "Event Announcement", text: plan.commsPack.announcement },
-                { key: "volunteerRequest", label: "Volunteer Request", text: plan.commsPack.volunteerRequest },
-                { key: "dayBefore", label: "Day-Before Reminder", text: plan.commsPack.dayBeforeReminder },
-                { key: "thankYou", label: "Thank-You Message", text: plan.commsPack.thankYou },
+                { key: "announcement", label: "Event Announcement", text: safeCommsPack?.announcement ?? "" },
+                { key: "volunteerRequest", label: "Volunteer Request", text: safeCommsPack?.volunteerRequest ?? "" },
+                { key: "dayBefore", label: "Day-Before Reminder", text: safeCommsPack?.dayBeforeReminder ?? "" },
+                { key: "thankYou", label: "Thank-You Message", text: safeCommsPack?.thankYou ?? "" },
               ]).map(({ key, label, text }) => (
                 <div key={key} className="comms-block" data-testid={`comms-block-${key}`}>
                   <div className="comms-block-title">{label}</div>
