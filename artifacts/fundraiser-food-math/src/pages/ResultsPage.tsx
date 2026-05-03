@@ -26,12 +26,46 @@ function fmt(n: number) {
   return n.toLocaleString("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 });
 }
 
+function safeNumber(value: unknown, fallback: number): number {
+  return typeof value === "number" && Number.isFinite(value) ? value : fallback;
+}
+
 export default function ResultsPage({ plan, formData, onReset }: ResultsPageProps) {
   const [copied, setCopied] = useState(false);
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
   const [copiedSummary, setCopiedSummary] = useState(false);
   const [summaryFailed, setSummaryFailed] = useState(false);
-  const [sensitivityPrice, setSensitivityPrice] = useState<number>(plan.summary.mealPrice);
+  const safePlan = plan ?? null;
+  const safeFormData = formData ?? null;
+  const planSummary = safePlan?.summary;
+  const safeAttendance = safeNumber(planSummary?.attendance, 0);
+  const safeAdults = safeNumber(planSummary?.adults, 0);
+  const safeKids = safeNumber(planSummary?.kids, 0);
+  const safeMealPrice = safeNumber(planSummary?.mealPrice, 0);
+  const safeCostRange: [number, number] = [
+    safeNumber(plan?.costRange?.[0], 0),
+    safeNumber(plan?.costRange?.[1], 0),
+  ];
+  const safeEstimatedRevenue = safeNumber(plan?.estimatedRevenue, 0);
+  const safeEstimatedProfit: [number, number] = [
+    safeNumber(plan?.estimatedProfit?.[0], 0),
+    safeNumber(plan?.estimatedProfit?.[1], 0),
+  ];
+  const safeShoppingList = Array.isArray(plan?.shoppingList) ? plan.shoppingList : [];
+  const safeRiskWarnings = Array.isArray(plan?.riskWarnings) ? plan.riskWarnings : [];
+  const safeFoodQuantities = Array.isArray(plan?.foodQuantities) ? plan.foodQuantities : [];
+  const safeSuppliesList = Array.isArray(plan?.suppliesList) ? plan.suppliesList : [];
+  const safePrepTimeline = Array.isArray(plan?.prepTimeline) ? plan.prepTimeline : [];
+  const safeVolunteerPlan = Array.isArray(plan?.volunteerPlan) ? plan.volunteerPlan : [];
+  const safeStrategySummary = plan?.strategySummary;
+  const safeProfitStrategy = plan?.profitStrategy;
+  const safeSetupLayout = Array.isArray(plan?.setupLayout) ? plan.setupLayout : [];
+  const safeLeftoverPlan = plan?.leftoverPlan;
+  const safeCommsPack = plan?.commsPack;
+  const safeVolunteerBriefing = plan?.volunteerBriefing ?? "";
+  const safeEmailBlurb = plan?.emailBlurb ?? "";
+  const safeDisclaimer = plan?.disclaimer ?? "These are planning estimates. Adjust for your group, appetite, store prices, and local context.";
+  const [sensitivityPrice, setSensitivityPrice] = useState<number>(safeMealPrice);
   const [accessCode, setAccessCode] = useState("");
   const [codeStatus, setCodeStatus] = useState<"idle" | "success" | "error">("idle");
   const [unlocked, setUnlockedState] = useState<boolean>(getUnlocked);
@@ -43,13 +77,13 @@ export default function ResultsPage({ plan, formData, onReset }: ResultsPageProp
   const handleDemoUnlock = () => {
     setUnlocked();
     setUnlockedState(true);
-    savePlanBeforePayment(plan, formData);
+    if (safePlan && safeFormData) savePlanBeforePayment(safePlan, safeFormData);
   };
 
   const handleApplyCode = () => {
     const result = applyAccessCode(accessCode);
     if (result === "ok") {
-      savePlanBeforePayment(plan, formData);
+      if (safePlan && safeFormData) savePlanBeforePayment(safePlan, safeFormData);
       setCodeStatus("success");
       setUnlockedState(true);
     } else {
@@ -58,17 +92,17 @@ export default function ResultsPage({ plan, formData, onReset }: ResultsPageProp
   };
 
   const handlePaymentCTAClick = () => {
-    savePlanBeforePayment(plan, formData);
+    if (safePlan && safeFormData) savePlanBeforePayment(safePlan, safeFormData);
     const link = PAYMENT_LINKS.fullEventPack;
     if (link) window.location.href = link;
   };
 
   const handlePrintClick = () => {
-    savePlanBeforePayment(plan, formData);
+    if (safePlan && safeFormData) savePlanBeforePayment(safePlan, safeFormData);
   };
 
   const copyEmailBlurb = () => {
-    navigator.clipboard.writeText(plan.emailBlurb).then(() => {
+    navigator.clipboard.writeText(safeEmailBlurb).then(() => {
       setCopied(true);
       setTimeout(() => setCopied(false), 2500);
     });
@@ -88,8 +122,8 @@ export default function ResultsPage({ plan, formData, onReset }: ResultsPageProp
   };
 
   const copyKeySummary = () => {
-    const mealLabel = MEAL_LABELS[plan.summary.mealType] ?? plan.summary.mealType;
-    const top5 = [...plan.shoppingList]
+    const mealLabel = MEAL_LABELS[planSummary?.mealType ?? ""] ?? planSummary?.mealType ?? "Custom Meal";
+    const top5 = [...safeShoppingList]
       .sort((a, b) => b.estimatedCost[1] - a.estimatedCost[1])
       .slice(0, 5);
     const sep = "─".repeat(38);
@@ -97,22 +131,22 @@ export default function ResultsPage({ plan, formData, onReset }: ResultsPageProp
       "FUNDRAISER KEY SUMMARY",
       sep,
       "",
-      `Event:        ${plan.summary.eventName}`,
-      `Organization: ${plan.summary.orgType}`,
+      `Event:        ${planSummary?.eventName ?? "Unnamed Event"}`,
+      `Organization: ${planSummary?.orgType ?? "—"}`,
       `Meal:         ${mealLabel}`,
-      `Attendance:   ${plan.summary.attendance} guests (${plan.summary.adults} adults, ${plan.summary.kids} kids)`,
-      `Suggested:    $${plan.summary.mealPrice} per person`,
+      `Attendance:   ${safeAttendance} guests (${safeAdults} adults, ${safeKids} kids)`,
+      `Suggested:    $${safeMealPrice} per person`,
       "",
       "FINANCIALS",
       sep,
-      `Expected Revenue:  ${fmt(plan.estimatedRevenue)}`,
-      `Est. Food Cost:    ${fmt(plan.costRange[0])} – ${fmt(plan.costRange[1])}`,
-      `Est. Net Profit:   ${fmt(plan.estimatedProfit[0])} – ${fmt(plan.estimatedProfit[1])}`,
+      `Expected Revenue:  ${fmt(safeEstimatedRevenue)}`,
+      `Est. Food Cost:    ${fmt(safeCostRange[0])} – ${fmt(safeCostRange[1])}`,
+      `Est. Net Profit:   ${fmt(safeEstimatedProfit[0])} – ${fmt(safeEstimatedProfit[1])}`,
       "",
       "VOLUNTEERS",
       sep,
-      `Adult Volunteers:  ${formData.adultVolunteers}`,
-      `Student Helpers:   ${formData.studentVolunteers}`,
+      `Adult Volunteers:  ${safeFormData?.adultVolunteers ?? 0}`,
+      `Student Helpers:   ${safeFormData?.studentVolunteers ?? 0}`,
       "",
       "TOP SHOPPING ITEMS (by cost)",
       sep,
@@ -122,15 +156,14 @@ export default function ResultsPage({ plan, formData, onReset }: ResultsPageProp
       "",
       "MAIN EXECUTION RISK",
       sep,
-      plan.strategySummary.mainExecutionRisk,
+      safeStrategySummary?.mainExecutionRisk ?? "No strategy summary available.",
       "",
       "RECOMMENDED LEADER FOCUS",
       sep,
-      plan.strategySummary.recommendedFocus,
+      safeStrategySummary?.recommendedFocus ?? "No recommended focus available.",
       "",
       sep,
-      plan.disclaimer ??
-        "These are planning estimates. Adjust for your group, appetite, store prices, and local context.",
+      safeDisclaimer,
       "Generated by Fundraiser Food Math · fundraiserfoodmath.com",
     ];
 
@@ -145,11 +178,11 @@ export default function ResultsPage({ plan, formData, onReset }: ResultsPageProp
   };
 
   // Free preview: top N shopping items
-  const previewItems = plan.shoppingList.slice(0, FREE_SHOPPING_ITEMS);
-  const hiddenItemCount = plan.shoppingList.length - FREE_SHOPPING_ITEMS;
+  const previewItems = safeShoppingList.slice(0, FREE_SHOPPING_ITEMS);
+  const hiddenItemCount = safeShoppingList.length - FREE_SHOPPING_ITEMS;
 
   // Free preview: up to N warnings
-  const visibleWarnings = plan.riskWarnings.slice(0, FREE_WARNINGS_SHOWN);
+  const visibleWarnings = safeRiskWarnings.slice(0, FREE_WARNINGS_SHOWN);
 
   return (
     <div className="results-page" data-testid="results-page">
@@ -159,9 +192,9 @@ export default function ResultsPage({ plan, formData, onReset }: ResultsPageProp
           <Link href="/" className="back-link" data-testid="link-back-home">
             <ArrowLeft className="w-4 h-4 mr-1" /> Back to home
           </Link>
-          <h1 className="results-title" data-testid="results-title">{plan.summary.eventName}</h1>
+          <h1 className="results-title" data-testid="results-title">{planSummary?.eventName ?? "Untitled Event"}</h1>
           <p className="results-subtitle" data-testid="results-subtitle">
-            {plan.summary.mealType} · {plan.summary.attendance} guests · {plan.summary.orgType}
+            {planSummary?.mealType ?? "Meal"} · {safeAttendance} guests · {planSummary?.orgType ?? "Organization"}
           </p>
           <div className="results-actions">
             <button onClick={onReset} className="btn-secondary" data-testid="button-edit-plan">
@@ -218,12 +251,12 @@ export default function ResultsPage({ plan, formData, onReset }: ResultsPageProp
       <div className="summary-cards">
         <div className="summary-card" data-testid="card-revenue">
           <div className="summary-label">Expected Revenue</div>
-          <div className="summary-value summary-value--revenue">{fmt(plan.estimatedRevenue)}</div>
-          <div className="summary-note">{plan.summary.attendance} guests × ${plan.summary.mealPrice}</div>
+          <div className="summary-value summary-value--revenue">{fmt(safeEstimatedRevenue)}</div>
+          <div className="summary-note">{safeAttendance} guests × ${safeMealPrice}</div>
         </div>
         <div className="summary-card" data-testid="card-cost">
           <div className="summary-label">Est. Total Cost</div>
-          <div className="summary-value">{fmt(plan.costRange[0])} – {fmt(plan.costRange[1])}</div>
+          <div className="summary-value">{fmt(safeCostRange[0])} – {fmt(safeCostRange[1])}</div>
           <div className="summary-note">Food + supplies + 5% buffer</div>
         </div>
         <div className={`summary-card summary-card--${profitStatus}`} data-testid="card-profit">
@@ -239,13 +272,13 @@ export default function ResultsPage({ plan, formData, onReset }: ResultsPageProp
         </div>
         <div className="summary-card" data-testid="card-attendance">
           <div className="summary-label">Attendance Split</div>
-          <div className="summary-value">{plan.summary.adults} adults</div>
-          <div className="summary-note">{plan.summary.kids} kids / students</div>
+          <div className="summary-value">{safeAdults} adults</div>
+          <div className="summary-note">{safeKids} kids / students</div>
         </div>
       </div>
 
       {/* Disclaimer — always visible */}
-      <p className="results-disclaimer" data-testid="results-disclaimer">{plan.disclaimer}</p>
+      <p className="results-disclaimer" data-testid="results-disclaimer">{safeDisclaimer}</p>
 
       {/* Shopping List Preview — always visible, limited */}
       <section className="results-section" data-testid="section-preview">

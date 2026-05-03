@@ -375,7 +375,7 @@ export default function IdeaFinderPage() {
         </div>
 
         <div className="idea-results-wrap" data-testid="idea-results">
-          {recommendations.map((rec, i) => (
+          {recommendations.length > 0 ? recommendations.map((rec, i) => (
             <div key={rec.mealKey} className="rec-card" data-testid={`rec-card-${rec.mealKey}`}>
               <div className="rec-header">
                 <span className={`rec-rank-badge rec-rank-badge--${i}`}>{rec.rankLabel}</span>
@@ -422,7 +422,11 @@ export default function IdeaFinderPage() {
                 </p>
               </div>
             </div>
-          ))}
+          )) : (
+            <div className="rec-card">
+              <p className="rec-why">No recommendations available yet. Go back and complete the quiz.</p>
+            </div>
+          )}
 
           <div className="idea-disclaimer" data-testid="idea-disclaimer">
             <Lightbulb className="w-4 h-4 shrink-0 mt-0.5 text-muted-foreground" />

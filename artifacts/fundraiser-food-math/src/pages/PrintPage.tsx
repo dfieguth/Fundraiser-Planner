@@ -269,10 +269,10 @@ export default function PrintPage() {
         <SectionTitle>Fundraiser Strategy Summary</SectionTitle>
         <div className="print-strategy-grid">
           {[
-            { label: "Best Fit",            value: plan.strategySummary.bestFit },
-            { label: "Main Profit Driver",  value: plan.strategySummary.mainProfitDriver },
-            { label: "Main Execution Risk", value: plan.strategySummary.mainExecutionRisk },
-            { label: "Recommended Focus",   value: plan.strategySummary.recommendedFocus },
+            { label: "Best Fit",            value: plan.strategySummary?.bestFit ?? "—" },
+            { label: "Main Profit Driver",  value: plan.strategySummary?.mainProfitDriver ?? "—" },
+            { label: "Main Execution Risk", value: plan.strategySummary?.mainExecutionRisk ?? "—" },
+            { label: "Recommended Focus",   value: plan.strategySummary?.recommendedFocus ?? "—" },
           ].map((card) => (
             <div key={card.label} className="print-strategy-card">
               <div className="print-strategy-label">{card.label}</div>
@@ -476,11 +476,11 @@ export default function PrintPage() {
       <div className="print-section">
         <SectionTitle>Profit Strategy</SectionTitle>
         <KVTable rows={[
-          ["Price Check",      plan.profitStrategy.priceCheck],
-          ["Pricing Model",    plan.profitStrategy.pricingModel],
-          ["Upsell Ideas",     plan.profitStrategy.upsellIdeas.join(" · ")],
-          ["Donation Station", plan.profitStrategy.donationTableNote],
-          ["Suggested Signs",  plan.profitStrategy.signageLines.join(" / ")],
+          ["Price Check",      plan.profitStrategy?.priceCheck ?? "—"],
+          ["Pricing Model",    plan.profitStrategy?.pricingModel ?? "—"],
+          ["Upsell Ideas",     plan.profitStrategy?.upsellIdeas?.join(" · ") ?? "—"],
+          ["Donation Station", plan.profitStrategy?.donationTableNote ?? "—"],
+          ["Suggested Signs",  plan.profitStrategy?.signageLines?.join(" / ") ?? "—"],
         ]} />
       </div>
 
