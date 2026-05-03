@@ -894,6 +894,52 @@
     @apply text-xs text-muted-foreground;
   }
 
+  /* ── Sample Templates Picker ── */
+
+  .template-picker {
+    @apply max-w-2xl mx-auto px-4 pb-2;
+  }
+  .template-picker-intro {
+    @apply mb-4;
+  }
+  .template-picker-heading {
+    @apply text-base font-bold text-primary mb-1;
+  }
+  .template-picker-note {
+    @apply text-xs text-muted-foreground leading-relaxed;
+  }
+  .template-grid {
+    @apply grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2 mb-3;
+  }
+  .template-card {
+    @apply flex flex-col items-start gap-1 text-left px-3 py-3 rounded-xl border border-border
+      bg-card hover:border-accent hover:bg-accent/5 transition-all cursor-pointer
+      shadow-sm hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent;
+  }
+  .template-card--active {
+    @apply border-accent bg-accent/10 ring-2 ring-accent/30;
+  }
+  .template-card-emoji {
+    @apply text-xl leading-none mb-0.5;
+  }
+  .template-card-name {
+    @apply text-xs font-semibold text-foreground leading-tight;
+  }
+  .template-card-meta {
+    @apply text-xs text-muted-foreground leading-tight;
+  }
+  .template-active-banner {
+    @apply flex items-center justify-between gap-3 bg-accent/10 border border-accent/30
+      text-sm text-foreground rounded-xl px-4 py-2.5 mb-1;
+  }
+  .template-clear-btn {
+    @apply flex items-center text-xs text-muted-foreground hover:text-foreground transition-colors
+      flex-shrink-0 bg-transparent border-0 cursor-pointer p-0;
+  }
+  .template-step-note {
+    @apply text-sm text-muted-foreground bg-accent/8 border border-accent/20 rounded-lg px-3 py-2 mb-4;
+  }
+
   /* ── Full Event Pack section styles ── */
 
   .strategy-grid {
