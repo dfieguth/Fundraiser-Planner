@@ -121,9 +121,10 @@ export const ENABLE_DEMO_UNLOCK = false;
 // ============================================================
 // ACCESS CODES — CLIENT-SIDE ONLY (TESTING / EARLY ACCESS)
 //
-// Client-side access codes are for early testing only. For production
-// coupon codes, validate codes on the backend and issue a signed token
-// or session before setting unlock state on the client.
+// Tester codes are reusable. Reapplying a valid code refreshes the unlock
+// window from the time of application. For production coupon codes, validate
+// codes on the backend and issue a signed token or session before setting
+// unlock state on the client.
 // ============================================================
 
 export interface AccessCode {
