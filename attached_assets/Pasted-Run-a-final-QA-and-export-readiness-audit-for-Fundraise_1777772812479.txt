@@ -1,0 +1,82 @@
+Run a final QA and export-readiness audit for Fundraiser Food Math.
+
+Do not add new features.
+Do not redesign.
+Do not change Stripe links.
+Do not change unlock logic unless there is a real bug.
+
+Verify the full app flow:
+
+1. Manual planner flow
+- Build a plan manually
+- Generate results
+- Refresh /results
+- Confirm the plan still appears
+
+2. Sample template flow
+- Select a sample template
+- Edit at least one field
+- Generate results
+- Confirm results use the edited value
+
+3. Idea Finder flow
+- Complete the quiz
+- Click Build This Plan
+- Confirm planner is pre-filled
+- Generate results
+
+4. Locked/free preview
+- Confirm locked users see only preview content
+- Confirm Full Event Pack content is hidden
+- Confirm access code form is visible but secondary
+
+5. Access code flow
+- Invalid code does not unlock
+- DEVINTEST unlocks
+- devintest unlocks
+- Refresh keeps plan unlocked
+- Print page unlocks
+
+6. Stripe test flow readiness
+- USE_STRIPE_TEST_MODE is true
+- Test-mode banner is visible
+- Full Event Pack CTA points to TEST_FULL_EVENT_PACK_LINK
+- Demo unlock is hidden
+- Stripe success route still unlocks with /success?unlock=full-event-pack
+
+7. Print flow
+- Full print plan works when unlocked
+- Executive Summary print works when unlocked
+- Locked print page stays locked
+
+8. Copy features
+- Volunteer briefing copy works
+- Communication pack copy works
+- Copy Key Summary works
+
+9. Mobile/layout sanity
+- Landing page
+- Planner
+- Results
+- Idea Finder
+- Print page
+
+10. Code/export readiness
+- TypeScript passes
+- Build passes if available
+- No console errors
+- No "Parent Helper" anywhere
+- No placeholder support email
+- No accidental live/test confusion
+- List all launch config values:
+  SUPPORT_EMAIL
+  USE_STRIPE_TEST_MODE
+  ENABLE_DEMO_UNLOCK
+  LIVE_FULL_EVENT_PACK_LINK
+  TEST_FULL_EVENT_PACK_LINK
+
+Report:
+- Pass/fail for each section
+- Any bugs found
+- Files changed, if any
+- Exact launch steps remaining
