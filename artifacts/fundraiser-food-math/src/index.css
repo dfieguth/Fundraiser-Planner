@@ -488,6 +488,9 @@
   .results-actions .btn-primary {
     @apply bg-accent text-accent-foreground hover:bg-accent/90 border-transparent shadow-md;
   }
+  .results-copy-failed {
+    @apply text-xs text-primary-foreground/70 mt-2 italic;
+  }
 
   .warnings-section {
     @apply max-w-5xl mx-auto px-4 mt-8 flex flex-col gap-3;
