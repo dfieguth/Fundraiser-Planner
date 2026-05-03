@@ -59,6 +59,19 @@ export function getUnlocked(): boolean {
   }
 }
 
+export function hasExpiredCodeUnlock(): boolean {
+  try {
+    if (localStorage.getItem(UNLOCK_KEY) !== "code") return false;
+    const expiresRaw = localStorage.getItem(UNLOCK_EXPIRES_KEY);
+    if (!expiresRaw) return false;
+    const expiresAt = parseInt(expiresRaw, 10);
+    if (!Number.isFinite(expiresAt)) return false;
+    return Date.now() > expiresAt;
+  } catch {
+    return false;
+  }
+}
+
 /**
  * Marks the Full Event Pack as unlocked on this device via Stripe payment.
  * This unlock is non-expiring.

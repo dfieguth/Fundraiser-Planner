@@ -9,7 +9,7 @@ import {
   TrendingUp, MapPin, Package, MessageSquare, Shield,
 } from "lucide-react";
 import { PAYMENT_LINKS, ENABLE_DEMO_UNLOCK } from "@/config/paymentLinks";
-import { getUnlocked, setUnlocked, savePlanBeforePayment, applyAccessCode } from "@/lib/unlock";
+import { getUnlocked, hasExpiredCodeUnlock, setUnlocked, savePlanBeforePayment, applyAccessCode } from "@/lib/unlock";
 
 // ── FREE PREVIEW LIMITS ───────────────────────────────────────
 // Change these numbers to adjust what the free preview shows.
@@ -35,6 +35,7 @@ export default function ResultsPage({ plan, formData, onReset }: ResultsPageProp
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
   const [copiedSummary, setCopiedSummary] = useState(false);
   const [summaryFailed, setSummaryFailed] = useState(false);
+  const expiredCodeUnlock = hasExpiredCodeUnlock();
   const safePlan = plan ?? null;
   const safeFormData = formData ?? null;
   const planSummary = safePlan?.summary;
@@ -442,6 +443,11 @@ export default function ResultsPage({ plan, formData, onReset }: ResultsPageProp
 
             {/* Access Code Entry — understated, below the $19 CTA */}
             <div className="locked-access-code" data-testid="access-code-area">
+              {expiredCodeUnlock && (
+                <p className="locked-access-msg locked-access-msg--error" data-testid="access-code-expired">
+                  Your access code has expired. Re-enter a valid code to renew access.
+                </p>
+              )}
               <p className="locked-access-label">Have an access code?</p>
               <div className="locked-access-row">
                 <input
