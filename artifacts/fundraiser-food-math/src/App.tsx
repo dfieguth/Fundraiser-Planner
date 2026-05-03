@@ -8,6 +8,7 @@ import PlannerPage from "@/pages/PlannerPage";
 import ResultsPage from "@/pages/ResultsPage";
 import PrintPage from "@/pages/PrintPage";
 import SuccessPage from "@/pages/SuccessPage";
+import IdeaFinderPage from "@/pages/IdeaFinderPage";
 import NotFound from "@/pages/not-found";
 import type { FundraiserPlan, PlannerFormData } from "@/lib/types";
 import type { calculatePlan } from "@/lib/calculator";
@@ -72,6 +73,7 @@ function AppRoutes() {
       </Route>
       <Route path="/print" component={PrintPage} />
       <Route path="/success" component={SuccessPage} />
+      <Route path="/idea-finder" component={IdeaFinderPage} />
       <Route component={NotFound} />
     </Switch>
   );

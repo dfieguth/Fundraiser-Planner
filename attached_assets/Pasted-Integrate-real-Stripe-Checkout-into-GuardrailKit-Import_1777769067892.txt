@@ -1,0 +1,60 @@
+Integrate real Stripe Checkout into GuardrailKit.
+
+Important:
+This is the final launch Replit account. Use Replit Secrets for all sensitive values. Never hardcode secret keys.
+
+Current app:
+- Static Vite app works
+- Pricing page has payment stubs
+- Print / Save as PDF and Text Backup are gated
+- Preview Mode exists for testing
+- No auth
+- No database
+- Kit data is in localStorage
+
+Goal:
+Add simple Stripe Checkout for one-time purchases and unlock paid export access after successful payment.
+
+Products:
+1. $49 One-Time Kit
+2. $99 Pro Kit
+3. $199 Consultant / MSP License
+
+Environment variables expected:
+- VITE_APP_URL
+- STRIPE_SECRET_KEY
+- STRIPE_WEBHOOK_SECRET
+- VITE_STRIPE_PUBLISHABLE_KEY if needed
+- Stripe price IDs for each plan, using whatever naming convention is already documented in ENVIRONMENT.md
+
+Implementation requirements:
+1. Create or complete the server-side checkout session endpoint.
+2. Pricing buttons should call the checkout endpoint and redirect to Stripe Checkout.
+3. Add /payment-success page.
+4. Add /payment-cancelled page.
+5. On successful return, set localStorage paid access flag so watermark-free print/export is unlocked on this browser.
+6. On cancelled return, do not unlock paid access.
+7. Keep Preview Mode available in Settings for testing only.
+8. Keep unpaid users watermarked.
+9. Keep Text Backup hidden for unpaid users.
+10. Keep payment code inactive/friendly if secrets are missing.
+
+Security limitation:
+Because this MVP has no auth/database, paid access is browser-local. Add comments explaining that production-grade entitlements should later use auth + database + webhook-verified purchases.
+
+Testing:
+1. Use Stripe test mode.
+2. Confirm all three pricing buttons open the correct checkout product.
+3. Confirm successful test payment redirects to /payment-success and unlocks export.
+4. Confirm cancelled checkout redirects to /payment-cancelled and does not unlock export.
+5. Confirm unpaid preview still shows watermark.
+6. Confirm Preview Mode still works.
+7. Confirm TypeScript has zero errors.
+8. Confirm production build passes.
+9. Confirm console has zero errors.
+
+Report back:
+- Files changed
+- Environment variables required
+- Stripe test results
+- Current limitations

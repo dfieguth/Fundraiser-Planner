@@ -940,6 +940,190 @@
     @apply text-sm text-muted-foreground bg-accent/8 border border-accent/20 rounded-lg px-3 py-2 mb-4;
   }
 
+  /* ── Idea Finder nudge link (in planner) ── */
+
+  .idea-finder-nudge {
+    @apply text-xs text-muted-foreground mt-1 mb-0;
+  }
+  .idea-finder-nudge-link {
+    @apply text-accent underline underline-offset-2 hover:text-accent/80 transition-colors;
+  }
+
+  /* ── Landing page secondary CTA ── */
+
+  .hero-secondary-cta {
+    @apply inline-block mt-3 text-sm text-muted-foreground underline underline-offset-2
+      hover:text-foreground transition-colors;
+  }
+
+  /* ── Idea Finder page layout ── */
+
+  .idea-finder-page {
+    @apply min-h-screen bg-background pb-16;
+  }
+  .idea-finder-header {
+    @apply max-w-2xl mx-auto px-4 pt-6 pb-4;
+  }
+  .idea-finder-title {
+    @apply text-3xl font-bold text-primary mt-3 mb-1;
+  }
+  .idea-finder-sub {
+    @apply text-muted-foreground text-sm leading-relaxed;
+  }
+
+  /* ── Quiz container ── */
+
+  .quiz-container {
+    @apply max-w-2xl mx-auto px-4;
+  }
+  .quiz-progress-wrap {
+    @apply flex items-center gap-3 mb-6;
+  }
+  .quiz-progress-bar-bg {
+    @apply flex-1 h-2 rounded-full bg-muted overflow-hidden;
+  }
+  .quiz-progress-bar-fill {
+    @apply h-full rounded-full bg-accent transition-all duration-300;
+  }
+  .quiz-progress-label {
+    @apply text-xs text-muted-foreground shrink-0 tabular-nums;
+  }
+  .quiz-step {
+    @apply mb-6;
+  }
+  .quiz-question {
+    @apply text-xl font-bold text-foreground mb-4;
+  }
+  .quiz-step-hint {
+    @apply text-xs text-muted-foreground mb-3 -mt-2;
+  }
+  .quiz-sub-question {
+    @apply mb-4;
+  }
+  .quiz-sub-label {
+    @apply text-sm font-semibold text-foreground mb-2;
+  }
+
+  /* ── Option grids ── */
+
+  .quiz-option-grid {
+    @apply grid gap-2;
+  }
+  .quiz-option-grid--1col {
+    @apply grid-cols-1;
+  }
+  .quiz-option-grid--2col {
+    @apply grid-cols-1 sm:grid-cols-2;
+  }
+  .quiz-option-grid--4col {
+    @apply grid-cols-2 sm:grid-cols-4;
+  }
+
+  /* ── Option buttons ── */
+
+  .quiz-option {
+    @apply relative flex flex-col items-start text-left px-4 py-3 rounded-xl border border-border
+      bg-card hover:border-accent hover:bg-accent/5 transition-all cursor-pointer
+      shadow-sm hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent;
+  }
+  .quiz-option--active {
+    @apply border-accent bg-accent/10 ring-2 ring-accent/30;
+  }
+  .quiz-option-label {
+    @apply text-sm font-semibold text-foreground;
+  }
+  .quiz-option-sub {
+    @apply text-xs text-muted-foreground mt-0.5 leading-tight;
+  }
+  .quiz-option-check {
+    @apply absolute top-3 right-3 text-accent;
+  }
+
+  /* ── Quiz navigation ── */
+
+  .quiz-nav {
+    @apply flex items-center justify-between gap-3 pt-2;
+  }
+
+  /* ── Results layout ── */
+
+  .idea-results-wrap {
+    @apply max-w-2xl mx-auto px-4 flex flex-col gap-6;
+  }
+
+  /* ── Recommendation card ── */
+
+  .rec-card {
+    @apply bg-card border border-border rounded-2xl p-5 shadow-sm flex flex-col gap-4;
+  }
+  .rec-header {
+    @apply flex flex-col gap-2;
+  }
+  .rec-rank-badge {
+    @apply self-start text-xs font-bold uppercase tracking-wider px-3 py-1 rounded-full border;
+  }
+  .rec-rank-badge--0 {
+    @apply bg-accent/15 text-accent border-accent/30;
+  }
+  .rec-rank-badge--1 {
+    @apply bg-primary/10 text-primary border-primary/20;
+  }
+  .rec-rank-badge--2 {
+    @apply bg-muted text-muted-foreground border-border;
+  }
+  .rec-title {
+    @apply flex items-center gap-2;
+  }
+  .rec-emoji {
+    @apply text-3xl leading-none;
+  }
+  .rec-name {
+    @apply text-2xl font-bold text-foreground;
+  }
+  .rec-why {
+    @apply text-sm text-muted-foreground leading-relaxed;
+  }
+  .rec-meta-grid {
+    @apply grid grid-cols-3 gap-2;
+  }
+  .quiz-meta-badge {
+    @apply text-center;
+  }
+  .rec-lists {
+    @apply flex flex-col gap-3;
+  }
+  .rec-list-block {
+    @apply flex flex-col gap-1;
+  }
+  .rec-list-title {
+    @apply text-xs font-bold uppercase tracking-wider text-muted-foreground;
+  }
+  .rec-list {
+    @apply list-disc list-inside text-sm text-foreground space-y-0.5 pl-0.5;
+  }
+  .rec-list--warning {
+    @apply text-amber-800 dark:text-amber-400;
+  }
+  .rec-cta {
+    @apply flex flex-col items-start gap-1 pt-2 border-t border-border;
+  }
+  .rec-cta-note {
+    @apply text-xs text-muted-foreground;
+  }
+
+  /* ── Trust disclaimer ── */
+
+  .idea-disclaimer {
+    @apply flex items-start gap-2 text-xs text-muted-foreground bg-muted/50 border border-border
+      rounded-xl px-4 py-3;
+  }
+
+  /* ── Results nav ── */
+
+  .idea-results-nav {
+    @apply flex flex-wrap gap-3 pb-4;
+  }
+
   /* ── Full Event Pack section styles ── */
 
   .strategy-grid {

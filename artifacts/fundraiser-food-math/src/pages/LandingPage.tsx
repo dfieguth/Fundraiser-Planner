@@ -28,6 +28,9 @@ export default function LandingPage() {
           <Link href="/planner" className="hero-cta" data-testid="button-hero-cta">
             Build My Fundraiser Plan <ArrowRight className="ml-2 w-5 h-5" />
           </Link>
+          <Link href="/idea-finder" className="hero-secondary-cta" data-testid="button-hero-idea-finder">
+            Help me choose a fundraiser →
+          </Link>
           <p className="hero-disclaimer" data-testid="hero-disclaimer">Free to use. No account required.</p>
         </div>
       </section>
@@ -150,6 +153,7 @@ export default function LandingPage() {
           <div className="footer-links">
             <a href="/" data-testid="footer-link-home">Home</a>
             <Link href="/planner" data-testid="footer-link-planner">Planner</Link>
+            <Link href="/idea-finder" data-testid="footer-link-idea-finder">Idea Finder</Link>
             <a href="#pricing" data-testid="footer-link-pricing">Pricing</a>
           </div>
           <p className="footer-copy">© {new Date().getFullYear()} Fundraiser Food Math. All rights reserved.</p>

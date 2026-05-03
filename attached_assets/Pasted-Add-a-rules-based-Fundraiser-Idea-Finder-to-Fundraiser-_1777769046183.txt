@@ -1,0 +1,119 @@
+Add a rules-based Fundraiser Idea Finder to Fundraiser Food Math.
+
+Goal:
+Help users who do not know what food fundraiser to run choose a good option, then pre-fill the existing planner.
+
+Important:
+This should be a simple rules-based recommendation wizard, not an AI agent.
+Do not add OpenAI API, external APIs, maps, live store pricing, or location lookup.
+
+Add a new page/route:
+- /idea-finder
+
+Add entry points:
+- Landing page secondary CTA: “Help Me Choose a Fundraiser”
+- Planner page small link near the sample templates: “Not sure what to serve? Try the Idea Finder”
+
+Quiz fields:
+1. Organization type:
+Church, School, Sports Team, Nonprofit, Other
+
+2. Expected attendance:
+Under 75, 75–150, 150–250, 250+
+
+3. Audience:
+Mostly kids/students, Mostly adults, Mixed
+
+4. Time of event:
+Breakfast, Lunch, Dinner, After church/school, During a larger event
+
+5. Adult volunteer count:
+0–2, 3–5, 6–10, 10+
+
+6. Student/helper count:
+0–3, 4–8, 9–15, 16+
+
+7. Equipment available:
+Kitchen, Oven, Grill, Large pots, Warmers/roasters, Refrigerator/cooler space, No kitchen
+
+8. Priorities:
+Lowest cost, Easiest execution, Highest profit potential, Fastest serving line, Kid-friendly, Adult-friendly
+
+9. Constraints:
+No cooking onsite, Limited prep time, Limited adult supervision, Need grab-and-go, Need vegetarian option
+
+Recommendation logic:
+Recommend from existing meal types:
+- Hot Dogs
+- Burgers
+- Baked Potatoes
+- Breakfast Burritos
+- Tacos
+- Spaghetti
+- Pancakes
+
+For each recommendation, show:
+- Rank: Best Overall, Easiest, Highest Profit, Best Fit, etc.
+- Meal type
+- Why this fits
+- Difficulty: Easy, Moderate, High
+- Expected profit potential: Low, Medium, High
+- Volunteer need: Low, Medium, High
+- Equipment needed
+- Watch-outs
+- Button: “Build This Plan”
+
+When the user clicks “Build This Plan”:
+- Pre-fill the existing planner with realistic default values based on the quiz
+- User can edit everything before generating results
+
+Rules guidance:
+- Hot Dogs: best for low volunteers, kids, fast serving, low equipment
+- Burgers: good for high attendance with grill access and enough adult volunteers
+- Baked Potatoes: good profit, adult-friendly, oven/warmers helpful, slower prep
+- Breakfast Burritos: best for breakfast/grab-and-go, requires prep and foil wrapping
+- Tacos: good for youth/groups, moderate prep, needs serving line organization
+- Spaghetti: good for large dinner events, needs kitchen/large pots, adult volunteers
+- Pancakes: good for breakfast, low ingredient cost, needs griddle/cooking team
+
+Important wording:
+Do not claim exact profitability.
+Use phrases like:
+- “usually easier”
+- “often a good fit”
+- “may work well”
+- “watch your local prices”
+- “adjust for your group”
+
+Trust disclaimer:
+Add:
+“These recommendations are planning guidance, not guarantees. Adjust for your group, volunteers, equipment, store prices, and local context.”
+
+Design:
+Match the current app style.
+Keep it simple and mobile-friendly.
+Do not redesign the whole app.
+
+Do not add:
+- AI chat
+- backend requirements
+- external APIs
+- live location lookup
+- live store pricing
+- user accounts
+- database
+- analytics
+
+Verify:
+- Quiz works on mobile
+- Recommendations appear
+- Build This Plan pre-fills the planner
+- Existing planner still works manually
+- Results still calculate
+- Full unlocked sections still work
+- Type check/build passes
+
+Report:
+- Files changed
+- Recommendation logic summary
+- Any assumptions made

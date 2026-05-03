@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -77,6 +77,23 @@ export default function PlannerPage({ onPlanReady }: PlannerPageProps) {
     },
     mode: "onChange",
   });
+
+  const [ideaPreFillLabel, setIdeaPreFillLabel] = useState<string | null>(null);
+
+  // On mount: check sessionStorage for Idea Finder pre-fill
+  useEffect(() => {
+    const raw = sessionStorage.getItem("ffm_idea_prefill");
+    if (raw) {
+      try {
+        const { formData, mealName } = JSON.parse(raw) as { formData: PlannerFormData; mealName: string };
+        form.reset(formData);
+        setIdeaPreFillLabel(mealName);
+        sessionStorage.removeItem("ffm_idea_prefill");
+      } catch {
+        // ignore malformed data
+      }
+    }
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const mealType = form.watch("mealType");
 
@@ -200,6 +217,30 @@ export default function PlannerPage({ onPlanReady }: PlannerPageProps) {
             </button>
           </div>
         )}
+
+        {ideaPreFillLabel && !activeTemplate && (
+          <div className="template-active-banner" data-testid="idea-prefill-banner">
+            <span>
+              Pre-filled from Idea Finder: <strong>{ideaPreFillLabel}</strong> — adjust every field to match your event.
+            </span>
+            <button
+              type="button"
+              className="template-clear-btn"
+              onClick={() => { setIdeaPreFillLabel(null); handleClearTemplate(); }}
+              data-testid="button-clear-idea-prefill"
+              aria-label="Clear pre-fill"
+            >
+              <X className="w-3.5 h-3.5 mr-1" /> Clear
+            </button>
+          </div>
+        )}
+
+        <p className="idea-finder-nudge" data-testid="planner-idea-finder-nudge">
+          Not sure what to serve?{" "}
+          <Link href="/idea-finder" className="idea-finder-nudge-link" data-testid="link-planner-idea-finder">
+            Try the Idea Finder
+          </Link>
+        </p>
       </div>
 
       {/* ── Multi-step Form ───────────────────────────────────── */}
