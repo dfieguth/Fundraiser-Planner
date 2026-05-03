@@ -31,6 +31,7 @@ export default function ResultsPage({ plan, formData, onReset }: ResultsPageProp
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
   const [copiedSummary, setCopiedSummary] = useState(false);
   const [summaryFailed, setSummaryFailed] = useState(false);
+  const [sensitivityPrice, setSensitivityPrice] = useState<number>(plan.summary.mealPrice);
   const [unlocked, setUnlockedState] = useState<boolean>(getUnlocked);
   const [activeTab, setActiveTab] = useState<"shopping" | "supplies" | "timeline" | "volunteers" | "email">("shopping");
 
@@ -840,6 +841,98 @@ export default function ResultsPage({ plan, formData, onReset }: ResultsPageProp
               </div>
             </section>
           )}
+
+          {/* Pricing Sensitivity Calculator */}
+          <section className="results-section sensitivity-section" data-testid="section-sensitivity">
+            <h2 className="section-heading">Pricing Sensitivity</h2>
+            <p className="section-note">
+              Try a different suggested donation or meal price to see how your fundraiser estimate changes.
+              This is what-if math — it does not change your saved plan.
+            </p>
+
+            <div className="sensitivity-quick-btns">
+              {[5, 7, 10, 12, 15].map((p) => (
+                <button
+                  key={p}
+                  className={`sensitivity-quick-btn${sensitivityPrice === p ? " sensitivity-quick-btn--active" : ""}`}
+                  onClick={() => setSensitivityPrice(p)}
+                  data-testid={`sensitivity-quick-${p}`}
+                >
+                  ${p}
+                </button>
+              ))}
+            </div>
+
+            <div className="sensitivity-input-row">
+              <label className="sensitivity-label" htmlFor="sensitivity-price">
+                Suggested donation / meal price
+              </label>
+              <div className="sensitivity-input-wrap">
+                <span className="sensitivity-currency">$</span>
+                <input
+                  id="sensitivity-price"
+                  type="number"
+                  min="0"
+                  max="500"
+                  step="1"
+                  value={sensitivityPrice}
+                  onChange={(e) => {
+                    const v = parseFloat(e.target.value);
+                    if (!isNaN(v) && v >= 0) setSensitivityPrice(v);
+                  }}
+                  className="sensitivity-input"
+                  data-testid="sensitivity-price-input"
+                />
+                <span className="sensitivity-per">per person</span>
+              </div>
+            </div>
+
+            {(() => {
+              const att = plan.summary.attendance || 1;
+              const sensRevenue = sensitivityPrice * att;
+              const sensProfitLow = sensRevenue - plan.costRange[1];
+              const sensProfitHigh = sensRevenue - plan.costRange[0];
+              const sensProfitPerGuestMid = ((sensProfitLow + sensProfitHigh) / 2) / att;
+              const profitColor =
+                sensProfitHigh < 0 ? "loss" : sensProfitLow < 0 ? "risky" : "good";
+              const guidanceLevel =
+                sensProfitPerGuestMid < 3 ? "low" : sensProfitPerGuestMid > 7 ? "high" : "mid";
+              const guidanceText = {
+                low: "This may be too low unless your goal is accessibility over profit.",
+                mid: "This is a moderate margin for a simple fundraiser.",
+                high: "This may be strong, but make sure the price feels reasonable for your audience.",
+              }[guidanceLevel];
+
+              return (
+                <>
+                  <div className="sensitivity-cards">
+                    <div className="sensitivity-card">
+                      <div className="sensitivity-card-label">Expected Revenue</div>
+                      <div className="sensitivity-card-value">{fmt(sensRevenue)}</div>
+                      <div className="sensitivity-card-note">{att} guests × ${sensitivityPrice}</div>
+                    </div>
+                    <div className="sensitivity-card">
+                      <div className="sensitivity-card-label">Est. Food Cost</div>
+                      <div className="sensitivity-card-value">{fmt(plan.costRange[0])} – {fmt(plan.costRange[1])}</div>
+                      <div className="sensitivity-card-note">Unchanged from your plan</div>
+                    </div>
+                    <div className="sensitivity-card">
+                      <div className="sensitivity-card-label">Est. Net Profit</div>
+                      <div className={`sensitivity-card-value sensitivity-card-value--${profitColor}`}>
+                        {fmt(sensProfitLow)} – {fmt(sensProfitHigh)}
+                      </div>
+                      <div className="sensitivity-card-note">
+                        ~{fmt(sensProfitPerGuestMid)} per guest
+                      </div>
+                    </div>
+                  </div>
+                  <p className={`sensitivity-guidance sensitivity-guidance--${guidanceLevel}`} data-testid="sensitivity-guidance">
+                    {guidanceText}
+                  </p>
+                </>
+              );
+            })()}
+          </section>
 
           {/* Bottom CTA */}
           <div className="results-footer">

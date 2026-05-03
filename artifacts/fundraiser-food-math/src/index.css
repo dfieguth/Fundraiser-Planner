@@ -709,6 +709,74 @@
     @apply flex gap-4;
   }
 
+  /* Pricing Sensitivity Calculator */
+  .sensitivity-section {
+    @apply bg-muted/30 border border-border rounded-xl p-6;
+  }
+  .sensitivity-quick-btns {
+    @apply flex flex-wrap gap-2 mb-5;
+  }
+  .sensitivity-quick-btn {
+    @apply px-4 py-2 rounded-lg border border-border text-sm font-semibold bg-background hover:bg-accent/10 transition-colors cursor-pointer;
+  }
+  .sensitivity-quick-btn--active {
+    @apply bg-primary text-primary-foreground border-primary;
+  }
+  .sensitivity-input-row {
+    @apply mb-5;
+  }
+  .sensitivity-label {
+    @apply block text-sm font-medium text-foreground mb-1.5;
+  }
+  .sensitivity-input-wrap {
+    @apply flex items-center gap-2;
+  }
+  .sensitivity-currency {
+    @apply text-lg font-semibold text-muted-foreground;
+  }
+  .sensitivity-input {
+    @apply w-28 border border-input rounded-lg px-3 py-2 text-lg font-bold text-center bg-background focus:outline-none focus:ring-2 focus:ring-primary/30;
+  }
+  .sensitivity-per {
+    @apply text-sm text-muted-foreground;
+  }
+  .sensitivity-cards {
+    @apply grid grid-cols-1 gap-4 mb-4 sm:grid-cols-3;
+  }
+  .sensitivity-card {
+    @apply bg-background border border-border rounded-lg p-4 text-center;
+  }
+  .sensitivity-card-label {
+    @apply text-xs font-bold uppercase tracking-wider text-muted-foreground mb-1;
+  }
+  .sensitivity-card-value {
+    @apply text-xl font-bold font-mono;
+  }
+  .sensitivity-card-value--good {
+    @apply text-green-700;
+  }
+  .sensitivity-card-value--risky {
+    @apply text-amber-600;
+  }
+  .sensitivity-card-value--loss {
+    @apply text-red-600;
+  }
+  .sensitivity-card-note {
+    @apply text-xs text-muted-foreground mt-1;
+  }
+  .sensitivity-guidance {
+    @apply text-sm font-medium px-4 py-3 rounded-lg border;
+  }
+  .sensitivity-guidance--low {
+    @apply bg-red-50 border-red-200 text-red-700;
+  }
+  .sensitivity-guidance--mid {
+    @apply bg-blue-50 border-blue-200 text-blue-700;
+  }
+  .sensitivity-guidance--high {
+    @apply bg-green-50 border-green-200 text-green-700;
+  }
+
   /* Print Page */
   .print-page {
     @apply min-h-[100dvh] bg-white text-black p-8 font-sans max-w-4xl mx-auto;
