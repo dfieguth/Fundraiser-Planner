@@ -110,7 +110,7 @@ export function setUnlockedWithCode(durationDays: number): void {
  */
 export function applyAccessCode(code: string): "ok" | "invalid" {
   const normalized = code.trim().toUpperCase();
-  const match = ACCESS_CODES.find((ac) => ac.code.toUpperCase() === normalized);
+  const match = ACCESS_CODES.find((ac) => ac.code.trim().toUpperCase() === normalized);
   if (!match) return "invalid";
   setUnlockedWithCode(match.durationDays);
   return "ok";
