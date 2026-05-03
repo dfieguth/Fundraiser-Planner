@@ -119,6 +119,28 @@ export function isConfigured(link: string | null | undefined): link is string {
 export const ENABLE_DEMO_UNLOCK = false;
 
 // ============================================================
+// ACCESS CODES — CLIENT-SIDE ONLY (TESTING / EARLY ACCESS)
+//
+// Client-side access codes are for early testing only. For production
+// coupon codes, validate codes on the backend and issue a signed token
+// or session before setting unlock state on the client.
+// ============================================================
+
+export interface AccessCode {
+  code: string;
+  label: string;
+  durationDays: number;
+}
+
+export const ACCESS_CODES: AccessCode[] = [
+  {
+    code: "DEVINTEST",
+    label: "30-day tester access",
+    durationDays: 30,
+  },
+];
+
+// ============================================================
 // PRICING DISPLAY CONFIG
 // Update labels and descriptions here to match your copy.
 // ============================================================

@@ -12,11 +12,16 @@
 // ============================================================
 
 import type { FundraiserPlan, PlannerFormData } from "@/lib/types";
+import { ACCESS_CODES } from "@/config/paymentLinks";
 
 // ── Storage keys ─────────────────────────────────────────────
 // Change these if you need to namespace multiple apps on the same origin.
 export const UNLOCK_KEY = "ffm_unlocked";
 export const PLAN_SAVE_KEY = "ffm_plan_saved";
+
+// Expiration timestamp (ms since epoch) for access-code-based unlocks.
+// Only written when unlocking via an access code — Stripe unlocks do not expire.
+export const UNLOCK_EXPIRES_KEY = "ffm_unlock_expires";
 
 // Key accepted in the ?unlock= query param to grant Full Event Pack access.
 // Must match what you configure as the Stripe/Gumroad success redirect URL.
@@ -32,18 +37,31 @@ export interface SavedPlan {
 
 /**
  * Returns true if the Full Event Pack is unlocked on this device.
+ *
+ * Two unlock modes:
+ *   "true"  — Stripe redirect unlock (non-expiring)
+ *   "code"  — Access code unlock (expires after durationDays)
+ *
  * Reads from localStorage so it persists across redirects and tab close/reopen.
  */
 export function getUnlocked(): boolean {
   try {
-    return localStorage.getItem(UNLOCK_KEY) === "true";
+    const val = localStorage.getItem(UNLOCK_KEY);
+    if (val === "true") return true; // Stripe unlock — never expires
+    if (val === "code") {
+      const expiresRaw = localStorage.getItem(UNLOCK_EXPIRES_KEY);
+      if (!expiresRaw) return false;
+      return Date.now() < parseInt(expiresRaw, 10);
+    }
+    return false;
   } catch {
     return false;
   }
 }
 
 /**
- * Marks the Full Event Pack as unlocked on this device.
+ * Marks the Full Event Pack as unlocked on this device via Stripe payment.
+ * This unlock is non-expiring.
  * Also writes to sessionStorage["ffm_plan"] if a saved plan exists,
  * so the PrintPage can find the plan immediately after unlock.
  */
@@ -59,6 +77,43 @@ export function setUnlocked(): void {
   } catch {
     // localStorage may be blocked in certain privacy modes — fail silently.
   }
+}
+
+/**
+ * Marks the Full Event Pack as unlocked on this device via access code.
+ * This unlock expires after durationDays days.
+ * Also writes to sessionStorage["ffm_plan"] so PrintPage finds the plan immediately.
+ */
+export function setUnlockedWithCode(durationDays: number): void {
+  try {
+    const expiresAt = Date.now() + durationDays * 24 * 60 * 60 * 1000;
+    localStorage.setItem(UNLOCK_KEY, "code");
+    localStorage.setItem(UNLOCK_EXPIRES_KEY, String(expiresAt));
+    const saved = getStoredPlan();
+    if (saved) {
+      sessionStorage.setItem("ffm_plan", JSON.stringify(saved));
+    }
+  } catch {
+    // fail silently
+  }
+}
+
+/**
+ * Attempts to unlock via an access code.
+ * Matching is case-insensitive and trims surrounding whitespace.
+ *
+ * Returns "ok" if the code matched and unlock was applied,
+ * or "invalid" if the code was not recognized.
+ *
+ * NOTE: Client-side access codes are for early testing only.
+ * For production coupon codes, validate codes on the backend.
+ */
+export function applyAccessCode(code: string): "ok" | "invalid" {
+  const normalized = code.trim().toUpperCase();
+  const match = ACCESS_CODES.find((ac) => ac.code.toUpperCase() === normalized);
+  if (!match) return "invalid";
+  setUnlockedWithCode(match.durationDays);
+  return "ok";
 }
 
 // ── Plan persistence ─────────────────────────────────────────

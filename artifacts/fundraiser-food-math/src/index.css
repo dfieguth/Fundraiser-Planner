@@ -924,6 +924,30 @@
   .locked-features-grid {
     @apply grid sm:grid-cols-2 gap-4 mb-8;
   }
+  .locked-access-code {
+    @apply mt-6 pt-5 border-t border-border text-center;
+  }
+  .locked-access-label {
+    @apply text-xs text-muted-foreground mb-2;
+  }
+  .locked-access-row {
+    @apply flex items-center gap-2 justify-center flex-wrap;
+  }
+  .locked-access-input {
+    @apply w-48 border border-input rounded-lg px-3 py-2 text-sm bg-background focus:outline-none focus:ring-2 focus:ring-primary/30;
+  }
+  .locked-access-btn {
+    @apply px-4 py-2 rounded-lg text-sm font-medium border border-border bg-muted hover:bg-muted/80 transition-colors cursor-pointer;
+  }
+  .locked-access-msg {
+    @apply text-xs mt-2;
+  }
+  .locked-access-msg--success {
+    @apply text-green-600 font-medium;
+  }
+  .locked-access-msg--error {
+    @apply text-red-600;
+  }
   .locked-feature {
     @apply flex items-start gap-3 bg-card rounded-xl p-4 border shadow-sm;
   }

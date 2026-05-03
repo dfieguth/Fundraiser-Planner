@@ -1,0 +1,81 @@
+Add a simple 30-day access code unlock for Fundraiser Food Math.
+
+Goal:
+Let me give testers or early reviewers a free 30-day Full Event Pack unlock without requiring Stripe payment.
+
+Important:
+This is an MVP/testing access code. It is client-side only and not secure against someone inspecting the code. Add a developer comment explaining that real coupon/access code validation should move to the backend later.
+
+Do not change Stripe links.
+Do not change USE_STRIPE_TEST_MODE.
+Do not add accounts, database, analytics, or external APIs.
+
+Requirements:
+
+1. Add config values
+In the existing payment/config file, add:
+
+ACCESS_CODES = [
+  {
+    code: "DEVINTEST",
+    label: "30-day tester access",
+    durationDays: 30
+  }
+]
+
+Add a clear comment:
+“Client-side access codes are for early testing only. For production coupon codes, validate codes on the backend.”
+
+2. Add unlock helper support
+Update the shared unlock helper so it can:
+- unlock normally from Stripe redirect
+- unlock from access code
+- store an expiration date for access-code unlocks
+- treat access as valid only if the expiration date is in the future
+
+Stripe redirect unlocks can remain non-expiring for now.
+
+3. Add access code entry on locked Results page
+On the locked Full Event Pack section, add a small, understated access code area:
+Label:
+“Have an access code?”
+
+Input placeholder:
+“Enter access code”
+
+Button:
+“Apply Code”
+
+Behavior:
+- If code is valid, unlock the Full Event Pack and show:
+  “Access code applied. Full Event Pack unlocked.”
+- If code is invalid, show:
+  “That code did not work. Check the code and try again.”
+- Code matching should be case-insensitive and trim spaces.
+
+4. 30-day behavior
+When DEVINTEST is applied:
+- Store unlock state
+- Store expiration timestamp 30 days from now
+- Results page unlocks immediately
+- Print page unlocks
+- Refresh still stays unlocked until expiration
+- After expiration, getUnlocked() should return false for code-based access
+
+5. Do not expose access code entry in the free preview too prominently
+Keep it below the $19 CTA, small and secondary.
+This should not distract normal buyers.
+
+6. Verify:
+- DEVINTEST unlocks the full plan
+- devintest also works
+- Invalid code does not unlock
+- Refresh after applying code stays unlocked
+- Print page unlocks
+- Stripe success unlock still works
+- Type check passes
+
+Report:
+- Files changed
+- How expiration is stored
+- Any assumptions made

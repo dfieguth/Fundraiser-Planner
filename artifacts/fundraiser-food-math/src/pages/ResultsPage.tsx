@@ -9,7 +9,7 @@ import {
   TrendingUp, MapPin, Package, MessageSquare, Shield,
 } from "lucide-react";
 import { PAYMENT_LINKS, ENABLE_DEMO_UNLOCK } from "@/config/paymentLinks";
-import { getUnlocked, setUnlocked, savePlanBeforePayment } from "@/lib/unlock";
+import { getUnlocked, setUnlocked, savePlanBeforePayment, applyAccessCode } from "@/lib/unlock";
 
 // ── FREE PREVIEW LIMITS ───────────────────────────────────────
 // Change these numbers to adjust what the free preview shows.
@@ -32,6 +32,8 @@ export default function ResultsPage({ plan, formData, onReset }: ResultsPageProp
   const [copiedSummary, setCopiedSummary] = useState(false);
   const [summaryFailed, setSummaryFailed] = useState(false);
   const [sensitivityPrice, setSensitivityPrice] = useState<number>(plan.summary.mealPrice);
+  const [accessCode, setAccessCode] = useState("");
+  const [codeStatus, setCodeStatus] = useState<"idle" | "success" | "error">("idle");
   const [unlocked, setUnlockedState] = useState<boolean>(getUnlocked);
   const [activeTab, setActiveTab] = useState<"shopping" | "supplies" | "timeline" | "volunteers" | "email">("shopping");
 
@@ -42,6 +44,17 @@ export default function ResultsPage({ plan, formData, onReset }: ResultsPageProp
     setUnlocked();
     setUnlockedState(true);
     savePlanBeforePayment(plan, formData);
+  };
+
+  const handleApplyCode = () => {
+    const result = applyAccessCode(accessCode);
+    if (result === "ok") {
+      savePlanBeforePayment(plan, formData);
+      setCodeStatus("success");
+      setUnlockedState(true);
+    } else {
+      setCodeStatus("error");
+    }
   };
 
   const handlePaymentCTAClick = () => {
@@ -389,6 +402,39 @@ export default function ResultsPage({ plan, formData, onReset }: ResultsPageProp
                 >
                   Demo: Unlock Full Plan
                 </button>
+              )}
+            </div>
+
+            {/* Access Code Entry — understated, below the $19 CTA */}
+            <div className="locked-access-code" data-testid="access-code-area">
+              <p className="locked-access-label">Have an access code?</p>
+              <div className="locked-access-row">
+                <input
+                  type="text"
+                  placeholder="Enter access code"
+                  value={accessCode}
+                  onChange={(e) => { setAccessCode(e.target.value); setCodeStatus("idle"); }}
+                  className="locked-access-input"
+                  data-testid="access-code-input"
+                  onKeyDown={(e) => { if (e.key === "Enter") handleApplyCode(); }}
+                />
+                <button
+                  onClick={handleApplyCode}
+                  className="locked-access-btn"
+                  data-testid="access-code-submit"
+                >
+                  Apply Code
+                </button>
+              </div>
+              {codeStatus === "success" && (
+                <p className="locked-access-msg locked-access-msg--success" data-testid="access-code-success">
+                  Access code applied. Full Event Pack unlocked.
+                </p>
+              )}
+              {codeStatus === "error" && (
+                <p className="locked-access-msg locked-access-msg--error" data-testid="access-code-error">
+                  That code did not work. Check the code and try again.
+                </p>
               )}
             </div>
           </div>
