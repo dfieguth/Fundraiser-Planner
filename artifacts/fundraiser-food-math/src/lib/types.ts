@@ -10,7 +10,11 @@ export type MealType =
   | "tacos"
   | "spaghetti"
   | "pancakes"
-  | "custom";
+  | "custom"
+  // ── Combo meals ───────────────────────────────────────────
+  | "combo_hotdogs_potatoes"   // Hot Dogs + Baked Potatoes
+  | "combo_burgers_chips"      // Burgers + Chips
+  | "combo_pancakes_sausage";  // Pancakes + Sausage (sausage already in pancakes — presented as explicit combo)
 
 export type OrgType =
   | "Church"
@@ -43,9 +47,16 @@ export interface PlannerFormData {
   adultVolunteers: number;
   studentVolunteers: number;
   notes: string;
+  // ── Custom meal (Tier 1 free-text) ───────────────────────
   customMealName?: string;
   customServingSize?: string;
   customIngredients?: string;
+  // ── Tier 2 "Tell Us About Your Menu" follow-up ───────────
+  customMenuMainDish?: string;
+  customMenuSides?: string[];    // e.g. ["rolls", "chips", "salad", "mac", "coleslaw", "other"]
+  customMenuDrinks?: string[];   // e.g. ["water", "lemonade", "coffee", "soda", "none"]
+  customMenuDesserts?: string[]; // e.g. ["cookies", "brownies", "cake", "none"]
+  customMenuDietary?: string[];  // e.g. ["vegetarian", "glutenFree", "nutAllergy"]
 }
 
 export interface ShoppingItem {

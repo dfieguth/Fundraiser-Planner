@@ -10,7 +10,8 @@ import type {
   StrategySection, ProfitStrategy, SetupStation,
   LeftoverPlan, CommsPack, ShoppingGroup,
 } from "./types";
-import { MEAL_ASSUMPTIONS } from "./mealAssumptions";
+import { MEAL_ASSUMPTIONS, isComboMeal, COMBO_DEFINITIONS } from "./mealAssumptions";
+import type { MealAssumption, IngredientDef } from "./mealAssumptions";
 
 // ── Planning disclaimer ───────────────────────────────────────
 const DISCLAIMER =
@@ -832,6 +833,56 @@ function buildShoppingListGrouped(shoppingList: ShoppingItem[]): ShoppingGroup[]
     .map(k => ({ label: LABEL_MAP[k] ?? k, items: groups[k] }));
 }
 
+// ── Custom menu ingredient generator (Tier 2 meals) ──────────
+function buildCustomMenuIngredients(form: PlannerFormData): IngredientDef[] {
+  const ingredients: IngredientDef[] = [];
+  const sides = form.customMenuSides ?? [];
+  const drinks = form.customMenuDrinks ?? [];
+  const desserts = form.customMenuDesserts ?? [];
+
+  // Sides — estimated per person (adultServings=1, so perServing ≈ per person)
+  if (sides.includes("rolls")) {
+    ingredients.push({ name: "Dinner Rolls (bag of 12)", perServing: 0.1, unit: "bag", packageSize: 1, packageUnit: "bag of 12", costPerPackage: [3.00, 5.50], category: "carb" });
+  }
+  if (sides.includes("chips")) {
+    ingredients.push({ name: "Potato Chips (2-lb bulk bag)", perServing: 0.047, unit: "bag", packageSize: 1, packageUnit: "2-lb bag", costPerPackage: [5.00, 9.00], category: "other" });
+  }
+  if (sides.includes("salad")) {
+    ingredients.push({ name: "Salad Mix (16-oz bag — 4 servings)", perServing: 0.25, unit: "bag", packageSize: 1, packageUnit: "16-oz bag", costPerPackage: [3.50, 6.00], category: "produce" });
+  }
+  if (sides.includes("mac")) {
+    ingredients.push({ name: "Mac & Cheese (box — 3 servings)", perServing: 0.34, unit: "box", packageSize: 1, packageUnit: "box", costPerPackage: [1.50, 3.00], category: "other" });
+  }
+  if (sides.includes("coleslaw")) {
+    ingredients.push({ name: "Coleslaw Mix (14-oz bag)", perServing: 0.07, unit: "bag", packageSize: 1, packageUnit: "14-oz bag", costPerPackage: [2.50, 4.50], category: "produce" });
+  }
+  // Drinks
+  if (drinks.includes("water")) {
+    ingredients.push({ name: "Water Bottles (24-pack, 16.9 oz)", perServing: 0.042, unit: "case", packageSize: 1, packageUnit: "24-pack case", costPerPackage: [4.00, 8.00], category: "other" });
+  }
+  if (drinks.includes("lemonade")) {
+    ingredients.push({ name: "Lemonade Mix (canister — makes 2 gallons, ~32 servings)", perServing: 0.031, unit: "canister", packageSize: 1, packageUnit: "canister", costPerPackage: [3.00, 6.00], category: "other" });
+  }
+  if (drinks.includes("coffee")) {
+    ingredients.push({ name: "Ground Coffee (1-lb can — ~60 cups)", perServing: 0.017, unit: "can", packageSize: 1, packageUnit: "1-lb can", costPerPackage: [8.00, 16.00], category: "other" });
+  }
+  if (drinks.includes("soda")) {
+    ingredients.push({ name: "Soda (2-liter bottles — assorted, ~6 servings each)", perServing: 0.18, unit: "bottle", packageSize: 1, packageUnit: "2-liter bottle", costPerPackage: [1.75, 3.00], category: "other" });
+  }
+  // Desserts
+  if (desserts.includes("cookies")) {
+    ingredients.push({ name: "Cookies (30-count variety pack)", perServing: 0.067, unit: "pack", packageSize: 1, packageUnit: "30-count pack", costPerPackage: [8.00, 15.00], category: "other" });
+  }
+  if (desserts.includes("brownies")) {
+    ingredients.push({ name: "Brownie Mix (box — 24 brownies)", perServing: 0.042, unit: "box", packageSize: 1, packageUnit: "box", costPerPackage: [2.50, 5.00], category: "other" });
+  }
+  if (desserts.includes("cake")) {
+    ingredients.push({ name: "Sheet Cake (9×13 — serves 24)", perServing: 0.042, unit: "cake", packageSize: 1, packageUnit: "9×13 sheet cake", costPerPackage: [12.00, 22.00], category: "other" });
+  }
+
+  return ingredients;
+}
+
 // ── Main Calculator ───────────────────────────────────────────
 
 export function calculatePlan(rawForm: PlannerFormData): FundraiserPlan {
@@ -853,77 +904,116 @@ export function calculatePlan(rawForm: PlannerFormData): FundraiserPlan {
     serveEndTime: rawForm.serveEndTime || "14:00",
   };
 
-  const meal = MEAL_ASSUMPTIONS[form.mealType] ?? MEAL_ASSUMPTIONS["custom"]!;
+  const mealMeta = MEAL_ASSUMPTIONS[form.mealType] ?? MEAL_ASSUMPTIONS["custom"]!;
+  const combo = isComboMeal(form.mealType) ? (COMBO_DEFINITIONS[form.mealType] ?? null) : null;
+  // meal is used for display metadata (displayName, cookingComplexity)
+  const meal = mealMeta;
 
   const adults = Math.round(form.attendance * (form.adultPercent / 100));
   const kids = form.attendance - adults;
   const kidPercent = form.attendance > 0 ? Math.round((kids / form.attendance) * 100) : 0;
 
-  // Total individual servings including waste/overage buffer
-  const totalServings = Math.ceil(
-    (adults * meal.adultServings + kids * meal.kidServings) * meal.wasteBuffer
-  );
+  // ── Ingredient calculator for a single meal component ─────
+  function computeIngredientResults(component: MealAssumption): {
+    foodQuantities: FundraiserPlan["foodQuantities"];
+    shoppingItems: ShoppingItem[];
+    cost: [number, number];
+  } {
+    const servings = Math.ceil(
+      (adults * component.adultServings + kids * component.kidServings) * component.wasteBuffer
+    );
+    const foodQuantities: FundraiserPlan["foodQuantities"] = component.ingredients.map((ing) => {
+      const rawTotal = servings * ing.perServing;
+      const packages = ceilToPackage(rawTotal, ing.packageSize);
+      const totalUnits = packages * ing.packageSize;
+      const neededDisplay = rawTotal < 1
+        ? `~${rawTotal.toFixed(2)} ${ing.unit}s`
+        : `~${Math.ceil(rawTotal)} ${ing.unit}s`;
+      return {
+        ingredient: ing.name,
+        quantity: `${packages} × ${ing.packageUnit} (need ${neededDisplay}, buying ${totalUnits})`,
+        notes: ing.category === "condiment"
+          ? "Estimate — adjust based on your crowd's preferences"
+          : undefined,
+      };
+    });
+    let cost: [number, number] = [0, 0];
+    const shoppingItems: ShoppingItem[] = component.ingredients.map((ing) => {
+      const rawTotal = servings * ing.perServing;
+      const packages = ceilToPackage(rawTotal, ing.packageSize);
+      const totalUnits = packages * ing.packageSize;
+      const itemCost: [number, number] = [
+        packages * ing.costPerPackage[0],
+        packages * ing.costPerPackage[1],
+      ];
+      cost = rangeAdd(cost, itemCost);
+      const neededRaw = Math.ceil(rawTotal);
+      return {
+        item: ing.name,
+        quantity: `${packages} × ${ing.packageUnit}  (${neededRaw} ${ing.unit}s needed → ${totalUnits} buying)`,
+        estimatedCost: itemCost,
+        notes: ing.category === "condiment"
+          ? "May have leftovers — saves money at your next event"
+          : undefined,
+        category: ing.category,
+      };
+    });
+    return { foodQuantities, shoppingItems, cost };
+  }
 
-  // ── Food Quantities ────────────────────────────────────────
-  const foodQuantities: FundraiserPlan["foodQuantities"] = meal.ingredients.map((ing) => {
-    const rawTotal = totalServings * ing.perServing;
-    const packages = ceilToPackage(rawTotal, ing.packageSize);
-    const totalUnits = packages * ing.packageSize;
-    const neededDisplay = rawTotal < 1
-      ? `~${rawTotal.toFixed(2)} ${ing.unit}s`
-      : `~${Math.ceil(rawTotal)} ${ing.unit}s`;
-    return {
-      ingredient: ing.name,
-      quantity: `${packages} × ${ing.packageUnit} (need ${neededDisplay}, buying ${totalUnits})`,
-      notes: ing.category === "condiment"
-        ? "Estimate — adjust based on your crowd's preferences"
-        : undefined,
-    };
-  });
-
-  // ── Shopping List ──────────────────────────────────────────
+  // ── Food Quantities + Shopping List ───────────────────────
   let totalCostRange: [number, number] = [0, 0];
+  let foodQuantities: FundraiserPlan["foodQuantities"] = [];
+  let shoppingList: ShoppingItem[] = [];
 
-  const shoppingList: ShoppingItem[] = meal.ingredients.map((ing) => {
-    const rawTotal = totalServings * ing.perServing;
-    const packages = ceilToPackage(rawTotal, ing.packageSize);
-    const totalUnits = packages * ing.packageSize;
-    const itemCost: [number, number] = [
-      packages * ing.costPerPackage[0],
-      packages * ing.costPerPackage[1],
-    ];
-    totalCostRange = rangeAdd(totalCostRange, itemCost);
-
-    const neededRaw = Math.ceil(rawTotal);
-    const quantityStr = `${packages} × ${ing.packageUnit}  (${neededRaw} ${ing.unit}s needed → ${totalUnits} buying)`;
-
-    return {
-      item: ing.name,
-      quantity: quantityStr,
-      estimatedCost: itemCost,
-      notes: ing.category === "condiment"
-        ? "May have leftovers — saves money at your next event"
-        : undefined,
-      category: ing.category,
-    };
-  });
+  if (combo) {
+    // Combo: compute each component independently and merge
+    for (const component of combo.components) {
+      const r = computeIngredientResults(component);
+      foodQuantities = foodQuantities.concat(r.foodQuantities);
+      shoppingList = shoppingList.concat(r.shoppingItems);
+      totalCostRange = rangeAdd(totalCostRange, r.cost);
+    }
+  } else if (form.mealType === "custom") {
+    // Tier 2 custom: generate shopping list from menu details if provided
+    const customIngredients = buildCustomMenuIngredients(form);
+    const r = computeIngredientResults({
+      ...meal,
+      ingredients: customIngredients,
+    });
+    foodQuantities = r.foodQuantities;
+    shoppingList = r.shoppingItems;
+    totalCostRange = rangeAdd(totalCostRange, r.cost);
+  } else {
+    const r = computeIngredientResults(meal);
+    foodQuantities = r.foodQuantities;
+    shoppingList = r.shoppingItems;
+    totalCostRange = rangeAdd(totalCostRange, r.cost);
+  }
 
   // ── Supplies List ──────────────────────────────────────────
-  const suppliesList: SupplyItem[] = meal.supplies.map((sup) => {
-    const rawTotal = form.attendance * sup.perPerson;
-    const packages = sup.packageSize > 0 ? ceilToPackage(rawTotal, sup.packageSize) : 0;
-    const totalUnits = packages * sup.packageSize;
-    const itemCost: [number, number] = packages > 0
-      ? [packages * sup.costPerPackage[0], packages * sup.costPerPackage[1]]
-      : [0, 0];
-    totalCostRange = rangeAdd(totalCostRange, itemCost);
-
-    const quantityStr = packages > 0
-      ? `${packages} pack${packages > 1 ? "s" : ""} (${totalUnits} units)`
-      : "As needed / already owned";
-
-    return { item: sup.name, quantity: quantityStr, estimatedCost: itemCost };
-  });
+  // For combos: use the first component's supplies (avoids duplication of plates/napkins)
+  const supplySource = combo ? (combo.components[0]) : meal;
+  const seenSupplyNames = new Set<string>();
+  const suppliesList: SupplyItem[] = supplySource.supplies
+    .filter((sup) => {
+      if (seenSupplyNames.has(sup.name)) return false;
+      seenSupplyNames.add(sup.name);
+      return true;
+    })
+    .map((sup) => {
+      const rawTotal = form.attendance * sup.perPerson;
+      const packages = sup.packageSize > 0 ? ceilToPackage(rawTotal, sup.packageSize) : 0;
+      const totalUnits = packages * sup.packageSize;
+      const itemCost: [number, number] = packages > 0
+        ? [packages * sup.costPerPackage[0], packages * sup.costPerPackage[1]]
+        : [0, 0];
+      totalCostRange = rangeAdd(totalCostRange, itemCost);
+      const quantityStr = packages > 0
+        ? `${packages} pack${packages > 1 ? "s" : ""} (${totalUnits} units)`
+        : "As needed / already owned";
+      return { item: sup.name, quantity: quantityStr, estimatedCost: itemCost };
+    });
 
   // Add a misc contingency buffer (5%)
   totalCostRange = [
@@ -1164,12 +1254,29 @@ export function calculatePlan(rawForm: PlannerFormData): FundraiserPlan {
     ));
   }
 
-  if (form.mealType === "custom") {
+  if (combo) {
     risks.push(buildRisk(
       "info",
-      "Custom meal calculations are rough estimates only. The app cannot calculate specific ingredients for a custom meal — use this plan for supplies and volunteer structure, and calculate your food quantities manually from your recipe.",
-      "Do a test cook of your recipe at 25–50% of the full batch size before the event. This reveals actual timing, portion sizes, and equipment needs at scale.",
+      `${meal.displayName} is a combo meal — the shopping list combines independent ingredient calculations for each component. Review each section carefully and adjust quantities if your crowd strongly prefers one item over the other.`,
+      "Plan cooking stations for each component separately. Assign at least one dedicated adult to each cooking area so neither component falls behind during service.",
     ));
+  } else if (form.mealType === "custom") {
+    const hasMenuDetails = (form.customMenuSides?.length ?? 0) > 0
+      || (form.customMenuDrinks?.length ?? 0) > 0
+      || (form.customMenuDesserts?.length ?? 0) > 0;
+    if (hasMenuDetails) {
+      risks.push(buildRisk(
+        "info",
+        "Shopping list items are estimates based on your menu selections. Quantities for custom meals are approximate — verify against your specific recipes before purchasing.",
+        "Do a test cook at 25–50% scale before the event to confirm portion sizes and timing. Adjust quantities from this estimate as needed.",
+      ));
+    } else {
+      risks.push(buildRisk(
+        "info",
+        "Custom meal calculations are rough estimates only. The app cannot calculate specific ingredients without menu details — use this plan for supplies and volunteer structure, and calculate your food quantities manually from your recipe.",
+        "Do a test cook of your recipe at 25–50% of the full batch size before the event. This reveals actual timing, portion sizes, and equipment needs at scale.",
+      ));
+    }
   }
 
   if (form.adultPercent + form.kidPercent !== 100) {

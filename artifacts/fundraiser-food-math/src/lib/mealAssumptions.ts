@@ -881,6 +881,32 @@ export const pancakeAssumptions: MealAssumption = {
 };
 
 // ============================================================
+// CHIPS (side dish — used in Burgers + Chips combo)
+// ============================================================
+export const chipsAssumption: MealAssumption = {
+  label: "chips" as string,
+  displayName: "Chips (side)",
+  adultServings: 1,
+  kidServings: 1,
+  wasteBuffer: 1.10,
+  cookingComplexity: "low",
+  ingredients: [
+    {
+      name: "Potato Chips (2-lb bulk bag)",
+      perServing: 0.05,     // ~1.3 oz chips per person; 2-lb bag covers ~24 guests
+      unit: "bag",
+      packageSize: 1,
+      packageUnit: "2-lb bag",
+      costPerPackage: [5.00, 9.00],
+      category: "other",
+    },
+  ],
+  supplies: [],   // supplies are inherited from the primary meal (burgers)
+  prepNotes: "Open bags and portion into serving bowls at the chip station. Set out before doors open.",
+  cookNote: "No cooking required. Keep chips sealed until just before service to maintain freshness.",
+};
+
+// ============================================================
 // CUSTOM (user-defined meal — limited calculation accuracy)
 // ============================================================
 export const customAssumptions: MealAssumption = {
@@ -903,6 +929,76 @@ export const customAssumptions: MealAssumption = {
 };
 
 // ============================================================
+// Combo meal stubs — metadata only; ingredients come from
+// constituent assumptions resolved at calculation time.
+// ============================================================
+
+const comboHotdogsPotatoesStub: MealAssumption = {
+  label: "combo_hotdogs_potatoes",
+  displayName: "Hot Dogs + Baked Potatoes",
+  adultServings: 1, kidServings: 1, wasteBuffer: 1.12,
+  cookingComplexity: "medium",
+  ingredients: [], supplies: [],
+  prepNotes: hotDogAssumptions.prepNotes + " | " + bakedPotatoAssumptions.prepNotes,
+  cookNote: hotDogAssumptions.cookNote + " | " + bakedPotatoAssumptions.cookNote,
+};
+
+const comboBurgersChipsStub: MealAssumption = {
+  label: "combo_burgers_chips",
+  displayName: "Burgers + Chips",
+  adultServings: 1, kidServings: 1, wasteBuffer: 1.10,
+  cookingComplexity: "medium",
+  ingredients: [], supplies: [],
+  prepNotes: burgerAssumptions.prepNotes + " | " + chipsAssumption.prepNotes,
+  cookNote: burgerAssumptions.cookNote,
+};
+
+const comboPancakesSausageStub: MealAssumption = {
+  label: "combo_pancakes_sausage",
+  displayName: "Pancakes + Sausage",
+  adultServings: pancakeAssumptions.adultServings,
+  kidServings: pancakeAssumptions.kidServings,
+  wasteBuffer: pancakeAssumptions.wasteBuffer,
+  cookingComplexity: "medium",
+  ingredients: [], supplies: [],
+  prepNotes: pancakeAssumptions.prepNotes,
+  cookNote: pancakeAssumptions.cookNote,
+};
+
+// ============================================================
+// Combo component definitions
+// Each combo lists its constituent base meal assumption objects.
+// The calculator runs each component independently and merges.
+// ============================================================
+export interface ComboComponent {
+  displayName: string;
+  cookingComplexity: "low" | "medium" | "high";
+  components: MealAssumption[];  // one or two base meal assumptions
+}
+
+export const COMBO_DEFINITIONS: Record<string, ComboComponent> = {
+  combo_hotdogs_potatoes: {
+    displayName: "Hot Dogs + Baked Potatoes",
+    cookingComplexity: "medium",
+    components: [hotDogAssumptions, bakedPotatoAssumptions],
+  },
+  combo_burgers_chips: {
+    displayName: "Burgers + Chips",
+    cookingComplexity: "medium",
+    components: [burgerAssumptions, chipsAssumption],
+  },
+  combo_pancakes_sausage: {
+    displayName: "Pancakes + Sausage",
+    cookingComplexity: "medium",
+    components: [pancakeAssumptions],
+  },
+};
+
+export function isComboMeal(mealType: string): boolean {
+  return mealType.startsWith("combo_");
+}
+
+// ============================================================
 // Map meal type keys to their assumption objects
 // ============================================================
 import type { MealType } from "./types";
@@ -916,4 +1012,8 @@ export const MEAL_ASSUMPTIONS: Record<MealType, MealAssumption> = {
   spaghetti: spaghettiAssumptions,
   pancakes: pancakeAssumptions,
   custom: customAssumptions,
+  // Combo stubs — used for metadata/display; ingredient calc uses COMBO_DEFINITIONS
+  combo_hotdogs_potatoes: comboHotdogsPotatoesStub,
+  combo_burgers_chips: comboBurgersChipsStub,
+  combo_pancakes_sausage: comboPancakesSausageStub,
 };
