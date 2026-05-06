@@ -1,93 +1,58 @@
 # Fundraiser Food Math
 
-## Overview
+A production-ready food fundraiser planning web app for churches, schools, sports teams, and nonprofits. Users fill out a short form and instantly get a shopping list, food quantity plan, prep timeline, volunteer plan, cost estimate, profit estimate, and printable event plan.
 
-A production-ready food fundraiser planning web app for churches, schools, sports teams, and nonprofits. Users fill out a short form and instantly get a shopping list, food quantity plan, prep timeline, volunteer role plan, cost estimate, profit estimate, and printable event plan.
+## Run & Operate
+
+- Workflow: `artifacts/fundraiser-food-math: web` — `pnpm --filter @workspace/fundraiser-food-math run dev`
+- `pnpm run typecheck` — full typecheck across all packages
+- `pnpm run build` — typecheck + build all packages
+- No env vars required for the frontend (Stripe links live in `src/config/paymentLinks.ts`)
 
 ## Stack
 
-- **Monorepo tool**: pnpm workspaces
-- **Node.js version**: 24
-- **Package manager**: pnpm
-- **TypeScript version**: 5.9
-- **Frontend framework**: React + Vite
-- **Routing**: Wouter
-- **Forms**: React Hook Form + Zod
-- **Styling**: Tailwind CSS v4 with custom CSS properties
-- **UI components**: shadcn/ui
+- pnpm workspaces monorepo · Node 24 · TypeScript 5.9
+- React 19 + Vite 7 · Wouter routing · React Hook Form + Zod · Tailwind CSS v4 · shadcn/ui
 
-## Artifact
+## Where things live
 
-- **fundraiser-food-math** — React + Vite frontend at `/` (port 19397)
-
-## Key Files
-
-### Core Logic (edit these to change how the app works)
-- `artifacts/fundraiser-food-math/src/lib/mealAssumptions.ts` — all meal types, ingredients, serving sizes, cost estimates, and supply lists. **Edit this to update any food assumptions.**
-- `artifacts/fundraiser-food-math/src/lib/calculator.ts` — core calculation engine (food quantities, shopping list, timeline, volunteer plan, profit estimate)
-- `artifacts/fundraiser-food-math/src/lib/types.ts` — TypeScript types for all data structures
-
-### Configuration
-- `artifacts/fundraiser-food-math/src/config/paymentLinks.ts` — **Replace placeholder URLs with your Stripe or Gumroad payment links.** Also controls pricing tier display labels and features.
-
-### Pages
-- `src/pages/LandingPage.tsx` — hero, how it works, pricing section, about
-- `src/pages/PlannerPage.tsx` — 3-step form wizard
-- `src/pages/ResultsPage.tsx` — full results with tabs (shopping, supplies, timeline, volunteers, email blurb)
+- `artifacts/fundraiser-food-math/src/lib/mealAssumptions.ts` — all meal assumptions, ingredients, serving sizes, costs. **Edit here to change food data.**
+- `artifacts/fundraiser-food-math/src/lib/calculator.ts` — core calculation engine
+- `artifacts/fundraiser-food-math/src/lib/types.ts` — all TypeScript types (`MealType`, `PlannerFormData`, etc.)
+- `artifacts/fundraiser-food-math/src/config/paymentLinks.ts` — Stripe/Gumroad payment link URLs
+- `src/pages/PlannerPage.tsx` — multi-step form wizard (4 steps for custom, 3 for all others)
+- `src/pages/ResultsPage.tsx` — full results with tabs
 - `src/pages/PrintPage.tsx` — print-friendly PDF layout
+- `src/index.css` — all CSS custom properties and utility classes
 
-### Styling
-- `artifacts/fundraiser-food-math/src/index.css` — all CSS custom properties (theme colors) and custom CSS classes
+## Architecture decisions
 
-## Key Commands
+- **Frontend-only** — all calculations run in the browser, no backend needed
+- **Meal type tiers**: Tier 1 = 7 known meals with full ingredient lists; Combo = two Tier 1 meals merged (independent two-pass calculation, not averaged); Tier 2 = "custom" meal that triggers a follow-up "Tell Us About Your Menu" step with checkbox-driven shopping list generation
+- **Combo calculation**: each combo component runs its own `computeIngredientResults()` pass (correct serving ratios per meal), then results are concatenated — never averaged or merged into a single assumption
+- **Unlock model**: free preview → paid Full Event Pack. Keys: `ffm_unlocked` (localStorage), `ffm_plan` (sessionStorage). Code `DEVINTEST` unlocks for 30 days
+- Print page reads `sessionStorage["ffm_plan"]` with a `localStorage` fallback via `getStoredPlan()`
 
-- `pnpm run typecheck` — full typecheck across all packages
-- `pnpm run build` — typecheck + build all packages
-- Workflow: `artifacts/fundraiser-food-math: web` — runs `pnpm --filter @workspace/fundraiser-food-math run dev`
+## Product
 
-## Monetization Flow
+- Free preview: event summary, revenue/cost/profit estimate, top 5 shopping items, risk warnings
+- Full Event Pack ($19): complete shopping list (grouped by category), supplies list, prep timeline, volunteer plan, email blurb, printable plan, Full Event Pack tabs
+- Meal selector: three-section card UI — Popular Combos (3), Individual Meals (7), Custom Meal (1)
+- Custom meal step 2 "Tell Us About Your Menu": sides, drinks, desserts, dietary checkboxes → drives shopping list estimates
 
-The app uses a free preview / paid full plan model — no accounts, no database, no subscriptions.
+## User preferences
 
-**Free preview includes:** event summary, revenue/cost/profit estimates, top 5 shopping items, risk warnings.
+- Volunteer terminology: "Adult Volunteer", "Parent Oversight", "Student Volunteer" — never "Parent Helper"
+- Do not change Stripe links, USE_STRIPE_TEST_MODE, or unlock behavior without explicit instruction
 
-**Full Event Pack ($19) includes:** complete shopping list, supplies list, prep timeline, volunteer plan, sign-up sheet, email blurb, printable plan.
+## Gotchas
 
-### Payment Links
-1. Open `src/config/paymentLinks.ts`
-2. Replace the URLs in the `PAYMENT_LINKS` object with your Stripe Payment Link or Gumroad product URLs
+- Combo types must be in both `MealType` (types.ts), `MEAL_ASSUMPTIONS` (stubs for type safety), and `COMBO_DEFINITIONS` (real ingredient logic)
+- `buildCustomMenuIngredients()` in calculator.ts uses `adultServings=1` from customAssumptions — perServing values are calibrated per-person
+- `buildVolunteerBriefing`, `buildSetupLayout`, `buildLeftoverPlan` fall back to `plans["custom"]` automatically for unknown/combo types — no extra handling needed
+- PlannerPage step flow: step 1 → step 2 (custom only) → step 3 → step 4; non-custom skips step 2 (1→3→4 internally, displayed as 1,2,3)
 
-### Demo Unlock
-- `ENABLE_DEMO_UNLOCK = true` in `paymentLinks.ts` shows a small "Demo: Unlock Full Plan" button on the results page
-- Clicking it stores `ffm_unlocked = "true"` in sessionStorage, granting access to the full plan locally
-- **Set `ENABLE_DEMO_UNLOCK = false` before going live**
+## Pointers
 
-### Unlock State
-- Stored in `localStorage` under key `ffm_unlocked`
-- Persists across tab close, reload, and Stripe redirect round-trips
-- The print page reads this key to decide whether to show the full plan or the locked message
-- `sessionStorage["ffm_plan"]` is used to pass plan data to the print page (same-session access), with a `localStorage` fallback via `getStoredPlan()`
-
-## Volunteer Terminology
-
-The app consistently uses:
-- "Adult Volunteer"
-- "Parent Oversight"
-- "Student Volunteer"
-
-Never use "Parent Helper" — this wording was intentionally excluded.
-
-## Meal Assumptions
-
-To add a new meal type:
-1. Add the meal key to the `MealType` union in `types.ts`
-2. Create a new `MealAssumption` object in `mealAssumptions.ts`
-3. Add it to the `MEAL_ASSUMPTIONS` map
-4. Add the display option to `PlannerPage.tsx`'s `MEAL_TYPES` array
-
-## Architecture Notes
-
-- This is a frontend-only app — all calculations happen in the browser (no backend needed)
-- No database, no user accounts (by design for v1)
-- Print page uses `sessionStorage` to pass plan data from the results page
-- Navigation uses `window.location.href` for simplicity (no complex routing state needed)
+- Adding a new Tier 1 meal: add key to `MealType`, create `MealAssumption`, add to `MEAL_ASSUMPTIONS`, add card option to `INDIVIDUAL_OPTIONS` in PlannerPage
+- Adding a new combo: add key to `MealType`, add stub to `MEAL_ASSUMPTIONS`, add entry to `COMBO_DEFINITIONS` with component assumptions
