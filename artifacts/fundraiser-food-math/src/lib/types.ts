@@ -14,7 +14,7 @@ export type MealType =
   // ── Combo meals ───────────────────────────────────────────
   | "combo_hotdogs_potatoes"   // Hot Dogs + Baked Potatoes
   | "combo_burgers_chips"      // Burgers + Chips
-  | "combo_pancakes_sausage";  // Pancakes + Sausage (sausage already in pancakes — presented as explicit combo)
+  | "combo_pancakes_sausage";  // Pancakes + Sausage
 
 export type OrgType =
   | "Church"
@@ -32,6 +32,8 @@ export type StorePreference =
   | "Local Grocery"
   | "Mixed";
 
+export type PricingModel = "flat" | "split";
+
 export interface PlannerFormData {
   eventName: string;
   orgType: OrgType;
@@ -47,6 +49,16 @@ export interface PlannerFormData {
   adultVolunteers: number;
   studentVolunteers: number;
   notes: string;
+  // ── Pricing model (Fix 1) ─────────────────────────────────
+  pricingModel?: PricingModel;     // "flat" = single price (default), "split" = individual+family
+  individualPrice?: number;         // $ per individual attendee
+  familyPrice?: number;             // $ per family group of ~4
+  individualPercent?: number;       // % of attendance who are individuals (default 40)
+  donationRate?: number;            // % of attendees who actually pay (default 75)
+  // ── Attendance range mode ─────────────────────────────────
+  attendanceMode?: "exact" | "estimate";
+  attendanceLow?: number;
+  attendanceHigh?: number;
   // ── Custom meal (Tier 1 free-text) ───────────────────────
   customMealName?: string;
   customServingSize?: string;
@@ -57,6 +69,9 @@ export interface PlannerFormData {
   customMenuDrinks?: string[];   // e.g. ["water", "lemonade", "coffee", "soda", "none"]
   customMenuDesserts?: string[]; // e.g. ["cookies", "brownies", "cake", "none"]
   customMenuDietary?: string[];  // e.g. ["vegetarian", "glutenFree", "nutAllergy"]
+  // ── Customize Your Menu (item selection + custom prices) ──
+  excludedItems?: string[];                     // names of items the user has unchecked
+  customItemPrices?: Record<string, number>;    // item name → custom price per package
 }
 
 export interface ShoppingItem {
@@ -159,7 +174,15 @@ export interface FundraiserPlan {
   suppliesList: SupplyItem[];
   costRange: [number, number];
   estimatedRevenue: number;
+  revenueConservative?: number;   // for split pricing model
+  revenueGenerous?: number;        // for split pricing model
   estimatedProfit: [number, number];
+  // Attendance range / scenario bundle (T002)
+  scenarioBundle?: {
+    conservative: { attendance: number; estimatedRevenue: number; costRange: [number, number]; estimatedProfit: [number, number] };
+    expected:     { attendance: number; estimatedRevenue: number; costRange: [number, number]; estimatedProfit: [number, number] };
+    generous:     { attendance: number; estimatedRevenue: number; costRange: [number, number]; estimatedProfit: [number, number] };
+  };
   prepTimeline: PrepStep[];
   volunteerPlan: VolunteerRole[];
   riskWarnings: RiskWarning[];

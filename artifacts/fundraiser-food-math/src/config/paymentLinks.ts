@@ -21,10 +21,13 @@
 //  [ ] Set USE_STRIPE_TEST_MODE = false before going live
 //  [ ] In your Stripe Payment Link settings:
 //        After payment → Confirmation page → Redirect to your website
-//        URL: https://[your-domain]/success?unlock=full-event-pack
+//        URL: https://fundraiser-planner.replit.app/success?unlock=full-event-pack
 //      Or in Gumroad:
-//        Product settings → Redirect URL → https://[your-domain]/success?unlock=full-event-pack
+//        Product settings → Redirect URL → https://fundraiser-planner.replit.app/success?unlock=full-event-pack
 //  [ ] Test a full purchase flow in the same browser tab before launch
+//
+//  Published app URL: https://fundraiser-planner.replit.app
+//  Success redirect:  https://fundraiser-planner.replit.app/success?unlock=full-event-pack
 // ============================================================
 
 // ============================================================
@@ -67,7 +70,8 @@ export const PAYMENT_LINKS = {
   //
   // POST-PAYMENT REDIRECT SETUP (both test and live links):
   // Stripe: Dashboard → Payment Links → [your link] → After payment → Confirmation page
-  //   → Set to "Redirect to your website" → URL: https://[your-domain]/success?unlock=full-event-pack
+  //   → Set to "Redirect to your website"
+  //   → URL: https://fundraiser-planner.replit.app/success?unlock=full-event-pack
   fullEventPack: USE_STRIPE_TEST_MODE ? TEST_FULL_EVENT_PACK_LINK : LIVE_FULL_EVENT_PACK_LINK,
 
   // $49 Custom Plan — replace with your Stripe/Gumroad link or calendar booking link

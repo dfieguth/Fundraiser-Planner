@@ -39,6 +39,10 @@ A production-ready food fundraiser planning web app for churches, schools, sport
 - Full Event Pack ($19): complete shopping list (grouped by category), supplies list, prep timeline, volunteer plan, email blurb, printable plan, Full Event Pack tabs
 - Meal selector: three-section card UI — Popular Combos (3), Individual Meals (7), Custom Meal (1)
 - Custom meal step 2 "Tell Us About Your Menu": sides, drinks, desserts, dietary checkboxes → drives shopping list estimates
+- **Customize Your Menu** step (between planner and results): checklist of every ingredient/supply with per-item price override and include/exclude toggles → `excludedItems` + `customItemPrices` on form
+- **Pricing model**: flat (default) or individual+family split with conservative/expected/generous revenue range
+- **Attendance range mode**: "Estimate Range" toggle shows low/high inputs; calculator auto-syncs attendance to midpoint; results show ScenarioCompare table for all 3 attendance levels
+- **Canva Ad Brief**: button on results page generates a copyable event brief with headline options, body copy, and Canva design guidance
 
 ## User preferences
 
@@ -51,6 +55,9 @@ A production-ready food fundraiser planning web app for churches, schools, sport
 - `buildCustomMenuIngredients()` in calculator.ts uses `adultServings=1` from customAssumptions — perServing values are calibrated per-person
 - `buildVolunteerBriefing`, `buildSetupLayout`, `buildLeftoverPlan` fall back to `plans["custom"]` automatically for unknown/combo types — no extra handling needed
 - PlannerPage step flow: step 1 → step 2 (custom only) → step 3 → step 4; non-custom skips step 2 (1→3→4 internally, displayed as 1,2,3)
+- `computeIngredientResults()` MUST stay at module scope (not nested inside `calculatePlan`) — nesting caused a Vite ES module closure bug where combo branches returned empty arrays
+- App flow is Planner → CustomizeMenuPage → Results (3 pages); calculatePlan() is called in App.tsx `handleCustomizeConfirm`, not in PlannerPage
+- `usageRate` on IngredientDef reduces quantities for toppings/condiments (e.g. 0.5 = only 50% of guests use it); `cookingOnly` marks batch-style ingredients not counted per-guest
 
 ## Pointers
 

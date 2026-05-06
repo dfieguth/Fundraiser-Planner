@@ -3,7 +3,6 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import type { PlannerFormData, MealType, OrgType, StorePreference } from "@/lib/types";
-import { calculatePlan } from "@/lib/calculator";
 import { SAMPLE_TEMPLATES } from "@/lib/sampleTemplates";
 import { Link } from "wouter";
 import { ArrowLeft, ArrowRight, Check, X } from "lucide-react";
@@ -40,6 +39,16 @@ const schema = z.object({
   customMenuDrinks: z.array(z.string()).optional(),
   customMenuDesserts: z.array(z.string()).optional(),
   customMenuDietary: z.array(z.string()).optional(),
+  // Pricing model
+  pricingModel: z.enum(["flat", "split"]).optional(),
+  individualPrice: z.coerce.number().min(0.5).optional(),
+  familyPrice: z.coerce.number().min(1).optional(),
+  individualPercent: z.coerce.number().min(0).max(100).optional(),
+  donationRate: z.coerce.number().min(0).max(100).optional(),
+  // Attendance range mode
+  attendanceMode: z.enum(["exact", "estimate"]).optional(),
+  attendanceLow: z.coerce.number().min(10).max(5000).optional(),
+  attendanceHigh: z.coerce.number().min(10).max(5000).optional(),
 });
 
 // ── Meal option groups ────────────────────────────────────────
@@ -123,10 +132,18 @@ const DEFAULT_VALUES: PlannerFormData = {
   customMenuDrinks: [],
   customMenuDesserts: [],
   customMenuDietary: [],
+  pricingModel: "flat",
+  individualPrice: 5,
+  familyPrice: 15,
+  individualPercent: 40,
+  donationRate: 75,
+  attendanceMode: "exact",
+  attendanceLow: 80,
+  attendanceHigh: 120,
 };
 
 interface PlannerPageProps {
-  onPlanReady: (plan: ReturnType<typeof calculatePlan>, form: PlannerFormData) => void;
+  onPlanReady: (form: PlannerFormData) => void;
 }
 
 // ── Checkbox toggle helper ────────────────────────────────────
@@ -192,9 +209,11 @@ export default function PlannerPage({ onPlanReady }: PlannerPageProps) {
     setActiveTemplateId(null);
   };
 
+  const pricingModel = form.watch("pricingModel");
+  const attendanceMode = form.watch("attendanceMode");
+
   const onSubmit = (data: PlannerFormData) => {
-    const plan = calculatePlan(data);
-    onPlanReady(plan, data);
+    onPlanReady(data);
   };
 
   const handleNext = async () => {
@@ -444,47 +463,182 @@ export default function PlannerPage({ onPlanReady }: PlannerPageProps) {
                 )}
               />
 
-              <div className="field-row">
-                <FormField
-                  control={form.control}
-                  name="attendance"
-                  render={({ field }) => (
-                    <FormItem className="field-group">
-                      <FormLabel className="field-label">Expected Attendance *</FormLabel>
-                      <FormControl>
-                        <Input
-                          className="field-input"
-                          type="number"
-                          min={10}
-                          max={5000}
-                          {...field}
-                          data-testid="input-attendance"
-                        />
-                      </FormControl>
-                      <FormMessage className="field-error" />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="mealPrice"
-                  render={({ field }) => (
-                    <FormItem className="field-group">
-                      <FormLabel className="field-label">Suggested Donation / Meal Price ($) *</FormLabel>
-                      <FormControl>
-                        <Input
-                          className="field-input"
-                          type="number"
-                          step="0.50"
-                          min={0.5}
-                          {...field}
-                          data-testid="input-meal-price"
-                        />
-                      </FormControl>
-                      <FormMessage className="field-error" />
-                    </FormItem>
-                  )}
-                />
+              {/* ── Attendance ─────────────────────────────────── */}
+              <div className="field-group">
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
+                  <p className="field-label" style={{ margin: 0 }}>
+                    {attendanceMode === "estimate" ? "Attendance Range *" : "Expected Attendance *"}
+                  </p>
+                  <div style={{ display: "flex", gap: 6 }}>
+                    {(["exact", "estimate"] as const).map((mode) => (
+                      <button
+                        key={mode}
+                        type="button"
+                        onClick={() => form.setValue("attendanceMode", mode)}
+                        style={{
+                          padding: "3px 10px",
+                          borderRadius: 16,
+                          fontSize: 11,
+                          fontWeight: 600,
+                          border: `1.5px solid ${attendanceMode === mode ? "var(--color-primary)" : "var(--color-border)"}`,
+                          background: attendanceMode === mode ? "var(--color-primary)" : "transparent",
+                          color: attendanceMode === mode ? "white" : "var(--color-text-muted)",
+                          cursor: "pointer",
+                          transition: "all 0.1s",
+                          letterSpacing: "0.03em",
+                        }}
+                        data-testid={`attendance-mode-${mode}`}
+                      >
+                        {mode === "exact" ? "Exact" : "Estimate Range"}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {attendanceMode === "estimate" ? (
+                  <>
+                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+                      <FormField control={form.control} name="attendanceLow" render={({ field }) => (
+                        <FormItem style={{ margin: 0 }}>
+                          <FormLabel className="field-label">Minimum guests</FormLabel>
+                          <FormControl>
+                            <Input className="field-input" type="number" min={10} max={5000} {...field} data-testid="input-attendance-low" />
+                          </FormControl>
+                        </FormItem>
+                      )} />
+                      <FormField control={form.control} name="attendanceHigh" render={({ field }) => (
+                        <FormItem style={{ margin: 0 }}>
+                          <FormLabel className="field-label">Maximum guests</FormLabel>
+                          <FormControl>
+                            <Input className="field-input" type="number" min={10} max={5000} {...field} data-testid="input-attendance-high" />
+                          </FormControl>
+                        </FormItem>
+                      )} />
+                    </div>
+                    <p className="field-hint">
+                      Food quantities use the midpoint. Results show a conservative / expected / generous scenario breakdown.
+                    </p>
+                    {/* Keep attendance synced to midpoint for the underlying calculation */}
+                    {(() => {
+                      const low = Number(form.watch("attendanceLow") ?? 80);
+                      const high = Number(form.watch("attendanceHigh") ?? 120);
+                      const mid = Math.round((low + high) / 2);
+                      if (form.getValues("attendance") !== mid) form.setValue("attendance", mid);
+                      return null;
+                    })()}
+                  </>
+                ) : (
+                  <FormField
+                    control={form.control}
+                    name="attendance"
+                    render={({ field }) => (
+                      <FormItem style={{ margin: 0 }}>
+                        <FormControl>
+                          <Input
+                            className="field-input"
+                            type="number"
+                            min={10}
+                            max={5000}
+                            {...field}
+                            data-testid="input-attendance"
+                          />
+                        </FormControl>
+                        <FormMessage className="field-error" />
+                      </FormItem>
+                    )}
+                  />
+                )}
+              </div>
+
+              <FormField
+                control={form.control}
+                name="mealPrice"
+                render={({ field }) => (
+                  <FormItem className="field-group">
+                    <FormLabel className="field-label">
+                      {pricingModel === "split" ? "Base Price per Person ($) *" : "Suggested Donation / Meal Price ($) *"}
+                    </FormLabel>
+                    <FormControl>
+                      <Input
+                        className="field-input"
+                        type="number"
+                        step="0.50"
+                        min={0.5}
+                        {...field}
+                        data-testid="input-meal-price"
+                      />
+                    </FormControl>
+                    <FormMessage className="field-error" />
+                  </FormItem>
+                )}
+              />
+
+              {/* ── Pricing Model ──────────────────────────────── */}
+              <div className="field-group" data-testid="pricing-model-section">
+                <p className="field-label">Pricing Model</p>
+                <div style={{ display: "flex", gap: 10, marginBottom: 10 }}>
+                  {(["flat", "split"] as const).map((model) => (
+                    <button
+                      key={model}
+                      type="button"
+                      onClick={() => form.setValue("pricingModel", model)}
+                      className={pricingModel === model ? "meal-card meal-card--active" : "meal-card"}
+                      style={{ flex: 1, padding: "10px 14px", minHeight: "unset" }}
+                      data-testid={`pricing-model-${model}`}
+                    >
+                      <span className="meal-card-label">
+                        {model === "flat" ? "Flat Price" : "Individual + Family"}
+                      </span>
+                      <span className="meal-card-desc" style={{ fontSize: 12 }}>
+                        {model === "flat"
+                          ? "Single price for everyone"
+                          : "Different rates for individuals vs. families"}
+                      </span>
+                    </button>
+                  ))}
+                </div>
+
+                {pricingModel === "split" && (
+                  <div style={{ display: "flex", flexDirection: "column", gap: 10, padding: "14px", background: "var(--color-bg-card)", borderRadius: 8, border: "1px solid var(--color-border)" }}>
+                    <p style={{ fontSize: 13, color: "var(--color-text-muted)", marginBottom: 2 }}>
+                      Revenue is shown as a range based on 60% (conservative), your target %, and 90% (generous) actual donation rates — because not every guest pays full price.
+                    </p>
+                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+                      <FormField control={form.control} name="individualPrice" render={({ field }) => (
+                        <FormItem className="field-group" style={{ margin: 0 }}>
+                          <FormLabel className="field-label">Individual Price ($)</FormLabel>
+                          <FormControl>
+                            <Input className="field-input" type="number" step="0.50" min={0.5} {...field} data-testid="input-individual-price" />
+                          </FormControl>
+                        </FormItem>
+                      )} />
+                      <FormField control={form.control} name="familyPrice" render={({ field }) => (
+                        <FormItem className="field-group" style={{ margin: 0 }}>
+                          <FormLabel className="field-label">Family Price ($, ~4 people)</FormLabel>
+                          <FormControl>
+                            <Input className="field-input" type="number" step="0.50" min={1} {...field} data-testid="input-family-price" />
+                          </FormControl>
+                        </FormItem>
+                      )} />
+                      <FormField control={form.control} name="individualPercent" render={({ field }) => (
+                        <FormItem className="field-group" style={{ margin: 0 }}>
+                          <FormLabel className="field-label">% attending as individuals</FormLabel>
+                          <FormControl>
+                            <Input className="field-input" type="number" min={0} max={100} {...field} data-testid="input-individual-percent" />
+                          </FormControl>
+                        </FormItem>
+                      )} />
+                      <FormField control={form.control} name="donationRate" render={({ field }) => (
+                        <FormItem className="field-group" style={{ margin: 0 }}>
+                          <FormLabel className="field-label">Expected donation rate (%)</FormLabel>
+                          <FormControl>
+                            <Input className="field-input" type="number" min={0} max={100} {...field} data-testid="input-donation-rate" />
+                          </FormControl>
+                        </FormItem>
+                      )} />
+                    </div>
+                  </div>
+                )}
               </div>
 
               <div className="field-row mb-2">

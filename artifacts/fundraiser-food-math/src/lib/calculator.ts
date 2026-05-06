@@ -883,6 +883,78 @@ function buildCustomMenuIngredients(form: PlannerFormData): IngredientDef[] {
   return ingredients;
 }
 
+// ── Ingredient calculator (module-level — fixes combo closure bug) ──────────
+// IMPORTANT: This function MUST remain at module scope, not nested inside
+// calculatePlan. Nesting it causes a subtle closure/hoisting issue in Vite
+// ES module strict mode where combo branch returns empty ingredient arrays.
+function computeIngredientResults(
+  component: MealAssumption,
+  adults: number,
+  kids: number,
+  excludedItems?: string[],
+  customItemPrices?: Record<string, number>,
+): {
+  foodQuantities: FundraiserPlan["foodQuantities"];
+  shoppingItems: ShoppingItem[];
+  cost: [number, number];
+} {
+  const servings = Math.ceil(
+    (adults * component.adultServings + kids * component.kidServings) * component.wasteBuffer
+  );
+  const activeIngredients = component.ingredients.filter(
+    (ing) => !excludedItems?.includes(ing.name)
+  );
+
+  let cost: [number, number] = [0, 0];
+  const foodQuantities: FundraiserPlan["foodQuantities"] = [];
+  const shoppingItems: ShoppingItem[] = [];
+
+  for (const ing of activeIngredients) {
+    // FIX 2: Apply usage rate — not every guest uses every topping/condiment
+    const effectivePerServing = ing.perServing * (ing.usageRate ?? 1.0);
+    const rawTotal = servings * effectivePerServing;
+    const packages = ceilToPackage(rawTotal, ing.packageSize);
+    const totalUnits = packages * ing.packageSize;
+
+    // FIX 5: Use custom price if user entered one, otherwise use default range
+    const costRange: [number, number] = customItemPrices?.[ing.name] !== undefined
+      ? [customItemPrices[ing.name], customItemPrices[ing.name]]
+      : ing.costPerPackage;
+    const itemCost: [number, number] = [
+      packages * costRange[0],
+      packages * costRange[1],
+    ];
+    cost = rangeAdd(cost, itemCost);
+
+    const neededDisplay = rawTotal < 1
+      ? `~${rawTotal.toFixed(2)} ${ing.unit}s`
+      : `~${Math.ceil(rawTotal)} ${ing.unit}s`;
+
+    const usageNote = (ing.usageRate !== undefined && ing.usageRate < 1.0)
+      ? `~${Math.round(ing.usageRate * 100)}% of guests typically use this`
+      : undefined;
+    const cookingNote = ing.cookingOnly
+      ? "Cooking ingredient — calculated by batch, not per guest"
+      : undefined;
+    const note = cookingNote ?? usageNote ?? (ing.category === "condiment" ? "Estimate — adjust for your crowd" : undefined);
+
+    foodQuantities.push({
+      ingredient: ing.name,
+      quantity: `${packages} × ${ing.packageUnit} (need ${neededDisplay}, buying ${totalUnits})`,
+      notes: note,
+    });
+    shoppingItems.push({
+      item: ing.name,
+      quantity: `${packages} × ${ing.packageUnit}  (${Math.ceil(rawTotal)} ${ing.unit}s needed → ${totalUnits} buying)`,
+      estimatedCost: itemCost,
+      notes: cookingNote ?? usageNote ?? (ing.category === "condiment" ? "May have leftovers — saves money at your next event" : undefined),
+      category: ing.category,
+    });
+  }
+
+  return { foodQuantities, shoppingItems, cost };
+}
+
 // ── Main Calculator ───────────────────────────────────────────
 
 export function calculatePlan(rawForm: PlannerFormData): FundraiserPlan {
@@ -913,54 +985,6 @@ export function calculatePlan(rawForm: PlannerFormData): FundraiserPlan {
   const kids = form.attendance - adults;
   const kidPercent = form.attendance > 0 ? Math.round((kids / form.attendance) * 100) : 0;
 
-  // ── Ingredient calculator for a single meal component ─────
-  function computeIngredientResults(component: MealAssumption): {
-    foodQuantities: FundraiserPlan["foodQuantities"];
-    shoppingItems: ShoppingItem[];
-    cost: [number, number];
-  } {
-    const servings = Math.ceil(
-      (adults * component.adultServings + kids * component.kidServings) * component.wasteBuffer
-    );
-    const foodQuantities: FundraiserPlan["foodQuantities"] = component.ingredients.map((ing) => {
-      const rawTotal = servings * ing.perServing;
-      const packages = ceilToPackage(rawTotal, ing.packageSize);
-      const totalUnits = packages * ing.packageSize;
-      const neededDisplay = rawTotal < 1
-        ? `~${rawTotal.toFixed(2)} ${ing.unit}s`
-        : `~${Math.ceil(rawTotal)} ${ing.unit}s`;
-      return {
-        ingredient: ing.name,
-        quantity: `${packages} × ${ing.packageUnit} (need ${neededDisplay}, buying ${totalUnits})`,
-        notes: ing.category === "condiment"
-          ? "Estimate — adjust based on your crowd's preferences"
-          : undefined,
-      };
-    });
-    let cost: [number, number] = [0, 0];
-    const shoppingItems: ShoppingItem[] = component.ingredients.map((ing) => {
-      const rawTotal = servings * ing.perServing;
-      const packages = ceilToPackage(rawTotal, ing.packageSize);
-      const totalUnits = packages * ing.packageSize;
-      const itemCost: [number, number] = [
-        packages * ing.costPerPackage[0],
-        packages * ing.costPerPackage[1],
-      ];
-      cost = rangeAdd(cost, itemCost);
-      const neededRaw = Math.ceil(rawTotal);
-      return {
-        item: ing.name,
-        quantity: `${packages} × ${ing.packageUnit}  (${neededRaw} ${ing.unit}s needed → ${totalUnits} buying)`,
-        estimatedCost: itemCost,
-        notes: ing.category === "condiment"
-          ? "May have leftovers — saves money at your next event"
-          : undefined,
-        category: ing.category,
-      };
-    });
-    return { foodQuantities, shoppingItems, cost };
-  }
-
   // ── Food Quantities + Shopping List ───────────────────────
   let totalCostRange: [number, number] = [0, 0];
   let foodQuantities: FundraiserPlan["foodQuantities"] = [];
@@ -969,7 +993,7 @@ export function calculatePlan(rawForm: PlannerFormData): FundraiserPlan {
   if (combo) {
     // Combo: compute each component independently and merge
     for (const component of combo.components) {
-      const r = computeIngredientResults(component);
+      const r = computeIngredientResults(component, adults, kids, form.excludedItems, form.customItemPrices);
       foodQuantities = foodQuantities.concat(r.foodQuantities);
       shoppingList = shoppingList.concat(r.shoppingItems);
       totalCostRange = rangeAdd(totalCostRange, r.cost);
@@ -980,12 +1004,12 @@ export function calculatePlan(rawForm: PlannerFormData): FundraiserPlan {
     const r = computeIngredientResults({
       ...meal,
       ingredients: customIngredients,
-    });
+    }, adults, kids, form.excludedItems, form.customItemPrices);
     foodQuantities = r.foodQuantities;
     shoppingList = r.shoppingItems;
     totalCostRange = rangeAdd(totalCostRange, r.cost);
   } else {
-    const r = computeIngredientResults(meal);
+    const r = computeIngredientResults(meal, adults, kids, form.excludedItems, form.customItemPrices);
     foodQuantities = r.foodQuantities;
     shoppingList = r.shoppingItems;
     totalCostRange = rangeAdd(totalCostRange, r.cost);
@@ -997,6 +1021,8 @@ export function calculatePlan(rawForm: PlannerFormData): FundraiserPlan {
   const seenSupplyNames = new Set<string>();
   const suppliesList: SupplyItem[] = supplySource.supplies
     .filter((sup) => {
+      // FIX 4: Respect user's item selections from CustomizeMenuPage
+      if (form.excludedItems?.includes(sup.name)) return false;
       if (seenSupplyNames.has(sup.name)) return false;
       seenSupplyNames.add(sup.name);
       return true;
@@ -1005,8 +1031,12 @@ export function calculatePlan(rawForm: PlannerFormData): FundraiserPlan {
       const rawTotal = form.attendance * sup.perPerson;
       const packages = sup.packageSize > 0 ? ceilToPackage(rawTotal, sup.packageSize) : 0;
       const totalUnits = packages * sup.packageSize;
+      // FIX 5: Use custom price if user entered one
+      const supCost: [number, number] = form.customItemPrices?.[sup.name] !== undefined
+        ? [form.customItemPrices[sup.name], form.customItemPrices[sup.name]]
+        : sup.costPerPackage;
       const itemCost: [number, number] = packages > 0
-        ? [packages * sup.costPerPackage[0], packages * sup.costPerPackage[1]]
+        ? [packages * supCost[0], packages * supCost[1]]
         : [0, 0];
       totalCostRange = rangeAdd(totalCostRange, itemCost);
       const quantityStr = packages > 0
@@ -1022,7 +1052,26 @@ export function calculatePlan(rawForm: PlannerFormData): FundraiserPlan {
   ];
 
   // ── Revenue & Profit ──────────────────────────────────────
-  const estimatedRevenue = Math.round(form.attendance * form.mealPrice);
+  // FIX 1: Support split pricing model (individual + family pricing with range)
+  let estimatedRevenue: number;
+  let revenueConservative: number | undefined;
+  let revenueGenerous: number | undefined;
+
+  if (form.pricingModel === "split") {
+    const indPct = Math.max(0, Math.min(100, form.individualPercent ?? 40));
+    const individuals = Math.round(form.attendance * (indPct / 100));
+    const familyGroupCount = Math.ceil((form.attendance - individuals) / 4);
+    const indPrice = form.individualPrice ?? form.mealPrice;
+    const famPrice = form.familyPrice ?? (form.mealPrice * 4);
+    const calcRevenue = (rate: number) =>
+      Math.round((individuals * indPrice + familyGroupCount * famPrice) * rate);
+    revenueConservative = calcRevenue(0.60);
+    estimatedRevenue    = calcRevenue((form.donationRate ?? 75) / 100);
+    revenueGenerous     = calcRevenue(0.90);
+  } else {
+    estimatedRevenue = Math.round(form.attendance * form.mealPrice);
+  }
+
   const estimatedProfit: [number, number] = [
     estimatedRevenue - totalCostRange[1],
     estimatedRevenue - totalCostRange[0],
@@ -1317,6 +1366,35 @@ Reply to this message to let us know you can help, or sign up using the link bel
 
 Thank you for supporting ${form.eventName}!`.trim();
 
+  // ── Scenario Bundle (attendance range mode) ────────────────
+  let scenarioBundle: FundraiserPlan["scenarioBundle"];
+  if (form.attendanceMode === "estimate" && form.attendanceLow && form.attendanceHigh) {
+    const low  = Math.max(10, Math.min(form.attendanceLow, form.attendanceHigh));
+    const high = Math.max(low, Math.max(form.attendanceLow, form.attendanceHigh));
+    const mid  = Math.round((low + high) / 2);
+    const base = Math.max(form.attendance, 1);
+
+    const buildScenario = (n: number) => {
+      const scale = n / base;
+      const scenCost: [number, number] = [
+        Math.round(totalCostRange[0] * scale),
+        Math.round(totalCostRange[1] * scale),
+      ];
+      const scenRevenue = Math.round(n * form.mealPrice);
+      const scenProfit: [number, number] = [
+        scenRevenue - scenCost[1],
+        scenRevenue - scenCost[0],
+      ];
+      return { attendance: n, estimatedRevenue: scenRevenue, costRange: scenCost, estimatedProfit: scenProfit };
+    };
+
+    scenarioBundle = {
+      conservative: buildScenario(low),
+      expected:     buildScenario(mid),
+      generous:     buildScenario(high),
+    };
+  }
+
   // ── Full Event Pack sections ──────────────────────────────
   const strategySummary = buildStrategySummary(form);
   const profitStrategy = buildProfitStrategy(form, totalCostRange, estimatedProfit);
@@ -1344,7 +1422,10 @@ Thank you for supporting ${form.eventName}!`.trim();
     suppliesList,
     costRange: totalCostRange,
     estimatedRevenue,
+    revenueConservative,
+    revenueGenerous,
     estimatedProfit,
+    scenarioBundle,
     prepTimeline,
     volunteerPlan,
     riskWarnings,

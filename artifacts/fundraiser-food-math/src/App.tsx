@@ -5,13 +5,14 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import LandingPage from "@/pages/LandingPage";
 import PlannerPage from "@/pages/PlannerPage";
+import CustomizeMenuPage from "@/pages/CustomizeMenuPage";
 import ResultsPage from "@/pages/ResultsPage";
 import PrintPage from "@/pages/PrintPage";
 import SuccessPage from "@/pages/SuccessPage";
 import IdeaFinderPage from "@/pages/IdeaFinderPage";
 import NotFound from "@/pages/not-found";
 import type { FundraiserPlan, PlannerFormData } from "@/lib/types";
-import type { calculatePlan } from "@/lib/calculator";
+import { calculatePlan } from "@/lib/calculator";
 import { getStoredPlan, savePlanBeforePayment } from "@/lib/unlock";
 import { USE_STRIPE_TEST_MODE } from "@/config/paymentLinks";
 
@@ -20,6 +21,7 @@ const queryClient = new QueryClient();
 function AppRoutes() {
   const [plan, setPlan] = useState<FundraiserPlan | null>(null);
   const [formData, setFormData] = useState<PlannerFormData | null>(null);
+  const [pendingForm, setPendingForm] = useState<PlannerFormData | null>(null);
   const [, setLocation] = useLocation();
 
   // On mount, restore plan from localStorage so returning users (e.g. after a
@@ -33,23 +35,32 @@ function AppRoutes() {
         setFormData(saved.formData);
       }
     }
-  }, []);
+  }, []);  // eslint-disable-line react-hooks/exhaustive-deps
 
-  const handlePlanReady = (newPlan: ReturnType<typeof calculatePlan>, form: PlannerFormData) => {
-    // Persist to localStorage so the plan survives a browser refresh of /results
-    // and the Stripe redirect round-trip (page reload → useEffect restore).
+  // Step 1: PlannerPage submits form → navigate to Customize Your Menu
+  const handlePlanReady = (form: PlannerFormData) => {
+    setPendingForm(form);
+    setLocation("/customize");
+  };
+
+  // Step 2: CustomizeMenuPage confirms → run calculation → navigate to results
+  const handleCustomizeConfirm = (form: PlannerFormData) => {
+    const newPlan = calculatePlan(form);
     savePlanBeforePayment(newPlan, form);
-    // Update state first, then navigate client-side so the React component tree
-    // stays mounted and the /results route sees the new plan immediately —
-    // no full-page reload, no race between render and useEffect restore.
     setPlan(newPlan);
     setFormData(form);
     setLocation("/results");
   };
 
+  // Back from customize → back to planner
+  const handleCustomizeBack = () => {
+    setLocation("/planner");
+  };
+
   const handleReset = () => {
     setPlan(null);
     setFormData(null);
+    setPendingForm(null);
     setLocation("/planner");
   };
 
@@ -58,6 +69,24 @@ function AppRoutes() {
       <Route path="/" component={LandingPage} />
       <Route path="/planner">
         {() => <PlannerPage onPlanReady={handlePlanReady} />}
+      </Route>
+      <Route path="/customize">
+        {() =>
+          pendingForm ? (
+            <CustomizeMenuPage
+              form={pendingForm}
+              onConfirm={handleCustomizeConfirm}
+              onBack={handleCustomizeBack}
+            />
+          ) : (
+            <div className="empty-state">
+              <h2>No form data found.</h2>
+              <p>
+                Please <a href="/planner">start from the planner</a> to build your plan.
+              </p>
+            </div>
+          )
+        }
       </Route>
       <Route path="/results">
         {() =>
