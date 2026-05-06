@@ -1,0 +1,70 @@
+There are several critical fixes needed across the entire app. Apply these to every meal type, not just baked potatoes.
+
+FIX 1 - MIXED PRICING MODEL:
+Replace the single "suggested donation" field with a pricing model selector:
+- Option A: Single flat price (current behavior)
+- Option B: Individual vs Family pricing
+  - Individual price field (example: $5 per person)
+  - Family price field (example: $15 per family, default family size: 4)
+  - Expected attendance split: what percentage are individuals vs families (default 40% individual, 60% family groups)
+  - Donation conversion rate: what percentage of guests actually donate (default 75%)
+
+When Option B is selected, calculate revenue as:
+(individual attendees x individual price x conversion rate) + (family groups x family price x conversion rate)
+
+Show the revenue as a range: conservative (60% conversion), expected (75% conversion), generous (90% conversion).
+
+Never assume 100% of attendees pay full price. Always show a realistic range.
+
+FIX 2 - TOPPING USAGE RATES:
+Never assume 100% topping usage. Apply these default usage rates to all topping-based meals:
+- Butter: 85% of guests
+- Sour Cream: 65% of guests
+- Shredded Cheese: 70% of guests
+- Bacon Bits: 55% of guests
+- Chives or Green Onions: 35% of guests
+- Broccoli optional topping: 20% of guests
+- Hot sauce or salsa: 45% of guests
+- Condiments like ketchup and mustard: 70% of guests
+
+Recalculate all topping quantities using these rates, not 100% of attendance.
+
+FIX 3 - COOKING SUPPLIES VS SERVING SUPPLIES:
+Separate cooking ingredients from serving toppings in the shopping list and quantity math.
+
+Olive oil and kosher salt for baked potatoes are COOKING ingredients used in preparation, not per-guest items. Calculate them based on batch cooking math not per-person math:
+- Olive oil: 1 tablespoon per 10 potatoes. For 230 potatoes that is 23 tablespoons, roughly 1.5 cups, which is one standard 16oz bottle. Not 5 large bottles.
+- Kosher salt for skin rubbing: approximately 1 teaspoon per 10 potatoes. One standard container is more than enough for any event under 500 guests.
+
+Apply this same cooking vs serving logic to all meal types. Cooking ingredients are calculated by batch. Serving ingredients are calculated by guest usage rate.
+
+FIX 4 - ITEM SELECTION PAGE BEFORE QUANTITIES:
+Add a new step between the planner form and the results page called "Customize Your Menu."
+
+This page shows the suggested item list for the selected meal type with checkboxes. Every item is pre-checked by default. The user can uncheck items they are not serving or already have on hand.
+
+For Baked Potatoes the default checklist should be:
+- Russet Potatoes (required, cannot uncheck)
+- Aluminum Foil for baking (required, cannot uncheck)
+- Butter
+- Sour Cream
+- Shredded Cheddar Cheese
+- Bacon Bits
+- Chives or Green Onions
+- Broccoli Florets (labeled as optional healthy topping)
+- Olive Oil for skin prep (cooking only)
+- Kosher Salt for skin prep (cooking only)
+- Paper Plates
+- Plastic Forks
+- Napkins
+- Serving Spoons for topping bar
+- Disposable Gloves
+- Trash Bags
+- Aluminum Foil Pans for holding finished potatoes
+
+Only generate quantities and costs for checked items. If an item is unchecked, remove it completely from the shopping list and subtract its cost from the total estimate.
+
+FIX 5 - ALLOW CUSTOM PRICE PER UNIT:
+For each item in the customize menu, add an optional "I know my price" field where users can enter their actual local price. If entered, use that price instead of the default range. This allows users like me who already know they are getting potatoes for $11 per 50lb bag to get an accurate cost estimate instead of a wildly wrong one.
+
+Apply all five fixes to every meal type in the app, not just baked potatoes.
