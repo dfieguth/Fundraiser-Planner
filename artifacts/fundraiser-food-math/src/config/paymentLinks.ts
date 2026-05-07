@@ -55,7 +55,7 @@
 // ─────────────────────────────────────────────────────────────
 export const LIVE_FULL_EVENT_PACK_LINK = "https://buy.stripe.com/28E7sF4DPgWw8pVgvE9EI00";
 export const TEST_FULL_EVENT_PACK_LINK = "https://buy.stripe.com/test_28E7sF4DPgWw8pVgvE9EI00";
-export const USE_STRIPE_TEST_MODE = true;
+export const USE_STRIPE_TEST_MODE = false;
 
 export const PAYMENT_LINKS = {
   // Free tier — no payment needed, just scroll to planner
