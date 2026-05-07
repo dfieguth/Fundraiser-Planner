@@ -461,7 +461,7 @@ export default function PlannerPage({ onPlanReady }: PlannerPageProps) {
                     <FormMessage className="field-error" />
 
                     {/* Popular Combos — hidden, code preserved for future use */}
-                    {false && (
+                    <div style={{ display: "none" }}>
                     <div className="meal-selector-section">
                       <p className="meal-selector-section-label">Popular Combos</p>
                       <div className="meal-selector-grid meal-selector-grid--combos">
@@ -483,8 +483,9 @@ export default function PlannerPage({ onPlanReady }: PlannerPageProps) {
                         ))}
                       </div>
                     </div>
-                    )}
+                    </div>
 
+                    <div style={{ display: "none" }}>
                     {selectedMeals.length >= 2 && (
                       <p style={{ fontSize: 12, color: "var(--color-text-muted)", marginBottom: 8, marginTop: 2 }}>
                         Two meals selected — tap a selected meal to deselect it, or tap a new one to swap the second.
@@ -520,6 +521,7 @@ export default function PlannerPage({ onPlanReady }: PlannerPageProps) {
                           );
                         })}
                       </div>
+                    </div>
                     </div>
 
                     {/* Snacks and Light Meals */}
@@ -602,7 +604,10 @@ export default function PlannerPage({ onPlanReady }: PlannerPageProps) {
                         min={1}
                         max={5000}
                         value={mealServings[meal] ?? 100}
-                        onChange={(e) => setMealServings((prev) => ({ ...prev, [meal]: Math.max(1, parseInt(e.target.value) || 1) }))}
+                        onChange={(e) => setMealServings((prev) => ({
+                          ...prev,
+                          [meal]: e.target.value === "" ? 0 : Math.max(0, parseInt(e.target.value) || 0),
+                        }))}
                         className="field-input"
                         style={{ width: 90 }}
                         data-testid={`input-servings-${meal}`}
@@ -627,7 +632,7 @@ export default function PlannerPage({ onPlanReady }: PlannerPageProps) {
                       min={1}
                       max={5000}
                       value={totalExpectedGuests}
-                      onChange={(e) => setTotalExpectedGuests(Math.max(1, parseInt(e.target.value) || 1))}
+                      onChange={(e) => setTotalExpectedGuests(e.target.value === "" ? 0 : Math.max(0, parseInt(e.target.value) || 0))}
                       className="field-input"
                       style={{ width: 90 }}
                       data-testid="input-total-guests"

@@ -1175,7 +1175,9 @@ export function calculatePlan(rawForm: PlannerFormData): FundraiserPlan {
       return true;
     })
     .map((sup) => {
-      const rawTotal = form.attendance * sup.perPerson;
+      const rawTotal = (sup.name === "Plates" || sup.name === "Paper Plates" || sup.name === "Napkins" || sup.name === "Utensils")
+        ? (form.attendance * sup.perPerson)
+        : (form.attendance * sup.perPerson);
       const packages = sup.packageSize > 0 ? ceilToPackage(rawTotal, sup.packageSize) : 0;
       const totalUnits = packages * sup.packageSize;
       // FIX 5: Use custom price if user entered one
