@@ -181,6 +181,30 @@ export default function PlannerPage({ onPlanReady }: PlannerPageProps) {
 
   const [ideaPreFillLabel, setIdeaPreFillLabel] = useState<string | null>(null);
 
+  // ── Multi-meal selection state ────────────────────────────────
+  const [selectedMeals, setSelectedMeals] = useState<MealType[]>([DEFAULT_VALUES.mealType]);
+  const [mealServings, setMealServings] = useState<Record<string, number>>({ [DEFAULT_VALUES.mealType]: DEFAULT_VALUES.attendance });
+  const [totalExpectedGuests, setTotalExpectedGuests] = useState<number>(DEFAULT_VALUES.attendance);
+
+  // Sync first selected meal → form.mealType (for schema validation + downstream logic)
+  useEffect(() => {
+    if (selectedMeals.length > 0) {
+      form.setValue("mealType", selectedMeals[0] as MealType);
+    }
+  }, [selectedMeals]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const toggleMealSelection = (mealType: MealType) => {
+    setSelectedMeals((prev) => {
+      if (prev.includes(mealType)) {
+        const next = prev.filter((m) => m !== mealType);
+        return next.length > 0 ? next : prev; // always keep at least 1
+      }
+      if (prev.length >= 2) return [prev[0], mealType]; // replace second slot
+      return [...prev, mealType];
+    });
+    setMealServings((prev) => ({ ...prev, [mealType]: prev[mealType] ?? 100 }));
+  };
+
   // On mount: check sessionStorage for Idea Finder pre-fill
   useEffect(() => {
     const raw = sessionStorage.getItem("ffm_idea_prefill");
@@ -217,6 +241,11 @@ export default function PlannerPage({ onPlanReady }: PlannerPageProps) {
     if (!template) return;
     form.reset({ ...DEFAULT_VALUES, ...template.formData });
     setActiveTemplateId(templateId);
+    const mealT = template.formData.mealType;
+    const att = template.formData.attendance;
+    setSelectedMeals([mealT]);
+    setMealServings({ [mealT]: att });
+    setTotalExpectedGuests(att);
     const formEl = document.querySelector("[data-testid='planner-form']");
     if (formEl) formEl.scrollIntoView({ behavior: "smooth", block: "start" });
   };
@@ -224,17 +253,35 @@ export default function PlannerPage({ onPlanReady }: PlannerPageProps) {
   const handleClearTemplate = () => {
     form.reset(DEFAULT_VALUES);
     setActiveTemplateId(null);
+    setSelectedMeals([DEFAULT_VALUES.mealType]);
+    setMealServings({ [DEFAULT_VALUES.mealType]: DEFAULT_VALUES.attendance });
+    setTotalExpectedGuests(DEFAULT_VALUES.attendance);
   };
 
   const pricingModel = form.watch("pricingModel");
   const attendanceMode = form.watch("attendanceMode");
 
   const onSubmit = (data: PlannerFormData) => {
-    onPlanReady(data);
+    const primaryMeal = selectedMeals[0] ?? data.mealType;
+    const primaryServings = mealServings[primaryMeal] ?? totalExpectedGuests;
+    const enriched: PlannerFormData = {
+      ...data,
+      mealType: primaryMeal,
+      attendance: selectedMeals.length >= 2 ? totalExpectedGuests : primaryServings,
+      selectedMeals: selectedMeals.length >= 2 ? selectedMeals : undefined,
+      mealServings: selectedMeals.length >= 2 ? mealServings : undefined,
+      totalExpectedGuests: selectedMeals.length >= 2 ? totalExpectedGuests : undefined,
+    };
+    onPlanReady(enriched);
   };
 
   const handleNext = async () => {
     if (step === 1) {
+      // Sync attendance from state so schema validation passes
+      const primaryMeal = selectedMeals[0] ?? DEFAULT_VALUES.mealType;
+      const primaryServings = mealServings[primaryMeal] ?? totalExpectedGuests;
+      form.setValue("attendance", selectedMeals.length >= 2 ? totalExpectedGuests : primaryServings);
+      form.setValue("mealType", primaryMeal);
       const isValid = await form.trigger([
         "eventName", "orgType", "mealType", "attendance", "mealPrice",
         "adultPercent", "kidPercent", "storePreference", "notes",
@@ -413,7 +460,8 @@ export default function PlannerPage({ onPlanReady }: PlannerPageProps) {
                     <FormLabel className="field-label">What are you serving? *</FormLabel>
                     <FormMessage className="field-error" />
 
-                    {/* Popular Combos */}
+                    {/* Popular Combos — hidden, code preserved for future use */}
+                    {false && (
                     <div className="meal-selector-section">
                       <p className="meal-selector-section-label">Popular Combos</p>
                       <div className="meal-selector-grid meal-selector-grid--combos">
@@ -435,50 +483,42 @@ export default function PlannerPage({ onPlanReady }: PlannerPageProps) {
                         ))}
                       </div>
                     </div>
+                    )}
 
-                    {(() => {
-                      const selected = form.watch("customMenuSides") ?? [];
-                      const total = selected.length;
-                      if (total < 2 || total > 3) return null;
-                      return (
-                        <div className="section-card section-card--soft" style={{ marginTop: 14 }}>
-                          <h3 className="section-card-title">About how many guests do you expect to choose each option?</h3>
-                          <p className="section-card-desc">Use percentages that total 100%. This updates the calculations automatically.</p>
-                          <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 12 }}>
-                            <button type="button" className="btn-secondary" onClick={() => {
-                              const equal = Math.floor(100 / total);
-                              const values = selected.map((_, i) => (i === selected.length - 1 ? 100 - equal * (selected.length - 1) : equal));
-                              form.setValue("customMenuSides", selected);
-                              form.setValue("customMenuDrinks", values.map(String) as unknown as string[]);
-                            }}>Equal split</button>
-                            <button type="button" className="btn-secondary">First item primary</button>
-                            <button type="button" className="btn-secondary">Second item primary</button>
-                          </div>
-                          <div style={{ fontSize: 13, fontWeight: 600, color: "var(--color-profit, #15803d)" }}>Total: 100%</div>
-                        </div>
-                      );
-                    })()}
+                    {selectedMeals.length >= 2 && (
+                      <p style={{ fontSize: 12, color: "var(--color-text-muted)", marginBottom: 8, marginTop: 2 }}>
+                        Two meals selected — tap a selected meal to deselect it, or tap a new one to swap the second.
+                      </p>
+                    )}
 
                     {/* Individual Meals */}
                     <div className="meal-selector-section">
-                      <p className="meal-selector-section-label">Individual Meals</p>
+                      <p className="meal-selector-section-label">Individual Meals — select up to 2</p>
                       <div className="meal-selector-grid meal-selector-grid--individual">
-                        {INDIVIDUAL_OPTIONS.map((opt) => (
-                          <button
-                            key={opt.value}
-                            type="button"
-                            className={`meal-card ${field.value === opt.value ? "meal-card--active" : ""}`}
-                            onClick={() => field.onChange(opt.value)}
-                            data-testid={`meal-card-${opt.value}`}
-                          >
-                            <span className="meal-card-emoji" aria-hidden="true">{opt.emoji}</span>
-                            <span className="meal-card-label">{opt.label}</span>
-                            <span className="meal-card-desc">{opt.desc}</span>
-                            {field.value === opt.value && (
-                              <span className="meal-card-check"><Check className="w-3.5 h-3.5" /></span>
-                            )}
-                          </button>
-                        ))}
+                        {INDIVIDUAL_OPTIONS.map((opt) => {
+                          const slotIndex = selectedMeals.indexOf(opt.value as MealType);
+                          const isSelected = slotIndex !== -1;
+                          return (
+                            <button
+                              key={opt.value}
+                              type="button"
+                              className={`meal-card ${isSelected ? "meal-card--active" : ""}`}
+                              onClick={() => toggleMealSelection(opt.value as MealType)}
+                              data-testid={`meal-card-${opt.value}`}
+                            >
+                              <span className="meal-card-emoji" aria-hidden="true">{opt.emoji}</span>
+                              <span className="meal-card-label">{opt.label}</span>
+                              <span className="meal-card-desc">{opt.desc}</span>
+                              {isSelected && (
+                                <span className="meal-card-check">
+                                  {selectedMeals.length >= 2
+                                    ? <span style={{ fontSize: 11, fontWeight: 700 }}>{slotIndex === 0 ? "①" : "②"}</span>
+                                    : <Check className="w-3.5 h-3.5" />}
+                                </span>
+                              )}
+                            </button>
+                          );
+                        })}
                       </div>
                     </div>
 
@@ -486,25 +526,33 @@ export default function PlannerPage({ onPlanReady }: PlannerPageProps) {
                     <div className="meal-selector-section">
                       <p className="meal-selector-section-label">Snacks &amp; Light Meals</p>
                       <div className="meal-selector-grid meal-selector-grid--individual">
-                        {SNACK_OPTIONS.map((opt) => (
-                          <button
-                            key={opt.value}
-                            type="button"
-                            className={`meal-card ${field.value === opt.value ? "meal-card--active" : ""}`}
-                            onClick={() => field.onChange(opt.value)}
-                            data-testid={`meal-card-${opt.value}`}
-                          >
-                            <span className="meal-card-emoji" aria-hidden="true">{opt.emoji}</span>
-                            <span className="meal-card-label">{opt.label}</span>
-                            {opt.badge && (
-                              <span style={{ display: "inline-block", fontSize: 10, fontWeight: 700, background: "#fef3c7", color: "#92400e", borderRadius: 4, padding: "1px 5px", marginBottom: 2 }}>{opt.badge}</span>
-                            )}
-                            <span className="meal-card-desc">{opt.desc}</span>
-                            {field.value === opt.value && (
-                              <span className="meal-card-check"><Check className="w-3.5 h-3.5" /></span>
-                            )}
-                          </button>
-                        ))}
+                        {SNACK_OPTIONS.map((opt) => {
+                          const slotIndex = selectedMeals.indexOf(opt.value as MealType);
+                          const isSelected = slotIndex !== -1;
+                          return (
+                            <button
+                              key={opt.value}
+                              type="button"
+                              className={`meal-card ${isSelected ? "meal-card--active" : ""}`}
+                              onClick={() => toggleMealSelection(opt.value as MealType)}
+                              data-testid={`meal-card-${opt.value}`}
+                            >
+                              <span className="meal-card-emoji" aria-hidden="true">{opt.emoji}</span>
+                              <span className="meal-card-label">{opt.label}</span>
+                              {opt.badge && (
+                                <span style={{ display: "inline-block", fontSize: 10, fontWeight: 700, background: "#fef3c7", color: "#92400e", borderRadius: 4, padding: "1px 5px", marginBottom: 2 }}>{opt.badge}</span>
+                              )}
+                              <span className="meal-card-desc">{opt.desc}</span>
+                              {isSelected && (
+                                <span className="meal-card-check">
+                                  {selectedMeals.length >= 2
+                                    ? <span style={{ fontSize: 11, fontWeight: 700 }}>{slotIndex === 0 ? "①" : "②"}</span>
+                                    : <Check className="w-3.5 h-3.5" />}
+                                </span>
+                              )}
+                            </button>
+                          );
+                        })}
                       </div>
                     </div>
 
@@ -529,91 +577,81 @@ export default function PlannerPage({ onPlanReady }: PlannerPageProps) {
                 )}
               />
 
-              {/* ── Attendance ─────────────────────────────────── */}
+              {/* ── Servings & Guest Count ─────────────────────── */}
               <div className="field-group">
-                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
-                  <p className="field-label" style={{ margin: 0 }}>
-                    {attendanceMode === "estimate" ? "Attendance Range *" : "Expected Attendance *"}
-                  </p>
-                  <div style={{ display: "flex", gap: 6 }}>
-                    {(["exact", "estimate"] as const).map((mode) => (
-                      <button
-                        key={mode}
-                        type="button"
-                        onClick={() => form.setValue("attendanceMode", mode)}
-                        style={{
-                          padding: "3px 10px",
-                          borderRadius: 16,
-                          fontSize: 11,
-                          fontWeight: 600,
-                          border: `1.5px solid ${attendanceMode === mode ? "var(--color-primary)" : "var(--color-border)"}`,
-                          background: attendanceMode === mode ? "var(--color-primary)" : "transparent",
-                          color: attendanceMode === mode ? "white" : "var(--color-text-muted)",
-                          cursor: "pointer",
-                          transition: "all 0.1s",
-                          letterSpacing: "0.03em",
-                        }}
-                        data-testid={`attendance-mode-${mode}`}
-                      >
-                        {mode === "exact" ? "Exact" : "Estimate Range"}
-                      </button>
-                    ))}
-                  </div>
-                </div>
+                <p className="field-label">How many servings are you planning? *</p>
+                <p className="field-hint" style={{ marginTop: 0, marginBottom: 12 }}>
+                  Enter how many servings you plan to prepare for each selected meal. Each meal is calculated independently.
+                </p>
 
-                {attendanceMode === "estimate" ? (
-                  <>
-                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
-                      <FormField control={form.control} name="attendanceLow" render={({ field }) => (
-                        <FormItem style={{ margin: 0 }}>
-                          <FormLabel className="field-label">Minimum guests</FormLabel>
-                          <FormControl>
-                            <Input className="field-input" type="number" min={10} max={5000} {...field} data-testid="input-attendance-low" />
-                          </FormControl>
-                        </FormItem>
-                      )} />
-                      <FormField control={form.control} name="attendanceHigh" render={({ field }) => (
-                        <FormItem style={{ margin: 0 }}>
-                          <FormLabel className="field-label">Maximum guests</FormLabel>
-                          <FormControl>
-                            <Input className="field-input" type="number" min={10} max={5000} {...field} data-testid="input-attendance-high" />
-                          </FormControl>
-                        </FormItem>
-                      )} />
+                {selectedMeals.map((meal, idx) => {
+                  const opt = [...INDIVIDUAL_OPTIONS, ...SNACK_OPTIONS].find((o) => o.value === meal);
+                  const label = opt ? `${opt.emoji} ${opt.label}` : meal;
+                  return (
+                    <div key={meal} style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 10 }}>
+                      <span style={{ flex: 1, fontWeight: 600, fontSize: 14, color: "var(--color-text)" }}>
+                        {label}
+                        {selectedMeals.length > 1 && (
+                          <span style={{ marginLeft: 6, fontSize: 11, fontWeight: 400, color: "var(--color-text-muted)" }}>
+                            Station {idx + 1}
+                          </span>
+                        )}
+                      </span>
+                      <input
+                        type="number"
+                        min={1}
+                        max={5000}
+                        value={mealServings[meal] ?? 100}
+                        onChange={(e) => setMealServings((prev) => ({ ...prev, [meal]: Math.max(1, parseInt(e.target.value) || 1) }))}
+                        className="field-input"
+                        style={{ width: 90 }}
+                        data-testid={`input-servings-${meal}`}
+                      />
+                      <span style={{ fontSize: 13, color: "var(--color-text-muted)", whiteSpace: "nowrap" }}>servings</span>
                     </div>
-                    <p className="field-hint">
-                      Food quantities use the midpoint. Results show a conservative / expected / generous scenario breakdown.
-                    </p>
-                    {/* Keep attendance synced to midpoint for the underlying calculation */}
-                    {(() => {
-                      const low = Number(form.watch("attendanceLow") ?? 80);
-                      const high = Number(form.watch("attendanceHigh") ?? 120);
-                      const mid = Math.round((low + high) / 2);
-                      if (form.getValues("attendance") !== mid) form.setValue("attendance", mid);
-                      return null;
-                    })()}
-                  </>
-                ) : (
-                  <FormField
-                    control={form.control}
-                    name="attendance"
-                    render={({ field }) => (
-                      <FormItem style={{ margin: 0 }}>
-                        <FormControl>
-                          <Input
-                            className="field-input"
-                            type="number"
-                            min={10}
-                            max={5000}
-                            {...field}
-                            data-testid="input-attendance"
-                          />
-                        </FormControl>
-                        <FormMessage className="field-error" />
-                      </FormItem>
-                    )}
-                  />
-                )}
+                  );
+                })}
+
+                <div style={{ borderTop: "1px solid var(--color-border)", paddingTop: 12, marginTop: 6 }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 10 }}>
+                    <span style={{ flex: 1 }}>
+                      <span style={{ fontWeight: 600, fontSize: 14, color: "var(--color-text)", display: "block" }}>
+                        Total guests expected
+                      </span>
+                      <span style={{ fontSize: 11, color: "var(--color-text-muted)" }}>
+                        Used for revenue estimate, supplies, and coverage
+                      </span>
+                    </span>
+                    <input
+                      type="number"
+                      min={1}
+                      max={5000}
+                      value={totalExpectedGuests}
+                      onChange={(e) => setTotalExpectedGuests(Math.max(1, parseInt(e.target.value) || 1))}
+                      className="field-input"
+                      style={{ width: 90 }}
+                      data-testid="input-total-guests"
+                    />
+                    <span style={{ fontSize: 13, color: "var(--color-text-muted)", whiteSpace: "nowrap" }}>guests</span>
+                  </div>
+
+                  {/* Coverage indicator */}
+                  {selectedMeals.length > 0 && (() => {
+                    const totalServings = selectedMeals.reduce((sum, m) => sum + (mealServings[m] ?? 0), 0);
+                    const coveragePct = totalExpectedGuests > 0 ? Math.round((totalServings / totalExpectedGuests) * 100) : 0;
+                    const color = coveragePct < 85 ? "#ca8a04" : coveragePct <= 100 ? "#16a34a" : coveragePct <= 130 ? "#2563eb" : "#ea580c";
+                    const bg = coveragePct < 85 ? "#fefce8" : coveragePct <= 100 ? "#f0fdf4" : coveragePct <= 130 ? "#eff6ff" : "#fff7ed";
+                    const coverageLabel = coveragePct < 85 ? "May run short — consider preparing more" : coveragePct <= 100 ? "Good coverage" : coveragePct <= 130 ? "Smart buffer" : "Significant overage — consider reducing";
+                    return (
+                      <div style={{ background: bg, border: `1px solid ${color}40`, borderRadius: 8, padding: "8px 12px", display: "flex", alignItems: "center", gap: 10 }}>
+                        <span style={{ fontSize: 14, fontWeight: 700, color, minWidth: 44 }}>{coveragePct}%</span>
+                        <span style={{ fontSize: 13, color: "var(--color-text)" }}>
+                          {totalServings.toLocaleString()} serving{totalServings !== 1 ? "s" : ""} planned for {totalExpectedGuests.toLocaleString()} guests — <strong>{coverageLabel}</strong>
+                        </span>
+                      </div>
+                    );
+                  })()}
+                </div>
               </div>
 
               <FormField
@@ -1085,18 +1123,20 @@ export default function PlannerPage({ onPlanReady }: PlannerPageProps) {
                   <strong>{form.watch("eventName") || "—"}</strong>
                 </div>
                 <div className="review-row">
-                  <span>Meal</span>
-                  <strong>{ALL_MEAL_LABELS[form.watch("mealType")] ?? form.watch("mealType")}</strong>
+                  <span>{selectedMeals.length > 1 ? "Meals" : "Meal"}</span>
+                  <strong>
+                    {selectedMeals.map((m) => ALL_MEAL_LABELS[m] ?? m).join(" + ")}
+                  </strong>
                 </div>
-                {form.watch("mealType") === "custom" && form.watch("customMenuMainDish") && (
-                  <div className="review-row">
-                    <span>Main Dish</span>
-                    <strong>{form.watch("customMenuMainDish")}</strong>
+                {selectedMeals.map((meal) => (
+                  <div key={meal} className="review-row">
+                    <span>{selectedMeals.length > 1 ? `${ALL_MEAL_LABELS[meal] ?? meal} servings` : "Servings planned"}</span>
+                    <strong>{(mealServings[meal] ?? 100).toLocaleString()} servings</strong>
                   </div>
-                )}
+                ))}
                 <div className="review-row">
-                  <span>Attendance</span>
-                  <strong>{form.watch("attendance")} guests</strong>
+                  <span>Total Guests Expected</span>
+                  <strong>{totalExpectedGuests.toLocaleString()} guests</strong>
                 </div>
                 <div className="review-row">
                   <span>Meal Price</span>

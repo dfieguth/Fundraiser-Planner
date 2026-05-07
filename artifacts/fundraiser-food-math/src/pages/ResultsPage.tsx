@@ -719,7 +719,83 @@ export default function ResultsPage({ plan, formData, onReset }: ResultsPageProp
                 <p className="tab-intro">
                   Store preference: <strong>{plan?.summary?.storePreference ?? "—"}</strong>. Prices are estimates and vary by store and region.
                 </p>
-                {safeShoppingListGrouped.length > 0 ? (
+
+                {/* ── Multi-meal: split shopping list per meal ───── */}
+                {plan?.multiMealSections && plan.multiMealSections.length >= 2 ? (
+                  <>
+                    {plan.multiMealSections.map((section) => (
+                      <div key={section.mealType} style={{ marginBottom: 24 }}>
+                        <h3 style={{ fontSize: 15, fontWeight: 700, color: "var(--color-text)", marginBottom: 4, display: "flex", alignItems: "center", gap: 6 }}>
+                          <span>{section.emoji}</span>
+                          <span>{section.label}</span>
+                          <span style={{ fontSize: 12, fontWeight: 400, color: "var(--color-text-muted)", marginLeft: 4 }}>
+                            — {section.servings.toLocaleString()} servings
+                          </span>
+                        </h3>
+                        <div className="table-wrap">
+                          <table className="data-table" data-testid={`table-shopping-${section.mealType}`}>
+                            <thead>
+                              <tr>
+                                <th>Item</th>
+                                <th>Quantity</th>
+                                <th>Est. Cost Range</th>
+                                <th>Notes</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {section.shoppingListGrouped.length > 0
+                                ? section.shoppingListGrouped.map((group) => (
+                                    <>
+                                      <tr key={`grp-${section.mealType}-${group.label}`} className="shopping-group-row">
+                                        <td colSpan={4} className="shopping-group-header-cell">{group.label}</td>
+                                      </tr>
+                                      {group.items.map((item, i) => (
+                                        <tr key={`${section.mealType}-${group.label}-${i}`}>
+                                          <td>{item.item}</td>
+                                          <td><strong>{item.quantity}</strong></td>
+                                          <td>{fmt(item.estimatedCost[0])} – {fmt(item.estimatedCost[1])}</td>
+                                          <td className="table-note">{item.notes || "—"}</td>
+                                        </tr>
+                                      ))}
+                                    </>
+                                  ))
+                                : section.shoppingList.map((item, i) => (
+                                    <tr key={i}>
+                                      <td>{item.item}</td>
+                                      <td><strong>{item.quantity}</strong></td>
+                                      <td>{fmt(item.estimatedCost[0])} – {fmt(item.estimatedCost[1])}</td>
+                                      <td className="table-note">{item.notes || "—"}</td>
+                                    </tr>
+                                  ))}
+                              <tr className="table-total">
+                                <td colSpan={2}><strong>{section.label} Food Cost</strong></td>
+                                <td colSpan={2}><strong>{fmt(section.costRange[0])} – {fmt(section.costRange[1])}</strong></td>
+                              </tr>
+                            </tbody>
+                          </table>
+                        </div>
+                      </div>
+                    ))}
+
+                    {/* Shared supplies note */}
+                    {plan.sharedSuppliesList && plan.sharedSuppliesList.length > 0 && (
+                      <div style={{ background: "var(--color-bg-card)", border: "1px solid var(--color-border)", borderRadius: 8, padding: "10px 14px", marginBottom: 16, fontSize: 13, color: "var(--color-text-muted)" }}>
+                        Supplies (plates, utensils, etc.) are shared across both meals and calculated from your total guests expected. See the <strong>Supplies List</strong> tab for details.
+                      </div>
+                    )}
+
+                    <div className="table-wrap">
+                      <table className="data-table">
+                        <tbody>
+                          <tr className="table-total">
+                            <td colSpan={2}><strong>Combined Food Cost Estimate</strong></td>
+                            <td colSpan={2}><strong>{fmt(safeCostRange[0])} – {fmt(safeCostRange[1])}</strong></td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    </div>
+                  </>
+                ) : safeShoppingListGrouped.length > 0 ? (
                   <div className="table-wrap">
                     <table className="data-table" data-testid="table-shopping-list">
                       <thead>

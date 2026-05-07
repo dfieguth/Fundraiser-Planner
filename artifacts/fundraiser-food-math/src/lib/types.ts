@@ -80,6 +80,10 @@ export interface PlannerFormData {
   // ── Customize Your Menu (item selection + custom prices) ──
   excludedItems?: string[];                     // names of items the user has unchecked
   customItemPrices?: Record<string, number>;    // item name → custom price per package
+  // ── Multi-meal mode ──────────────────────────────────────
+  selectedMeals?: string[];                     // 1 or 2 selected meal types
+  mealServings?: Record<string, number>;        // independent serving count per meal
+  totalExpectedGuests?: number;                 // total guests for coverage + supplies
 }
 
 export interface ShoppingItem {
@@ -176,6 +180,16 @@ export interface RevenueScenario {
   breakEvenAttendance: number;
 }
 
+export interface MultiMealSection {
+  mealType: string;
+  label: string;
+  emoji: string;
+  servings: number;
+  shoppingList: ShoppingItem[];
+  shoppingListGrouped: ShoppingGroup[];
+  costRange: [number, number];
+}
+
 export interface FundraiserPlan {
   summary: {
     eventName: string;
@@ -187,6 +201,9 @@ export interface FundraiserPlan {
     mealPrice: number;
     storePreference: string;
   };
+  // ── Multi-meal output ─────────────────────────────────────
+  multiMealSections?: MultiMealSection[];
+  sharedSuppliesList?: SupplyItem[];
   foodQuantities: Array<{ ingredient: string; quantity: string; notes?: string }>;
   shoppingList: ShoppingItem[];
   shoppingListGrouped: ShoppingGroup[];

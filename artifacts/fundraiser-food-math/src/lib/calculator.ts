@@ -8,7 +8,7 @@ import type {
   PlannerFormData, FundraiserPlan, ShoppingItem,
   SupplyItem, PrepStep, VolunteerRole, RiskWarning, RiskPlanItem,
   StrategySection, ProfitStrategy, SetupStation,
-  LeftoverPlan, CommsPack, ShoppingGroup,
+  LeftoverPlan, CommsPack, ShoppingGroup, MealType, MultiMealSection,
 } from "./types";
 import { MEAL_ASSUMPTIONS, isComboMeal, COMBO_DEFINITIONS } from "./mealAssumptions";
 import type { MealAssumption, IngredientDef } from "./mealAssumptions";
@@ -1035,9 +1035,76 @@ function computeRevenueScenarios(
   };
 }
 
+// ── Meal emoji lookup ─────────────────────────────────────────
+const MEAL_EMOJIS: Record<string, string> = {
+  hotdogs: "🌭",
+  burgers: "🍔",
+  bakedPotatoes: "🥔",
+  breakfastBurritos: "🌯",
+  tacos: "🌮",
+  walkingTacos: "🌮",
+  spaghetti: "🍝",
+  pancakes: "🥞",
+  custom: "🍽️",
+};
+
+// ── Multi-meal calculator (2 independent meals, shared supplies) ──
+function calculateMultiMealPlan(rawForm: PlannerFormData): FundraiserPlan {
+  const primaryMeal = (rawForm.selectedMeals?.[0] ?? rawForm.mealType) as MealType;
+  const totalGuests = Math.max(1, rawForm.totalExpectedGuests ?? rawForm.attendance);
+  const adultFraction = Math.max(0, Math.min(1, (rawForm.adultPercent ?? 70) / 100));
+
+  // Base plan: primary meal + totalGuests → provides timeline, volunteer plan, risk warnings, revenue
+  const basePlan = calculatePlan({
+    ...rawForm,
+    mealType: primaryMeal,
+    attendance: totalGuests,
+    selectedMeals: undefined, // prevent recursion
+  });
+
+  // Per-meal shopping sections (each uses its own independent serving count)
+  const multiMealSections: MultiMealSection[] = (rawForm.selectedMeals ?? [primaryMeal]).map((mealType) => {
+    const servings = Math.max(1, rawForm.mealServings?.[mealType] ?? totalGuests);
+    const adults = Math.round(servings * adultFraction);
+    const kids = servings - adults;
+    const mealAssumption = MEAL_ASSUMPTIONS[mealType as MealType] ?? MEAL_ASSUMPTIONS["custom"]!;
+    const r = computeIngredientResults(
+      mealAssumption,
+      adults,
+      kids,
+      rawForm.excludedItems,
+      rawForm.customItemPrices,
+    );
+    return {
+      mealType,
+      label: mealAssumption.displayName,
+      emoji: MEAL_EMOJIS[mealType] ?? "🍽️",
+      servings,
+      shoppingList: r.shoppingItems,
+      shoppingListGrouped: buildShoppingListGrouped(r.shoppingItems),
+      costRange: r.cost,
+    };
+  });
+
+  // Merge all shopping items for the preview table
+  const combinedShoppingList = multiMealSections.flatMap((s) => s.shoppingList);
+
+  return {
+    ...basePlan,
+    multiMealSections,
+    sharedSuppliesList: basePlan.suppliesList, // supplies calculated off totalGuests
+    shoppingList: combinedShoppingList,
+    shoppingListGrouped: buildShoppingListGrouped(combinedShoppingList),
+  };
+}
+
 // ── Main Calculator ───────────────────────────────────────────
 
 export function calculatePlan(rawForm: PlannerFormData): FundraiserPlan {
+  // ── Multi-meal shortcut ──────────────────────────────────────
+  if (rawForm.selectedMeals && rawForm.selectedMeals.length >= 2 && rawForm.mealServings) {
+    return calculateMultiMealPlan(rawForm);
+  }
   // ── Input sanitization ──────────────────────────────────────
   // Guard against NaN, 0, or out-of-range values that can reach the
   // calculator via localStorage restore or edge-case form state.
