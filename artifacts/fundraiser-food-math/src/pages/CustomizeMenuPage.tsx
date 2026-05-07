@@ -121,7 +121,7 @@ export default function CustomizeMenuPage({ form, onConfirm, onBack }: Customize
   };
 
   const getQuantity = (item: PreviewItem) => {
-    const calculated = planByName.get(item.name)?.quantity ?? "1";
+    const calculated = planByName.get(item.name)?.quantity ?? `1 ${item.packageUnit}`;
     const qty = Number.parseFloat(qtyOverrides[item.name] ?? "");
     const override = Number.isFinite(qty) && qty > 0 ? qty : null;
     const baseQty = parseQuantity(calculated) || 1;
@@ -230,9 +230,12 @@ export default function CustomizeMenuPage({ form, onConfirm, onBack }: Customize
                 const isChecked = checked[item.name] ?? true;
                 const isReq = item.required;
                 const { calculated, finalQty } = getQuantity(item);
-                const qtyLabel = `Qty: ${finalQty} × ${item.packageUnit}`;
                 const itemEstimate = itemCostEstimate(item);
+                const packageBase = planByName.get(item.name);
                 const myPrice = prices[item.name];
+                const packageQty = packageBase?.quantity ?? `${finalQty} × ${item.packageUnit}`;
+                const totalLow = itemEstimate[0];
+                const totalHigh = itemEstimate[1];
                 return (
                   <div
                     key={item.name}
@@ -277,7 +280,7 @@ export default function CustomizeMenuPage({ form, onConfirm, onBack }: Customize
                         {item.usageRate && item.usageRate < 1 ? `~${Math.round(item.usageRate * 100)}% of guests` : " "}
                       </div>
                       <div style={{ fontSize: 12, marginTop: 4 }}>
-                        <strong>{qtyLabel}</strong>
+                        <strong>{calculated}</strong>
                       </div>
                       <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", marginTop: 4 }}>
                         <label style={{ fontSize: 12, color: "var(--color-text-muted)" }}>Adjust qty</label>
@@ -296,7 +299,7 @@ export default function CustomizeMenuPage({ form, onConfirm, onBack }: Customize
                       </div>
                       <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", marginTop: 6 }}>
                         <div style={{ fontSize: 12, color: "var(--color-text-muted)" }}>
-                          Default: {fmt(item.defaultCostRange[0])}–{fmt(item.defaultCostRange[1])} per {item.packageUnit}
+                          Buy: {packageQty}
                         </div>
                         {isChecked && (
                           <div onClick={(e) => e.stopPropagation()} style={{ display: "flex", alignItems: "center", gap: 4, flexShrink: 0 }}>
@@ -306,7 +309,10 @@ export default function CustomizeMenuPage({ form, onConfirm, onBack }: Customize
                         )}
                       </div>
                       <div style={{ fontSize: 12, marginTop: 4 }}>
-                        <strong>Estimated cost:</strong> {fmt(itemEstimate[0])} – {fmt(itemEstimate[1])}
+                        <strong>Price per package:</strong> {fmt(item.defaultCostRange[0])}–{fmt(item.defaultCostRange[1])} per {item.packageUnit}
+                      </div>
+                      <div style={{ fontSize: 12, marginTop: 4 }}>
+                        <strong>Total estimated cost:</strong> {fmt(totalLow)} – {fmt(totalHigh)}
                       </div>
                     </div>
                   </div>

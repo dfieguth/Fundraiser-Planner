@@ -926,9 +926,11 @@ function computeIngredientResults(
     ];
     cost = rangeAdd(cost, itemCost);
 
-    const neededDisplay = rawTotal < 1
-      ? `~${rawTotal.toFixed(2)} ${ing.unit}s`
-      : `~${Math.ceil(rawTotal)} ${ing.unit}s`;
+    const neededCount = Math.ceil(rawTotal);
+    const neededDisplay = `${neededCount} ${ing.unit}${neededCount === 1 ? "" : "s"} needed`;
+    const packageDisplay = `${packages} × ${ing.packageUnit}`;
+    const priceDisplay = `${fmt$(costRange[0])}–${fmt$(costRange[1])} per ${ing.packageUnit}`;
+    const totalDisplay = `${fmt$(itemCost[0])}–${fmt$(itemCost[1])}`;
 
     const usageNote = (ing.usageRate !== undefined && ing.usageRate < 1.0)
       ? `~${Math.round(ing.usageRate * 100)}% of guests typically use this`
@@ -940,12 +942,12 @@ function computeIngredientResults(
 
     foodQuantities.push({
       ingredient: ing.name,
-      quantity: `${packages} × ${ing.packageUnit} (need ${neededDisplay}, buying ${totalUnits})`,
+      quantity: `${neededDisplay} · buy ${packageDisplay}`,
       notes: note,
     });
     shoppingItems.push({
       item: ing.name,
-      quantity: `${packages} × ${ing.packageUnit}  (${Math.ceil(rawTotal)} ${ing.unit}s needed → ${totalUnits} buying)`,
+      quantity: `${neededDisplay} · buy ${packageDisplay} · ${priceDisplay} · total ${totalDisplay}`,
       estimatedCost: itemCost,
       notes: cookingNote ?? usageNote ?? (ing.category === "condiment" ? "May have leftovers — saves money at your next event" : undefined),
       category: ing.category,
