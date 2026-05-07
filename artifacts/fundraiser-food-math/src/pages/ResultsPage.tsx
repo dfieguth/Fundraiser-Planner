@@ -86,7 +86,7 @@ export default function ResultsPage({ plan, formData, onReset }: ResultsPageProp
 
   const MEAL_LABELS: Record<string, string> = {
     hotdogs: "Hot Dogs", burgers: "Burgers", bakedPotatoes: "Baked Potatoes",
-    breakfastBurritos: "Breakfast Burritos", tacos: "Tacos",
+    breakfastBurritos: "Breakfast Burritos", tacos: "Tacos", walkingTacos: "Walking Tacos",
     spaghetti: "Spaghetti", pancakes: "Pancakes", custom: "Custom Meal",
     combo_hotdogs_potatoes: "Hot Dogs + Baked Potatoes",
     combo_burgers_chips: "Burgers + Chips",

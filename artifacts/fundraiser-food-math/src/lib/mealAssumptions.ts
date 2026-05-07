@@ -2,6 +2,13 @@
 // MEAL ASSUMPTIONS
 // Edit these objects to update default quantities, costs,
 // ingredients, and serving sizes for each meal type.
+//
+// SERVING SIZE PHILOSOPHY (research-backed, updated):
+//   adultServings — portions per adult (includes 10% buffet premium baked in)
+//   kidServings   — portions per child (≈60% of adult for protein/starch * 1.1 buffet)
+//   wasteBuffer   — 1.05 standard (buffet premium already in servings)
+//   usageRate     — conservative fraction of guests who use optional items
+//   cookingOnly   — batch ingredient, not per-guest
 // ============================================================
 
 export interface MealAssumption {
@@ -44,13 +51,15 @@ export interface SupplyDef {
 
 // ============================================================
 // HOT DOGS
+// Serving: 1.5 per adult, 1.0 per child (research-verified fundraiser standard)
+// 10% buffet premium baked into adultServings/kidServings.
 // ============================================================
 export const hotDogAssumptions: MealAssumption = {
   label: "hotdogs",
   displayName: "Hot Dogs",
-  adultServings: 2.5,
-  kidServings: 1.5,
-  wasteBuffer: 1.12,
+  adultServings: 1.65,  // 1.5 × 1.1 buffet premium
+  kidServings: 1.10,    // 1.0 × 1.1 buffet premium
+  wasteBuffer: 1.05,
   cookingComplexity: "low",
   ingredients: [
     {
@@ -124,12 +133,13 @@ export const hotDogAssumptions: MealAssumption = {
       usageRate: 0.20,
     },
     {
-      name: "Potato Chips (2-lb bulk bag — side option)",
-      perServing: 0.04,
+      // Individual bags preferred for self-serve lines — no sharing issues
+      name: "Potato Chips (individual snack bags — side option)",
+      perServing: 1,
       unit: "bag",
-      packageSize: 1,
-      packageUnit: "2-lb bag",
-      costPerPackage: [5.00, 9.00],
+      packageSize: 40,
+      packageUnit: "40-count variety pack",
+      costPerPackage: [18.00, 28.00],
       category: "other",
       usageRate: 0.70,
     },
@@ -149,13 +159,15 @@ export const hotDogAssumptions: MealAssumption = {
 
 // ============================================================
 // BURGERS
+// Serving: 1 patty per adult, 0.75 per child (burgers are filling)
+// 10% buffet premium baked in. wasteBuffer reduced accordingly.
 // ============================================================
 export const burgerAssumptions: MealAssumption = {
   label: "burgers",
   displayName: "Burgers",
-  adultServings: 1.5,
-  kidServings: 1.0,
-  wasteBuffer: 1.12,
+  adultServings: 1.10,  // 1.0 × 1.1 buffet premium
+  kidServings: 0.83,    // 0.75 × 1.1 buffet premium
+  wasteBuffer: 1.05,
   cookingComplexity: "medium",
   ingredients: [
     {
@@ -275,16 +287,17 @@ export const burgerAssumptions: MealAssumption = {
 
 // ============================================================
 // BAKED POTATOES
-// FIX 3: Olive oil and kosher salt are COOKING ingredients —
-// calculated by batch, not per-guest. Fixed perServing values.
-// FIX 2: Topping usage rates applied — not everyone uses every topping.
+// Serving: 1 large potato per adult, 0.75 per child
+// Never more than 1 potato per person for a standard fundraiser.
+// 10% buffet premium baked in. Topping usage rates already conservative.
+// Olive oil and kosher salt are COOKING ingredients — batch calculated.
 // ============================================================
 export const bakedPotatoAssumptions: MealAssumption = {
   label: "bakedPotatoes",
   displayName: "Baked Potatoes",
-  adultServings: 1.3,
-  kidServings: 1.0,
-  wasteBuffer: 1.12,
+  adultServings: 1.10,  // 1.0 × 1.1 buffet premium
+  kidServings: 0.83,    // 0.75 × 1.1 buffet premium
+  wasteBuffer: 1.05,
   cookingComplexity: "medium",
   ingredients: [
     {
@@ -298,9 +311,9 @@ export const bakedPotatoAssumptions: MealAssumption = {
       required: true,
     },
     {
-      // FIX 3: Cooking ingredient — 1 tbsp per 10 potatoes.
+      // Cooking ingredient — 1 tbsp per 10 potatoes.
       // 1 standard 32 oz bottle (≈64 tbsp) easily covers 500+ potatoes.
-      // perServing = 0.1 tbsp / 64 tbsp per bottle ≈ 0.0016 per potato
+      // For any event under 500 guests: 1 bottle maximum.
       name: "Olive Oil (for rubbing potato skins — cooking only)",
       perServing: 0.0016,
       unit: "bottle",
@@ -311,9 +324,9 @@ export const bakedPotatoAssumptions: MealAssumption = {
       cookingOnly: true,
     },
     {
-      // FIX 3: Cooking ingredient — 1 tsp per 10 potatoes.
-      // One 3-lb container (~680 tsp) easily covers any event under 1,000 guests.
-      // perServing = 0.1 tsp / 680 tsp per container ≈ 0.0001 per potato
+      // Cooking ingredient — 1 tsp per 10 potatoes.
+      // One 3-lb container (~680 tsp) covers any event under 1,000 guests.
+      // Always buy 1 container; you will have significant leftovers.
       name: "Kosher Salt (for potato skins — cooking only)",
       perServing: 0.0001,
       unit: "container",
@@ -324,40 +337,46 @@ export const bakedPotatoAssumptions: MealAssumption = {
       cookingOnly: true,
     },
     {
+      // 80% usage, 1 tbsp (0.5 oz = 0.031 lb) per serving
+      // 1 × 5-lb tub covers up to 200 guests
       name: "Butter (1-lb blocks)",
-      perServing: 0.04,
+      perServing: 0.031,
       unit: "lb",
       packageSize: 1,
       packageUnit: "1-lb block (4 sticks)",
       costPerPackage: [4.50, 8.00],
       category: "dairy",
-      usageRate: 0.70,
+      usageRate: 0.80,
     },
     {
-      // 0.11 lb per serving × 0.65 usage × ~224 servings (200 guests) ≈ 16 lb → 4 × 5-lb tubs
+      // 60% usage, 2 tbsp (1 oz = 0.0625 lb) per serving
+      // 1 × 5-lb tub for up to 125 guests; 2 × for up to 250 guests
       name: "Sour Cream",
-      perServing: 0.11,
+      perServing: 0.0625,
       unit: "lb",
       packageSize: 5,
       packageUnit: "5-lb tub",
       costPerPackage: [5.99, 5.99],
       category: "dairy",
-      usageRate: 0.80,
+      usageRate: 0.60,
     },
     {
-      // 0.08 lb per serving × 0.70 usage × ~224 servings (200 guests) ≈ 12.5 lb → 3 × 5-lb bags
+      // 65% usage, 1.5 oz (0.094 lb) per serving
+      // 2 × 5-lb bags for up to 200 guests
       name: "Shredded Cheddar Cheese",
-      perServing: 0.08,
+      perServing: 0.094,
       unit: "lb",
       packageSize: 5,
       packageUnit: "5-lb bag",
       costPerPackage: [10.99, 10.99],
       category: "dairy",
-      usageRate: 0.60,
+      usageRate: 0.65,
     },
     {
+      // 45% usage, 0.5 oz per serving
+      // 2 × 12 oz bags for 100 guests; 3 bags max for 200
       name: "Real Bacon Bits (12 oz bag)",
-      perServing: 0.025,
+      perServing: 0.5,
       unit: "oz",
       packageSize: 12,
       packageUnit: "12 oz bag",
@@ -366,6 +385,7 @@ export const bakedPotatoAssumptions: MealAssumption = {
       usageRate: 0.45,
     },
     {
+      // 30% usage — few guests use chives
       name: "Chives or Green Onions (bunches)",
       perServing: 0.02,
       unit: "bunch",
@@ -376,6 +396,7 @@ export const bakedPotatoAssumptions: MealAssumption = {
       usageRate: 0.30,
     },
     {
+      // 15% usage — low-uptake optional item; flag clearly
       name: "Broccoli Florets — optional healthy topping (2-lb bag)",
       perServing: 0.03,
       unit: "lb",
@@ -402,13 +423,16 @@ export const bakedPotatoAssumptions: MealAssumption = {
 
 // ============================================================
 // BREAKFAST BURRITOS
+// Serving: 1 burrito per person — burritos are filling.
+// 10% buffet premium baked in. Protein: 2 oz cooked sausage per burrito.
+// Eggs: 2 per burrito. Potatoes: 3.5 oz per burrito.
 // ============================================================
 export const breakfastBurritoAssumptions: MealAssumption = {
   label: "breakfastBurritos",
   displayName: "Breakfast Burritos",
-  adultServings: 2,
-  kidServings: 1.5,
-  wasteBuffer: 1.12,
+  adultServings: 1.10,  // 1 burrito × 1.1 buffet premium
+  kidServings: 0.66,    // 0.6 adult × 1.1 buffet premium
+  wasteBuffer: 1.05,
   cookingComplexity: "high",
   ingredients: [
     {
@@ -422,6 +446,7 @@ export const breakfastBurritoAssumptions: MealAssumption = {
       required: true,
     },
     {
+      // 2 eggs per burrito + 10% buffer baked into wasteBuffer
       name: "Eggs (large, by the flat — 30-count)",
       perServing: 2,
       unit: "egg",
@@ -432,8 +457,9 @@ export const breakfastBurritoAssumptions: MealAssumption = {
       required: true,
     },
     {
+      // 2 oz cooked per burrito = 0.125 lb cooked (buy raw: ~0.156 lb)
       name: "Breakfast Sausage (bulk, 2-lb pack)",
-      perServing: 0.1,
+      perServing: 0.125,
       unit: "lb",
       packageSize: 2,
       packageUnit: "2-lb pack",
@@ -442,8 +468,9 @@ export const breakfastBurritoAssumptions: MealAssumption = {
       required: true,
     },
     {
+      // 3.5 oz per burrito = 0.22 lb
       name: "Frozen Diced Hash Brown Potatoes (5-lb bag)",
-      perServing: 0.08,
+      perServing: 0.22,
       unit: "lb",
       packageSize: 5,
       packageUnit: "5-lb bag",
@@ -461,14 +488,15 @@ export const breakfastBurritoAssumptions: MealAssumption = {
       usageRate: 0.70,
     },
     {
+      // 1 oz per burrito = 0.0625 lb, 90% of burritos get cheese
       name: "Shredded Mexican Blend Cheese (2-lb bag)",
-      perServing: 0.06,
+      perServing: 0.0625,
       unit: "lb",
       packageSize: 2,
       packageUnit: "2-lb bag",
       costPerPackage: [8.00, 14.00],
       category: "dairy",
-      usageRate: 0.80,
+      usageRate: 0.90,
     },
     {
       name: "Salsa (24 oz jar)",
@@ -491,7 +519,6 @@ export const breakfastBurritoAssumptions: MealAssumption = {
       usageRate: 0.45,
     },
     {
-      // Cooking only — used on griddle, not per burrito
       name: "Cooking Oil / Spray (for griddle)",
       perServing: 0.003,
       unit: "can",
@@ -513,7 +540,7 @@ export const breakfastBurritoAssumptions: MealAssumption = {
     },
   ],
   supplies: [
-    { name: "Aluminum Foil (for wrapping each burrito)", perPerson: 2.5, packageSize: 75, costPerPackage: [10.00, 18.00] },
+    { name: "Aluminum Foil (for wrapping each burrito)", perPerson: 1.5, packageSize: 75, costPerPackage: [10.00, 18.00] },
     { name: "Paper Plates", perPerson: 1.2, packageSize: 100, costPerPackage: [5.00, 9.00] },
     { name: "Napkins", perPerson: 5, packageSize: 250, costPerPackage: [3.50, 6.00] },
     { name: "Plastic Forks", perPerson: 1, packageSize: 100, costPerPackage: [3.50, 6.00] },
@@ -527,18 +554,23 @@ export const breakfastBurritoAssumptions: MealAssumption = {
 
 // ============================================================
 // TACOS
+// Serving: 2 tacos per adult, 1.5 per child (research-verified standard)
+// Protein: 2.5 oz cooked per taco → 0.208 lb raw (25% shrink factor)
+// Shell split: 40% hard, 60% soft when offering both
+// 10% buffet premium baked in.
 // ============================================================
 export const tacoAssumptions: MealAssumption = {
   label: "tacos",
   displayName: "Tacos",
-  adultServings: 3,
-  kidServings: 2,
-  wasteBuffer: 1.12,
+  adultServings: 2.2,   // 2 × 1.1 buffet premium
+  kidServings: 1.65,    // 1.5 × 1.1 buffet premium
+  wasteBuffer: 1.05,
   cookingComplexity: "low",
   ingredients: [
     {
+      // 2.5 oz cooked per taco → raw with 25% shrink = 3.33 oz = 0.208 lb raw per taco
       name: "Ground Beef 80/20 (or ground turkey)",
-      perServing: 0.14,
+      perServing: 0.208,
       unit: "lb",
       packageSize: 5,
       packageUnit: "5-lb pack",
@@ -547,8 +579,9 @@ export const tacoAssumptions: MealAssumption = {
       required: true,
     },
     {
+      // 40% of tacos go in hard shells
       name: "Taco Shells (hard, 24-count box)",
-      perServing: 1,
+      perServing: 0.4,
       unit: "shell",
       packageSize: 24,
       packageUnit: "24-count box",
@@ -557,8 +590,9 @@ export const tacoAssumptions: MealAssumption = {
       required: true,
     },
     {
+      // 60% of tacos go in soft tortillas
       name: "Flour Tortillas — soft taco option (20-pack)",
-      perServing: 0.5,
+      perServing: 0.6,
       unit: "tortilla",
       packageSize: 20,
       packageUnit: "20-pack",
@@ -566,8 +600,9 @@ export const tacoAssumptions: MealAssumption = {
       category: "carb",
     },
     {
+      // 1 packet per 1 lb of meat, scaled to 0.208 lb meat per taco
       name: "Taco Seasoning (1-oz packet per 1 lb of meat)",
-      perServing: 0.14,
+      perServing: 0.208,
       unit: "packet",
       packageSize: 1,
       packageUnit: "1-oz packet",
@@ -681,19 +716,24 @@ export const tacoAssumptions: MealAssumption = {
 
 // ============================================================
 // SPAGHETTI
-// FIX 3: Olive oil and kosher salt are cooking ingredients — fixed perServing values.
+// Serving: 4 oz dry pasta per adult, 2.5 oz per child (main course)
+// Sauce: 4 oz per serving. Meat: 2.5 oz cooked per serving.
+// Bread: 1.5 slices per adult (garlic bread loaf serves ~8 slices).
+// 10% buffet premium baked in.
+// Olive oil and kosher salt are cooking ingredients — batch calculated.
 // ============================================================
 export const spaghettiAssumptions: MealAssumption = {
   label: "spaghetti",
   displayName: "Spaghetti Dinner",
-  adultServings: 1.2,
-  kidServings: 0.75,
-  wasteBuffer: 1.12,
+  adultServings: 1.1,   // 1 plate × 1.1 buffet premium
+  kidServings: 0.66,    // 0.6 adult × 1.1 buffet premium
+  wasteBuffer: 1.05,
   cookingComplexity: "high",
   ingredients: [
     {
+      // 4 oz (0.25 lb) dry pasta per adult serving — standard main-course portion
       name: "Dry Spaghetti (1-lb boxes)",
-      perServing: 0.22,
+      perServing: 0.25,
       unit: "lb",
       packageSize: 1,
       packageUnit: "1-lb box",
@@ -702,8 +742,9 @@ export const spaghettiAssumptions: MealAssumption = {
       required: true,
     },
     {
+      // 2.5 oz cooked per serving; raw with 25% shrink = 0.208 lb raw
       name: "Ground Beef 80/20 or Italian Sausage (for sauce)",
-      perServing: 0.2,
+      perServing: 0.21,
       unit: "lb",
       packageSize: 5,
       packageUnit: "5-lb pack",
@@ -712,8 +753,9 @@ export const spaghettiAssumptions: MealAssumption = {
       required: true,
     },
     {
+      // 4 oz sauce per serving → 4/24 = 0.167 of a 24 oz jar per serving
       name: "Jarred Pasta Sauce (24 oz jar)",
-      perServing: 0.2,
+      perServing: 0.167,
       unit: "jar",
       packageSize: 1,
       packageUnit: "24 oz jar",
@@ -722,8 +764,9 @@ export const spaghettiAssumptions: MealAssumption = {
       required: true,
     },
     {
+      // 1.5 slices per adult; loaf ≈ 8 slices → 0.1875 per serving, 80% take
       name: "Frozen Garlic Bread Loaves (each loaf serves ~8)",
-      perServing: 0.125,
+      perServing: 0.1875,
       unit: "loaf",
       packageSize: 1,
       packageUnit: "frozen loaf (serves ~8)",
@@ -782,9 +825,7 @@ export const spaghettiAssumptions: MealAssumption = {
       cookingOnly: true,
     },
     {
-      // FIX 3: Cooking ingredient. ~2 tbsp per pot (1 lb pasta per pot).
-      // One 48 oz bottle ≈ 96 tbsp; covers ~48 pots of pasta.
-      // perServing = 0.003 → for 270 servings → 0.81 bottles → 1 bottle. Correct.
+      // ~2 tbsp per pot (1 lb pasta per pot). One 48 oz bottle ≈ 96 tbsp; covers ~48 pots.
       name: "Olive Oil (for pasta and sauce)",
       perServing: 0.003,
       unit: "bottle",
@@ -795,9 +836,7 @@ export const spaghettiAssumptions: MealAssumption = {
       cookingOnly: true,
     },
     {
-      // FIX 3: Cooking ingredient. ~1 tbsp per pot of pasta water.
-      // 3-lb container (~200 tbsp) is plenty for any event under 500 guests.
-      // perServing = 0.001 → 270 * 0.001 = 0.27 → 1 container. Correct.
+      // ~1 tbsp per pot of pasta water. 3-lb container is plenty for any event under 500.
       name: "Kosher Salt (for pasta water — large container)",
       perServing: 0.001,
       unit: "container",
@@ -826,28 +865,36 @@ export const spaghettiAssumptions: MealAssumption = {
 
 // ============================================================
 // PANCAKES
+// Serving: 3 pancakes per adult, 2 per child (breakfast fundraiser standard)
+// Each pancake ≈ 0.054 lb dry mix (0.25 cups × 0.215 lb/cup density)
+// Sausage: 1 link per adult (2 oz), 0.75 per child, 80% take rate
+// Syrup: 1.5 oz per person, 90% usage
+// 10% buffet premium baked in.
 // ============================================================
 export const pancakeAssumptions: MealAssumption = {
   label: "pancakes",
   displayName: "Pancake Breakfast",
-  adultServings: 4,
-  kidServings: 3,
-  wasteBuffer: 1.15,
+  adultServings: 3.3,   // 3 pancakes × 1.1 buffet premium
+  kidServings: 2.2,     // 2 pancakes × 1.1 buffet premium
+  wasteBuffer: 1.05,
   cookingComplexity: "medium",
   ingredients: [
     {
+      // 0.25 cups dry mix per pancake × 0.215 lb/cup ≈ 0.054 lb per pancake
+      // 5-lb box → ~92 pancakes
       name: "Complete Pancake Mix (5-lb box)",
-      perServing: 0.1,
+      perServing: 0.054,
       unit: "lb",
       packageSize: 5,
-      packageUnit: "5-lb box (~50 pancakes)",
+      packageUnit: "5-lb box (~92 pancakes)",
       costPerPackage: [6.50, 11.00],
       category: "carb",
       required: true,
     },
     {
+      // Mix-in eggs — complete mix typically needs 1 egg per 7-8 pancakes
       name: "Eggs (large, by the flat — 30-count)",
-      perServing: 0.15,
+      perServing: 0.13,
       unit: "egg",
       packageSize: 30,
       packageUnit: "30-egg flat",
@@ -855,8 +902,9 @@ export const pancakeAssumptions: MealAssumption = {
       category: "protein",
     },
     {
+      // Mix-in milk — complete mix typically needs ~2/3 cup per 7-8 pancakes
       name: "Milk (gallon — for batter)",
-      perServing: 0.08,
+      perServing: 0.011,
       unit: "gallon",
       packageSize: 1,
       packageUnit: "gallon",
@@ -864,16 +912,18 @@ export const pancakeAssumptions: MealAssumption = {
       category: "dairy",
     },
     {
+      // 1 link (2 oz = 0.125 lb) per adult, 0.75 per child → per pancake: ~0.038 lb
       name: "Breakfast Sausage Links (2-lb pack — side dish)",
-      perServing: 0.06,
+      perServing: 0.038,
       unit: "lb",
       packageSize: 2,
       packageUnit: "2-lb pack",
       costPerPackage: [7.00, 13.00],
       category: "protein",
+      usageRate: 0.80,
     },
     {
-      // FIX 3: Cooking ingredient — used on griddle, not per pancake
+      // Cooking ingredient — used on griddle
       name: "Butter / Cooking Spray (for griddle)",
       perServing: 0.004,
       unit: "can",
@@ -884,8 +934,9 @@ export const pancakeAssumptions: MealAssumption = {
       cookingOnly: true,
     },
     {
+      // 1.5 oz syrup per person → per pancake: 1.5/32/3.3 ≈ 0.014 bottles per pancake
       name: "Maple Syrup (32 oz bottle)",
-      perServing: 0.035,
+      perServing: 0.014,
       unit: "bottle",
       packageSize: 1,
       packageUnit: "32 oz bottle",
@@ -915,7 +966,7 @@ export const pancakeAssumptions: MealAssumption = {
     },
     {
       name: "Orange Juice (half-gallon — optional breakfast drink)",
-      perServing: 0.04,
+      perServing: 0.012,
       unit: "carton",
       packageSize: 1,
       packageUnit: "half-gallon carton",
@@ -941,6 +992,111 @@ export const pancakeAssumptions: MealAssumption = {
 };
 
 // ============================================================
+// WALKING TACOS
+// Great for youth events and outdoor gatherings.
+// Setup: Individual snack bags (Fritos/Doritos) opened at the top.
+// Guests add seasoned meat and toppings directly into the bag.
+// No plates needed — just a fork. Fastest taco-style service.
+// ============================================================
+export const walkingTacosAssumptions: MealAssumption = {
+  label: "walkingTacos",
+  displayName: "Walking Tacos",
+  adultServings: 1.0,   // 1 bag per person — format is self-limiting
+  kidServings: 1.0,     // kids love this format equally
+  wasteBuffer: 1.05,
+  cookingComplexity: "low",
+  ingredients: [
+    {
+      // 1 individual 1-oz snack bag per person (Fritos or Doritos)
+      name: "Fritos or Doritos Individual Snack Bags (1-oz, 40-count box)",
+      perServing: 1,
+      unit: "bag",
+      packageSize: 40,
+      packageUnit: "40-count variety box",
+      costPerPackage: [18.00, 28.00],
+      category: "carb",
+      required: true,
+    },
+    {
+      // 2 oz cooked meat per person → raw with 25% shrink = 2.67 oz = 0.167 lb raw
+      name: "Ground Beef 80/20 (seasoned taco meat)",
+      perServing: 0.167,
+      unit: "lb",
+      packageSize: 5,
+      packageUnit: "5-lb pack",
+      costPerPackage: [20.00, 32.00],
+      category: "protein",
+      required: true,
+    },
+    {
+      // 1 packet per 1 lb of meat, scaled to 0.167 lb per person
+      name: "Taco Seasoning (1-oz packet)",
+      perServing: 0.167,
+      unit: "packet",
+      packageSize: 1,
+      packageUnit: "1-oz packet",
+      costPerPackage: [0.85, 2.00],
+      category: "condiment",
+      cookingOnly: true,
+    },
+    {
+      // 0.75 oz per person = 0.047 lb; 80% usage
+      name: "Shredded Mexican Blend Cheese (2-lb bag)",
+      perServing: 0.047,
+      unit: "lb",
+      packageSize: 2,
+      packageUnit: "2-lb bag",
+      costPerPackage: [8.00, 14.00],
+      category: "dairy",
+      usageRate: 0.80,
+    },
+    {
+      // 0.75 oz per person; 50% usage
+      name: "Sour Cream (5-lb tub)",
+      perServing: 0.047,
+      unit: "lb",
+      packageSize: 5,
+      packageUnit: "5-lb tub",
+      costPerPackage: [5.99, 5.99],
+      category: "dairy",
+      usageRate: 0.50,
+    },
+    {
+      // 0.75 oz = ~1/32 of a 24 oz jar; 65% usage
+      name: "Salsa (24 oz jar)",
+      perServing: 0.031,
+      unit: "jar",
+      packageSize: 1,
+      packageUnit: "24 oz jar",
+      costPerPackage: [3.50, 6.50],
+      category: "condiment",
+      usageRate: 0.65,
+    },
+    {
+      // 0.5 oz per person; 55% usage
+      name: "Shredded Iceberg Lettuce (pre-shredded bag — 16 oz)",
+      perServing: 0.031,
+      unit: "lb",
+      packageSize: 1,
+      packageUnit: "16 oz bag",
+      costPerPackage: [2.50, 4.50],
+      category: "produce",
+      usageRate: 0.55,
+    },
+  ],
+  supplies: [
+    { name: "Plastic Forks (one per person — no plates needed!)", perPerson: 1.2, packageSize: 100, costPerPackage: [3.50, 6.00] },
+    { name: "Napkins", perPerson: 5, packageSize: 250, costPerPackage: [3.50, 6.00] },
+    { name: "Aluminum Foil Pans (for holding seasoned meat)", perPerson: 0.02, packageSize: 5, costPerPackage: [7.00, 12.00] },
+    { name: "Serving Spoons (for toppings)", perPerson: 0.01, packageSize: 6, costPerPackage: [7.00, 13.00] },
+    { name: "Disposable Gloves (box of 100)", perPerson: 0.02, packageSize: 100, costPerPackage: [9.00, 16.00] },
+    { name: "Trash Bags (13-gallon)", perPerson: 0.03, packageSize: 30, costPerPackage: [9.00, 17.00] },
+  ],
+  prepNotes: "Brown and season meat ahead of time — can be done the day before and reheated. At service: open chip bags at the top, let guests add meat and toppings directly into the bag. No plates or assembly table needed — just a topping bar and forks.",
+  cookNote: "Walking tacos are the fastest-serving taco format. One person can serve 100 guests in under 20 minutes with a single meat station. Keep meat warm in a covered foil pan or electric roaster at 170°F.",
+};
+
+// ============================================================
 // CHIPS (side dish — used in Burgers + Chips combo)
 // ============================================================
 export const chipsAssumption: MealAssumption = {
@@ -948,7 +1104,7 @@ export const chipsAssumption: MealAssumption = {
   displayName: "Chips (side)",
   adultServings: 1,
   kidServings: 1,
-  wasteBuffer: 1.10,
+  wasteBuffer: 1.05,
   cookingComplexity: "low",
   ingredients: [
     {
@@ -990,7 +1146,9 @@ export const customAssumptions: MealAssumption = {
 
 // ============================================================
 // Combo-adjusted assumptions
-// People eat less of each item when getting both.
+// 30% multi-option rule: when two meals are offered together,
+// total quantity only needs to increase by 30% — not double.
+// Each component gets ~70% of its solo portion.
 // These are ONLY used in combo contexts — not for solo meals.
 // ============================================================
 
@@ -998,18 +1156,18 @@ const hotdogsForComboAssumptions: MealAssumption = {
   ...hotDogAssumptions,
   label: "hotdogs_combo",
   displayName: "Hot Dogs (combo portion)",
-  // User expects ~1.1 hot dogs per person average in a combo context
-  adultServings: 1.2,
-  kidServings: 0.9,
+  // Solo: 1.65 per adult → combo 70%: ~1.15
+  adultServings: 1.15,
+  kidServings: 0.77,
 };
 
 const bakedPotatoForComboAssumptions: MealAssumption = {
   ...bakedPotatoAssumptions,
   label: "bakedPotatoes_combo",
   displayName: "Baked Potatoes (combo portion)",
-  // User specified: 1.05 per adult, 0.6 per child
-  adultServings: 1.05,
-  kidServings: 0.60,
+  // Solo: 1.10 per adult → combo 70%: ~0.77
+  adultServings: 0.77,
+  kidServings: 0.58,
   supplies: [],  // no duplicate plates/napkins — taken from hotdogs component
 };
 
@@ -1017,6 +1175,7 @@ const burgersForComboAssumptions: MealAssumption = {
   ...burgerAssumptions,
   label: "burgers_combo",
   displayName: "Burgers (combo portion)",
+  // Solo: 1.10 per adult → combo ~1.0 (burgers already conservative)
   adultServings: 1.0,
   kidServings: 0.75,
 };
@@ -1038,7 +1197,7 @@ const chipsForComboAssumptions: MealAssumption = {
 const comboHotdogsPotatoesStub: MealAssumption = {
   label: "combo_hotdogs_potatoes",
   displayName: "Hot Dogs + Baked Potatoes",
-  adultServings: 1, kidServings: 1, wasteBuffer: 1.12,
+  adultServings: 1, kidServings: 1, wasteBuffer: 1.05,
   cookingComplexity: "medium",
   ingredients: [], supplies: [],
   prepNotes: hotDogAssumptions.prepNotes + " | " + bakedPotatoAssumptions.prepNotes,
@@ -1048,7 +1207,7 @@ const comboHotdogsPotatoesStub: MealAssumption = {
 const comboBurgersChipsStub: MealAssumption = {
   label: "combo_burgers_chips",
   displayName: "Burgers + Chips",
-  adultServings: 1, kidServings: 1, wasteBuffer: 1.10,
+  adultServings: 1, kidServings: 1, wasteBuffer: 1.05,
   cookingComplexity: "medium",
   ingredients: [], supplies: [],
   prepNotes: burgerAssumptions.prepNotes + " | " + chipsAssumption.prepNotes,
@@ -1114,6 +1273,7 @@ export const MEAL_ASSUMPTIONS: Record<MealType, MealAssumption> = {
   tacos: tacoAssumptions,
   spaghetti: spaghettiAssumptions,
   pancakes: pancakeAssumptions,
+  walkingTacos: walkingTacosAssumptions,
   custom: customAssumptions,
   // Combo stubs — used for metadata/display; ingredient calc uses COMBO_DEFINITIONS
   combo_hotdogs_potatoes: comboHotdogsPotatoesStub,

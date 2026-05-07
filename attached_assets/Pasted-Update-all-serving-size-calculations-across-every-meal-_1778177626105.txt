@@ -1,0 +1,161 @@
+Update all serving size calculations across every meal type using research-backed portion data. Apply these verified serving sizes as the foundation for all quantity calculations.
+
+CORE PHILOSOPHY TO APPLY EVERYWHERE:
+
+1. Buffet premium: Add 10% to all primary proteins and starches because self-serve buffets consistently result in guests taking larger portions than sit-down meals.
+
+2. Multiple option rule: When two meal types are offered together, total quantity only needs to increase by 30% not double. Guests naturally take smaller portions of each when multiple options exist.
+
+3. Kids adjustment: Children eat approximately 60% of an adult portion for proteins and starches. Always apply this when audience mix includes kids.
+
+4. Never double-count: Condiments and toppings are shared across guests who choose them. Never calculate as if every guest uses every topping at full serving size.
+
+HOT DOGS:
+- Primary serving: 1.5 hot dogs per adult, 1.0 per child at a fundraiser dinner
+- Reasoning: Hot dog fundraisers are typically the main protein. Hungry adults take more than one.
+- Buns: match hot dog count exactly plus 5% buffer
+- Never calculate more than 2 hot dogs per adult for a standard fundraiser
+
+BURGERS:
+- Primary serving: 1 patty per adult, 0.75 per child
+- Reasoning: Burgers are filling. One per adult is standard for a fundraiser meal.
+- Buns: match patty count exactly plus 5% buffer
+- If offering burgers AND hot dogs together: apply the 30% multi-option rule
+
+BAKED POTATOES:
+- Primary serving: 1 large potato per adult, 0.75 per child
+- Large potato weight: approximately 0.5-0.75 lbs each
+- Never calculate more than 1 potato per person for a standard fundraiser
+- Toppings: conservative usage rates already applied — keep those
+
+TACOS:
+- Primary serving: 2 tacos per adult, 1.5 per child — this is the research-verified standard
+- Protein per taco: 2.5 oz cooked meat
+- For 100 guests (70 adults, 30 kids): 140 + 45 = 185 tacos total
+- Protein needed: 185 x 2.5oz = 462oz cooked = about 35 lbs raw beef with 25% shrink factor
+- Hard vs soft split if offering both: 40% hard shells, 60% soft tortillas
+- Never suggest more than 3 tacos per adult for any calculation
+
+BREAKFAST BURRITOS:
+- Primary serving: 1 burrito per person — burritos are filling, one is the standard
+- Protein per burrito: 2 oz cooked
+- Eggs per burrito: 2 eggs
+- Potatoes per burrito: 3-4 oz
+- Cheese inside: 1 oz per burrito at 90% of burritos
+- Total egg calculation: 2 eggs x number of burritos plus 10% buffer
+
+SPAGHETTI:
+- Dry pasta: 4 oz per adult as main course, 2.5 oz per child
+- For 100 guests: approximately 320 oz dry = 20 lbs
+- Sauce: 4 oz per serving
+- For 100 guests: 400 oz = about 3 x 106oz cans
+- Meat if mixed in: 2.5 oz cooked per serving
+- Bread: 1.5 slices per adult, 1 per child
+
+PANCAKES:
+- Serving: 3 pancakes per adult, 2 per child at a breakfast fundraiser
+- Each pancake uses approximately 0.25 cups dry mix
+- For 100 guests (assume 60 adults, 40 kids): 180 + 80 = 260 pancakes
+- Mix needed: 260 x 0.25 cups = 65 cups = approximately 14 lbs dry mix
+- Syrup: 1.5 oz per person, 90% usage rate
+- Sausage: 1 link or patty per adult, 0.75 per child, 80% take rate
+
+CHILI:
+- Primary serving: 8-10 oz per adult as main dish, 6 oz per child
+- This is the research-verified standard serving size for chili as main
+- For 100 guests: approximately 850 oz total = about 53 lbs finished chili
+- Ground beef: 3 oz cooked per serving = about 18 lbs raw
+- Beans dry: 1 cup dry per 8 servings = about 13 cups = 6-7 lbs dry beans
+- Or canned: 1 x 15oz can per 3 servings = 34 cans for 100 guests
+- Shredded cheese topping: 55% usage, 1 oz per serving
+- Sour cream topping: 40% usage, 1 oz per serving
+
+NACHO CHEESE SAUCE — CRITICAL CORRECTION:
+Research shows one #10 can (106 oz) thinned with 24 oz water serves 50-60 people.
+- For 100 guests: 2 x #10 cans is sufficient — not 3
+- Always include the thinning instruction: "Add 24 oz water per can and heat slowly, stirring frequently"
+- Never suggest more than 3 cans for under 200 guests
+- Update all meal types that use nacho cheese with this serving data
+
+NACHOS BAR:
+- Chips: 2 oz per adult as main dish, 1.5 oz per child
+- For 100 guests: about 175 oz = 11 lbs chips = 2 x 56oz bags plus small buffer
+- Nacho cheese: 2 cans for 100 guests per research verified data above
+- Ground beef optional: 2 oz cooked per guest who takes meat, 60% take rate
+- Jalapeños: 35% usage, 0.5 oz per serving, 1 can sufficient for 100 guests
+- Sour cream: 45% usage, 1 oz per serving, 1 x 5lb tub covers 100 guests
+
+BBQ CHICKEN:
+- Leg quarters: 1 piece per adult, 0.75 per child
+- Weight per raw leg quarter: approximately 0.75-1 lb including bone
+- For 100 guests: 85 pieces needed, buy 90-95 with buffer
+- Bone-in adjustment: add 18% to account for bone weight when calculating raw purchase weight
+- BBQ sauce: 1.5 oz per piece served, 85% usage rate
+- Coleslaw: 3 oz per serving, 65% usage rate
+
+FISH FRY:
+- Standard catering portion: 6 oz fish per adult as main course
+- For bone-in or breaded pieces: 2 pieces per adult, 1.5 per child
+- Fillet weight: approximately 4 oz each
+- For 100 guests: about 175 pieces = 44 lbs fillets
+- Add 15% for breading absorption and cooking loss
+- Buy: 50 lbs fish fillets for 100 guests
+- Tartar sauce: 70% usage, 1 oz per serving, 2 x 32oz jars for 100 guests
+
+PORK SLIDERS:
+- Serving: 1.5 sliders per adult, 1 per child at a fundraiser
+- Cooked pulled pork per slider: 3 oz
+- Shrink factor: pork shoulder loses approximately 40% weight during cooking
+- For 100 guests (70 adults, 30 kids): 105 + 30 = 135 sliders
+- Cooked pork needed: 135 x 3oz = 405oz cooked
+- Raw pork needed: 405oz divided by 0.60 = 675oz raw = 42 lbs raw pork shoulder
+- Buy: 45 lbs with buffer
+- Buns: match slider count plus 5% buffer
+
+SOUP AND BREAD:
+- Serving: 8-10 oz soup per adult as main, 6 oz per child
+- For 100 guests: approximately 850 oz = about 6.5 gallons finished soup
+- Bread: 1.5 slices per adult, 1 per child
+- Butter for bread: 85% usage, 0.5 oz per serving
+
+BREAKFAST SCRAMBLE:
+- Eggs: 1.5 per adult, 1 per child
+- For 100 guests: approximately 120 eggs = 4 x 30-count flats plus buffer
+- Potatoes: 3 oz per adult, 2 oz per child
+- Sausage: 1.5 oz cooked per adult, 1 oz per child, 80% take rate
+- Cheese mixed in: 1 oz per serving, 75% take rate
+
+WALKING TACOS — ADD AS NEW MEAL TYPE:
+This is a popular youth event meal that the app is currently missing entirely.
+
+Setup: Individual snack-size bags of Fritos or Doritos opened at the top. Guests add seasoned meat and toppings directly into the bag and eat with a fork. No plates needed.
+
+Serving sizes:
+- 1 individual snack bag per person (1-2 oz bag)
+- Seasoned meat: 2 oz cooked per person
+- Cheese: 0.75 oz per person, 80% usage
+- Sour cream: 0.75 oz per person, 50% usage  
+- Salsa: 0.75 oz per person, 65% usage
+- Shredded lettuce: 0.5 oz per person, 55% usage
+
+Why this meal type matters:
+- No plates or utensils needed — just a fork
+- Fastest service of any taco-style meal
+- Kids and teenagers love the interactive format
+- Lower food cost than traditional tacos
+- Easy to execute with minimal equipment
+
+Add to the meal selector under Snacks and Light meals category.
+Label with a youth event badge: "Great for youth events and outdoor gatherings"
+
+GLOBAL RULES TO ENFORCE EVERYWHERE:
+1. Always apply 10% buffer to primary proteins and starches only
+2. Never apply buffer to condiments, toppings, or optional items
+3. Always apply 60% portion adjustment for children on proteins and starches
+4. Always apply 30% multi-option rule when two meal types are selected together
+5. Always include the nacho cheese thinning instruction when cheese sauce appears
+6. Never calculate condiments as if every single guest uses every single condiment
+7. Round all package quantities up to the nearest full package
+8. Flag any item where the nearest full package gives more than 30% overage
+
+Apply all of these verified serving sizes to replace any previous estimates across the entire app. Do not change the conservative condiment and topping rates already in place from the previous update.

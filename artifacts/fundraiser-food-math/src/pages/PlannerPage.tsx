@@ -17,7 +17,7 @@ const schema = z.object({
   orgType: z.enum(["Church", "School", "Sports Team", "Nonprofit", "Other"]),
   mealType: z.enum([
     "hotdogs", "burgers", "bakedPotatoes", "breakfastBurritos",
-    "tacos", "spaghetti", "pancakes", "custom",
+    "tacos", "walkingTacos", "spaghetti", "pancakes", "custom",
     "combo_hotdogs_potatoes", "combo_burgers_chips", "combo_pancakes_sausage",
   ]),
   attendance: z.coerce.number().min(10, "Minimum 10 guests").max(5000, "Max 5000"),
@@ -75,10 +75,14 @@ const INDIVIDUAL_OPTIONS: { value: MealType; label: string; emoji: string; desc:
   { value: "pancakes",         label: "Pancakes",          emoji: "🥞", desc: "Griddle-based breakfast" },
 ];
 
+const SNACK_OPTIONS: { value: MealType; label: string; emoji: string; desc: string; badge?: string }[] = [
+  { value: "walkingTacos", label: "Walking Tacos", emoji: "🌮", desc: "Great for youth events and outdoor gatherings", badge: "Youth Favorite" },
+];
+
 const ALL_MEAL_LABELS: Record<string, string> = {
   hotdogs: "Hot Dogs", burgers: "Burgers", bakedPotatoes: "Baked Potatoes",
-  breakfastBurritos: "Breakfast Burritos", tacos: "Tacos", spaghetti: "Spaghetti",
-  pancakes: "Pancakes", custom: "Custom Meal",
+  breakfastBurritos: "Breakfast Burritos", tacos: "Tacos", walkingTacos: "Walking Tacos",
+  spaghetti: "Spaghetti", pancakes: "Pancakes", custom: "Custom Meal",
   combo_hotdogs_potatoes: "Hot Dogs + Baked Potatoes",
   combo_burgers_chips: "Burgers + Chips",
   combo_pancakes_sausage: "Pancakes + Sausage",
@@ -469,6 +473,32 @@ export default function PlannerPage({ onPlanReady }: PlannerPageProps) {
                           >
                             <span className="meal-card-emoji" aria-hidden="true">{opt.emoji}</span>
                             <span className="meal-card-label">{opt.label}</span>
+                            <span className="meal-card-desc">{opt.desc}</span>
+                            {field.value === opt.value && (
+                              <span className="meal-card-check"><Check className="w-3.5 h-3.5" /></span>
+                            )}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Snacks and Light Meals */}
+                    <div className="meal-selector-section">
+                      <p className="meal-selector-section-label">Snacks &amp; Light Meals</p>
+                      <div className="meal-selector-grid meal-selector-grid--individual">
+                        {SNACK_OPTIONS.map((opt) => (
+                          <button
+                            key={opt.value}
+                            type="button"
+                            className={`meal-card ${field.value === opt.value ? "meal-card--active" : ""}`}
+                            onClick={() => field.onChange(opt.value)}
+                            data-testid={`meal-card-${opt.value}`}
+                          >
+                            <span className="meal-card-emoji" aria-hidden="true">{opt.emoji}</span>
+                            <span className="meal-card-label">{opt.label}</span>
+                            {opt.badge && (
+                              <span style={{ display: "inline-block", fontSize: 10, fontWeight: 700, background: "#fef3c7", color: "#92400e", borderRadius: 4, padding: "1px 5px", marginBottom: 2 }}>{opt.badge}</span>
+                            )}
                             <span className="meal-card-desc">{opt.desc}</span>
                             {field.value === opt.value && (
                               <span className="meal-card-check"><Check className="w-3.5 h-3.5" /></span>

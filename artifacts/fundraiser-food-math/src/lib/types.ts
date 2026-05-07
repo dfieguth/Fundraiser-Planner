@@ -8,6 +8,7 @@ export type MealType =
   | "bakedPotatoes"
   | "breakfastBurritos"
   | "tacos"
+  | "walkingTacos"
   | "spaghetti"
   | "pancakes"
   | "custom"
