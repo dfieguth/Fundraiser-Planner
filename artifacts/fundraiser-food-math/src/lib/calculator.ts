@@ -955,6 +955,84 @@ function computeIngredientResults(
   return { foodQuantities, shoppingItems, cost };
 }
 
+// ── Three-Scenario Revenue Calculator ────────────────────────
+// Computes Conservative / Baseline / Optimistic revenue scenarios.
+// For "split" (tiered) pricing: uses 4-group demographic math.
+// For "flat" pricing: uses attendance × price × conversionRate.
+function computeRevenueScenarios(
+  form: PlannerFormData,
+  costRange: [number, number],
+): {
+  conservative: import("./types").RevenueScenario;
+  baseline:     import("./types").RevenueScenario;
+  optimistic:   import("./types").RevenueScenario;
+} {
+  const baseDonationRate = Math.max(50, Math.min(95, form.donationRate ?? 75)) / 100;
+  const conservativeRate = Math.max(0.50, baseDonationRate - 0.10);
+  const optimisticRate   = Math.min(0.95, baseDonationRate + 0.10);
+
+  const computeGrossRevenue = (convRate: number): number => {
+    if (form.pricingModel === "split") {
+      const att      = form.attendance;
+      const soloPct  = (form.soloAdultPct  ?? 22) / 100;
+      const cplPct   = (form.couplesPct    ?? 25) / 100;
+      const famPct   = (form.familiesPct   ?? 45) / 100;
+      const teenPct  = (form.teensPct      ??  8) / 100;
+      const famSize  = Math.max(2, form.avgFamilySize ?? 3.75);
+      const famAdopt = (form.familyPriceAdoptionRate ?? 80) / 100;
+      const indPrice = form.individualPrice ?? form.mealPrice;
+      const famPrice = form.familyPrice    ?? (form.mealPrice * Math.round(famSize));
+
+      // Paying units per group
+      const soloConv   = att * soloPct * convRate;
+      const coupleConv = (att * cplPct  / 2)       * convRate;
+      const famConv    = (att * famPct  / famSize)  * convRate;
+      const teenConv   = (att * teenPct / 1.5)      * convRate * 0.73;
+
+      const soloRev   = soloConv   * indPrice;
+      const coupleRev = coupleConv * indPrice * 2;
+      const famRev    = famConv    * famAdopt * famPrice
+                      + famConv    * (1 - famAdopt) * indPrice * famSize;
+      const teenRev   = teenConv   * indPrice;
+      return Math.round(soloRev + coupleRev + famRev + teenRev);
+    } else {
+      return Math.round(form.attendance * form.mealPrice * convRate);
+    }
+  };
+
+  const makeScenario = (
+    label: string,
+    convRate: number,
+  ): import("./types").RevenueScenario => {
+    const grossRevenue    = computeGrossRevenue(convRate);
+    const netProfitRange: [number, number] = [
+      grossRevenue - costRange[1],
+      grossRevenue - costRange[0],
+    ];
+    const revenuePerAttendee = form.attendance > 0
+      ? Math.round((grossRevenue / form.attendance) * 100) / 100
+      : 0;
+    const breakEvenAttendance = revenuePerAttendee > 0
+      ? Math.ceil(costRange[1] / revenuePerAttendee)
+      : 9999;
+    return {
+      label,
+      conversionRate: Math.round(convRate * 100),
+      grossRevenue,
+      costRange,
+      netProfitRange,
+      revenuePerAttendee,
+      breakEvenAttendance,
+    };
+  };
+
+  return {
+    conservative: makeScenario("Conservative", conservativeRate),
+    baseline:     makeScenario("Baseline",     baseDonationRate),
+    optimistic:   makeScenario("Optimistic",   optimisticRate),
+  };
+}
+
 // ── Main Calculator ───────────────────────────────────────────
 
 export function calculatePlan(rawForm: PlannerFormData): FundraiserPlan {
@@ -1051,31 +1129,40 @@ export function calculatePlan(rawForm: PlannerFormData): FundraiserPlan {
     Math.round(totalCostRange[1] * 1.05),
   ];
 
-  // ── Revenue & Profit ──────────────────────────────────────
-  // FIX 1: Support split pricing model (individual + family pricing with range)
+  // ── Sam's Club store note ─────────────────────────────────
+  if (form.storePreference === "Sam's Club") {
+    shoppingList = shoppingList.map(item => ({
+      ...item,
+      notes: item.notes
+        ? `${item.notes} · Sam's Club pricing is comparable to Costco for bulk items — verify locally.`
+        : "Sam's Club pricing is comparable to Costco for most bulk items — verify locally before shopping.",
+    }));
+  }
+
+  // ── Revenue & Profit ─────────────────────────────────────
+  const revenueScenarios = computeRevenueScenarios(form, totalCostRange);
   let estimatedRevenue: number;
   let revenueConservative: number | undefined;
   let revenueGenerous: number | undefined;
 
   if (form.pricingModel === "split") {
-    const indPct = Math.max(0, Math.min(100, form.individualPercent ?? 40));
-    const individuals = Math.round(form.attendance * (indPct / 100));
-    const familyGroupCount = Math.ceil((form.attendance - individuals) / 4);
-    const indPrice = form.individualPrice ?? form.mealPrice;
-    const famPrice = form.familyPrice ?? (form.mealPrice * 4);
-    const calcRevenue = (rate: number) =>
-      Math.round((individuals * indPrice + familyGroupCount * famPrice) * rate);
-    revenueConservative = calcRevenue(0.60);
-    estimatedRevenue    = calcRevenue((form.donationRate ?? 75) / 100);
-    revenueGenerous     = calcRevenue(0.90);
+    revenueConservative = revenueScenarios.conservative.grossRevenue;
+    estimatedRevenue    = revenueScenarios.baseline.grossRevenue;
+    revenueGenerous     = revenueScenarios.optimistic.grossRevenue;
   } else {
-    estimatedRevenue = Math.round(form.attendance * form.mealPrice);
+    estimatedRevenue = revenueScenarios.baseline.grossRevenue;
   }
 
   const estimatedProfit: [number, number] = [
     estimatedRevenue - totalCostRange[1],
     estimatedRevenue - totalCostRange[0],
   ];
+
+  // ── Pricing Methodology Note (Part 5) ────────────────────
+  const pricingMethodologyNote =
+    form.storePreference === "Sam's Club"
+      ? "Prices benchmarked against Sam's Club / Costco bulk pricing. Prices were cross-referenced with in-store pricing in Whittier, California. Prices vary by region, season, and availability — always verify before shopping."
+      : "Prices benchmarked against Costco and Smart & Final bulk pricing, cross-referenced with in-store pricing in Whittier, California. Prices vary by region, season, and store — always verify before shopping. Walmart and Aldi prices are estimated 8–15% lower than the ranges shown.";
 
   // ── Prep Timeline ─────────────────────────────────────────
   const prepStart = form.prepStartTime || "09:00";
@@ -1336,6 +1423,43 @@ export function calculatePlan(rawForm: PlannerFormData): FundraiserPlan {
     ));
   }
 
+  // ── Revenue scenario-based profit warnings (Part 3) ───────
+  {
+    const { conservative, baseline, optimistic } = revenueScenarios;
+    const profitPerAttendee = form.attendance > 0
+      ? baseline.grossRevenue / form.attendance : 0;
+
+    if (conservative.netProfitRange[1] < 0 && baseline.netProfitRange[1] >= 0) {
+      risks.push(buildRisk(
+        "warning",
+        `Your Conservative scenario (${conservative.conversionRate}% donation rate) results in a loss. If fewer guests donate than expected, this event may not break even. Pre-selling plates before the event is the most effective way to reduce this risk.`,
+        "Pre-sell plates through your group's messaging platform before the event. Even 20–30 guaranteed sales meaningfully reduce your break-even risk and give you a floor to plan around.",
+      ));
+    } else if (optimistic.netProfitRange[1] < 0) {
+      risks.push(buildRisk(
+        "error",
+        `All three revenue scenarios — Conservative (${conservative.conversionRate}%), Baseline (${baseline.conversionRate}%), and Optimistic (${optimistic.conversionRate}%) — project a loss. This event will not break even at your current pricing. Raise your price or find donated supplies before proceeding.`,
+        "Raise your suggested donation by $3–5 per person, or identify 2–3 high-cost shopping items where local businesses might donate. A single donated ingredient can shift this from a loss to a profit.",
+      ));
+    }
+
+    if (profitPerAttendee > 0 && profitPerAttendee < 3) {
+      risks.push(buildRisk(
+        "warning",
+        `Your baseline revenue per guest is only $${profitPerAttendee.toFixed(2)} after costs — a very thin margin. A small drop in attendance or donation rate will erase your profit. Consider raising prices $2–$3 or seeking donated supplies.`,
+        "Look for one or two donated items from local businesses (buns, condiments, drinks) to reduce your cost base. Even partial donations meaningfully shift the per-person margin.",
+      ));
+    }
+
+    if ((form.donationRate ?? 75) < 60 && form.pricingModel === "split") {
+      risks.push(buildRisk(
+        "info",
+        `Your baseline donation rate is set to ${form.donationRate ?? 75}%. For tiered-pricing events, a rate below 60% suggests guests may be hesitant about the pricing structure. A clear suggested-donation sign with specific amounts — not just a price board — often increases actual conversion.`,
+        "Post clear signs showing 'Suggested donation: $X individual / $Y family.' Include a QR code for digital payment alongside a cash box. Removing friction from the payment step typically raises conversion rates by 5–10%.",
+      ));
+    }
+  }
+
   const riskWarnings: RiskWarning[] = risks.map(r => r.warning);
   const riskPlan: RiskPlanItem[] = risks.map(r => r.plan);
 
@@ -1425,6 +1549,8 @@ Thank you for supporting ${form.eventName}!`.trim();
     revenueConservative,
     revenueGenerous,
     estimatedProfit,
+    revenueScenarios,
+    pricingMethodologyNote,
     scenarioBundle,
     prepTimeline,
     volunteerPlan,

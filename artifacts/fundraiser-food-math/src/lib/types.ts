@@ -49,12 +49,19 @@ export interface PlannerFormData {
   adultVolunteers: number;
   studentVolunteers: number;
   notes: string;
-  // ── Pricing model (Fix 1) ─────────────────────────────────
-  pricingModel?: PricingModel;     // "flat" = single price (default), "split" = individual+family
-  individualPrice?: number;         // $ per individual attendee
-  familyPrice?: number;             // $ per family group of ~4
-  individualPercent?: number;       // % of attendance who are individuals (default 40)
-  donationRate?: number;            // % of attendees who actually pay (default 75)
+  // ── Pricing model ────────────────────────────────────────
+  pricingModel?: PricingModel;             // "flat" = single price (default), "split" = tiered
+  individualPrice?: number;                // $ per individual attendee
+  familyPrice?: number;                    // $ per family group
+  individualPercent?: number;              // legacy — % attending as individuals (default 40)
+  donationRate?: number;                   // baseline % of attendees who actually donate (default 75)
+  // ── Attendee mix (tiered pricing) ────────────────────────
+  soloAdultPct?: number;                   // % of crowd that are solo adults (default 22)
+  couplesPct?: number;                     // % arriving as couples / pairs (default 25)
+  familiesPct?: number;                    // % arriving as families with kids (default 45)
+  teensPct?: number;                       // % arriving as unaccompanied teens (default 8)
+  avgFamilySize?: number;                  // average people per family group (default 3.75)
+  familyPriceAdoptionRate?: number;        // % of families choosing family bundle price (default 80)
   // ── Attendance range mode ─────────────────────────────────
   attendanceMode?: "exact" | "estimate";
   attendanceLow?: number;
@@ -157,6 +164,17 @@ export interface CommsPack {
   thankYou: string;
 }
 
+// ── Revenue scenario (3-scenario model) ──────────────────────
+export interface RevenueScenario {
+  label: string;
+  conversionRate: number;    // % (e.g. 65, 75, 85)
+  grossRevenue: number;
+  costRange: [number, number];
+  netProfitRange: [number, number];
+  revenuePerAttendee: number;
+  breakEvenAttendance: number;
+}
+
 export interface FundraiserPlan {
   summary: {
     eventName: string;
@@ -174,10 +192,17 @@ export interface FundraiserPlan {
   suppliesList: SupplyItem[];
   costRange: [number, number];
   estimatedRevenue: number;
-  revenueConservative?: number;   // for split pricing model
-  revenueGenerous?: number;        // for split pricing model
+  revenueConservative?: number;
+  revenueGenerous?: number;
   estimatedProfit: [number, number];
-  // Attendance range / scenario bundle (T002)
+  // Three-scenario revenue model
+  revenueScenarios?: {
+    conservative: RevenueScenario;
+    baseline: RevenueScenario;
+    optimistic: RevenueScenario;
+  };
+  pricingMethodologyNote?: string;
+  // Attendance range / scenario bundle
   scenarioBundle?: {
     conservative: { attendance: number; estimatedRevenue: number; costRange: [number, number]; estimatedProfit: [number, number] };
     expected:     { attendance: number; estimatedRevenue: number; costRange: [number, number]; estimatedProfit: [number, number] };

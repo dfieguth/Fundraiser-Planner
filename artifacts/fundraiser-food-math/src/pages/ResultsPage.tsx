@@ -403,6 +403,55 @@ export default function ResultsPage({ plan, formData, onReset }: ResultsPageProp
         </div>
       </div>
 
+      {/* ── Revenue Scenarios (3-scenario model) ──────────────── */}
+      {plan?.revenueScenarios && (
+        <section className="results-section" data-testid="section-revenue-scenarios" style={{ margin: "0 0 8px" }}>
+          <h2 className="section-heading">Revenue Projection Scenarios</h2>
+          <p className="section-note">
+            Three scenarios based on how many guests actually donate, using your{" "}
+            {safeFormData?.pricingModel === "split" ? "tiered pricing model" : "flat pricing model"}.
+            The ±10% range around your baseline donation rate reflects real-world variance.
+          </p>
+          <div className="table-wrap">
+            <table className="data-table" data-testid="table-revenue-scenarios">
+              <thead>
+                <tr>
+                  <th>Scenario</th>
+                  <th>Conv. Rate</th>
+                  <th>Gross Revenue</th>
+                  <th>Est. Cost</th>
+                  <th>Net Profit Range</th>
+                  <th>$/Guest</th>
+                  <th>Break-Even</th>
+                </tr>
+              </thead>
+              <tbody>
+                {(["conservative", "baseline", "optimistic"] as const).map((key) => {
+                  const s = plan.revenueScenarios![key];
+                  const status = s.netProfitRange[1] < 0 ? "loss" : s.netProfitRange[0] < 0 ? "risky" : "good";
+                  return (
+                    <tr key={key} data-testid={`scenario-revenue-row-${key}`}>
+                      <td style={{ fontWeight: 600 }}>{s.label}</td>
+                      <td style={{ color: "var(--color-text-muted)" }}>{s.conversionRate}%</td>
+                      <td style={{ color: "var(--color-revenue, #15803d)", fontWeight: 600 }}>{fmt(s.grossRevenue)}</td>
+                      <td style={{ color: "var(--color-text-muted)" }}>{fmt(s.costRange[0])} – {fmt(s.costRange[1])}</td>
+                      <td style={{ fontWeight: 600, color: status === "good" ? "var(--color-profit)" : status === "risky" ? "var(--color-warning)" : "var(--color-error)" }}>
+                        {fmt(s.netProfitRange[0])} – {fmt(s.netProfitRange[1])}
+                      </td>
+                      <td>${s.revenuePerAttendee.toFixed(2)}</td>
+                      <td style={{ color: "var(--color-text-muted)" }}>{s.breakEvenAttendance >= 9999 ? "—" : `${s.breakEvenAttendance} guests`}</td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+          <p className="field-hint" style={{ marginTop: 8 }}>
+            Break-even is the minimum attendance needed to cover your high-end cost estimate at each scenario's donation rate. Plan to exceed your break-even by at least 20%.
+          </p>
+        </section>
+      )}
+
       {/* ScenarioCompare — attendance range mode */}
       {safeScenarioBundle && (
         <section className="results-section" data-testid="section-scenarios" style={{ margin: "0 0 8px" }}>
@@ -488,6 +537,13 @@ export default function ResultsPage({ plan, formData, onReset }: ResultsPageProp
             </tbody>
           </table>
         </div>
+
+        {/* Pricing methodology note (Part 5) */}
+        {plan?.pricingMethodologyNote && (
+          <p style={{ fontSize: 11, color: "var(--color-text-muted)", marginTop: 10, padding: "8px 12px", background: "var(--color-bg-card)", borderRadius: 6, border: "1px solid var(--color-border)", lineHeight: 1.5 }}>
+            <strong>About these prices:</strong> {plan.pricingMethodologyNote}
+          </p>
+        )}
       </section>
 
       {/* ── LOCKED SECTION ─────────────────────────────────────── */}
