@@ -81,7 +81,7 @@ export const hotDogAssumptions: MealAssumption = {
       packageUnit: "32 oz bottle",
       costPerPackage: [3.50, 6.00],
       category: "condiment",
-      usageRate: 0.70,
+      usageRate: 0.60,
     },
     {
       name: "Mustard (20 oz squeeze bottle)",
@@ -91,7 +91,7 @@ export const hotDogAssumptions: MealAssumption = {
       packageUnit: "20 oz bottle",
       costPerPackage: [2.00, 4.00],
       category: "condiment",
-      usageRate: 0.70,
+      usageRate: 0.45,
     },
     {
       name: "Relish (10 oz jar)",
@@ -101,7 +101,7 @@ export const hotDogAssumptions: MealAssumption = {
       packageUnit: "10 oz jar",
       costPerPackage: [2.50, 4.00],
       category: "condiment",
-      usageRate: 0.45,
+      usageRate: 0.25,
     },
     {
       name: "Diced White Onion (optional topping)",
@@ -111,7 +111,7 @@ export const hotDogAssumptions: MealAssumption = {
       packageUnit: "3-lb bag (~9 medium onions)",
       costPerPackage: [3.00, 5.00],
       category: "produce",
-      usageRate: 0.35,
+      usageRate: 0.25,
     },
     {
       name: "Canned Chili (optional topping for chili dogs)",
@@ -121,7 +121,7 @@ export const hotDogAssumptions: MealAssumption = {
       packageUnit: "15 oz can",
       costPerPackage: [1.50, 3.00],
       category: "other",
-      usageRate: 0.30,
+      usageRate: 0.20,
     },
     {
       name: "Potato Chips (2-lb bulk bag — side option)",
@@ -131,7 +131,7 @@ export const hotDogAssumptions: MealAssumption = {
       packageUnit: "2-lb bag",
       costPerPackage: [5.00, 9.00],
       category: "other",
-      usageRate: 0.80,
+      usageRate: 0.70,
     },
   ],
   supplies: [
@@ -186,7 +186,7 @@ export const burgerAssumptions: MealAssumption = {
       packageUnit: "24-slice pack",
       costPerPackage: [5.00, 9.00],
       category: "dairy",
-      usageRate: 0.70,
+      usageRate: 0.30,
     },
     {
       name: "Shredded Lettuce (pre-bagged)",
@@ -216,7 +216,7 @@ export const burgerAssumptions: MealAssumption = {
       packageUnit: "3-lb bag (~9 medium onions)",
       costPerPackage: [3.00, 5.00],
       category: "produce",
-      usageRate: 0.45,
+      usageRate: 0.25,
     },
     {
       name: "Dill Pickle Slices (gallon jar)",
@@ -226,7 +226,7 @@ export const burgerAssumptions: MealAssumption = {
       packageUnit: "gallon jar",
       costPerPackage: [6.00, 11.00],
       category: "condiment",
-      usageRate: 0.50,
+      usageRate: 0.30,
     },
     {
       name: "Ketchup (32 oz squeeze bottle)",
@@ -236,7 +236,7 @@ export const burgerAssumptions: MealAssumption = {
       packageUnit: "32 oz bottle",
       costPerPackage: [3.50, 6.00],
       category: "condiment",
-      usageRate: 0.70,
+      usageRate: 0.60,
     },
     {
       name: "Mustard (20 oz squeeze bottle)",
@@ -246,7 +246,7 @@ export const burgerAssumptions: MealAssumption = {
       packageUnit: "20 oz bottle",
       costPerPackage: [2.00, 4.00],
       category: "condiment",
-      usageRate: 0.70,
+      usageRate: 0.45,
     },
     {
       name: "Mayonnaise (30 oz jar)",
@@ -256,7 +256,7 @@ export const burgerAssumptions: MealAssumption = {
       packageUnit: "30 oz jar",
       costPerPackage: [5.00, 8.50],
       category: "condiment",
-      usageRate: 0.55,
+      usageRate: 0.30,
     },
   ],
   supplies: [
@@ -331,7 +331,7 @@ export const bakedPotatoAssumptions: MealAssumption = {
       packageUnit: "1-lb block (4 sticks)",
       costPerPackage: [4.50, 8.00],
       category: "dairy",
-      usageRate: 0.85,
+      usageRate: 0.70,
     },
     {
       // 0.11 lb per serving × 0.65 usage × ~224 servings (200 guests) ≈ 16 lb → 4 × 5-lb tubs
@@ -342,7 +342,7 @@ export const bakedPotatoAssumptions: MealAssumption = {
       packageUnit: "5-lb tub",
       costPerPackage: [5.99, 5.99],
       category: "dairy",
-      usageRate: 0.65,
+      usageRate: 0.80,
     },
     {
       // 0.08 lb per serving × 0.70 usage × ~224 servings (200 guests) ≈ 12.5 lb → 3 × 5-lb bags
@@ -353,7 +353,7 @@ export const bakedPotatoAssumptions: MealAssumption = {
       packageUnit: "5-lb bag",
       costPerPackage: [10.99, 10.99],
       category: "dairy",
-      usageRate: 0.70,
+      usageRate: 0.60,
     },
     {
       name: "Real Bacon Bits (12 oz bag)",
@@ -363,7 +363,7 @@ export const bakedPotatoAssumptions: MealAssumption = {
       packageUnit: "12 oz bag",
       costPerPackage: [6.00, 11.00],
       category: "protein",
-      usageRate: 0.55,
+      usageRate: 0.45,
     },
     {
       name: "Chives or Green Onions (bunches)",
@@ -373,7 +373,7 @@ export const bakedPotatoAssumptions: MealAssumption = {
       packageUnit: "bunch",
       costPerPackage: [1.25, 3.00],
       category: "produce",
-      usageRate: 0.35,
+      usageRate: 0.30,
     },
     {
       name: "Broccoli Florets — optional healthy topping (2-lb bag)",
@@ -383,7 +383,7 @@ export const bakedPotatoAssumptions: MealAssumption = {
       packageUnit: "2-lb bag",
       costPerPackage: [4.00, 7.50],
       category: "produce",
-      usageRate: 0.20,
+      usageRate: 0.15,
     },
   ],
   supplies: [
