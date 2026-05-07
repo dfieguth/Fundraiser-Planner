@@ -3,6 +3,7 @@ import { ArrowLeft, ArrowRight, Check, Info, Lock } from "lucide-react";
 import type { PlannerFormData } from "@/lib/types";
 import { MEAL_ASSUMPTIONS, COMBO_DEFINITIONS, isComboMeal } from "@/lib/mealAssumptions";
 import type { MealAssumption } from "@/lib/mealAssumptions";
+import { calculatePlan } from "@/lib/calculator";
 
 interface PreviewItem {
   name: string;
@@ -85,6 +86,13 @@ interface CustomizeMenuPageProps {
 
 export default function CustomizeMenuPage({ form, onConfirm, onBack }: CustomizeMenuPageProps) {
   const items = useMemo(() => getPreviewItems(form), [form]);
+  const previewPlan = useMemo(() => calculatePlan({ ...form, excludedItems: undefined, customItemPrices: undefined }), [form]);
+  const planByName = useMemo(() => {
+    const map = new Map<string, { quantity: string; estimatedCost: [number, number] }>();
+    for (const item of previewPlan.shoppingList) map.set(item.item, { quantity: item.quantity, estimatedCost: item.estimatedCost });
+    for (const item of previewPlan.suppliesList) map.set(item.item, { quantity: item.quantity, estimatedCost: item.estimatedCost });
+    return map;
+  }, [previewPlan]);
 
   // Initialize: all items checked, no custom prices
   const [checked, setChecked] = useState<Record<string, boolean>>(() => {
@@ -93,6 +101,7 @@ export default function CustomizeMenuPage({ form, onConfirm, onBack }: Customize
     return init;
   });
   const [prices, setPrices] = useState<Record<string, string>>({});
+  const [qtyOverrides, setQtyOverrides] = useState<Record<string, string>>({});
 
   const toggleItem = (name: string, required: boolean) => {
     if (required) return;
@@ -102,6 +111,40 @@ export default function CustomizeMenuPage({ form, onConfirm, onBack }: Customize
   const setPrice = (name: string, val: string) => {
     setPrices(prev => ({ ...prev, [name]: val }));
   };
+  const setQtyOverride = (name: string, val: string) => {
+    setQtyOverrides(prev => ({ ...prev, [name]: val }));
+  };
+
+  const parseQuantity = (value: string) => {
+    const match = value.match(/([\d.]+)/);
+    return match ? Number.parseFloat(match[1]) : 0;
+  };
+
+  const getQuantity = (item: PreviewItem) => {
+    const calculated = planByName.get(item.name)?.quantity ?? "1";
+    const qty = Number.parseFloat(qtyOverrides[item.name] ?? "");
+    const override = Number.isFinite(qty) && qty > 0 ? qty : null;
+    const baseQty = parseQuantity(calculated) || 1;
+    return { calculated, finalQty: override ?? baseQty };
+  };
+
+  const itemCostEstimate = (item: PreviewItem) => {
+    const base = planByName.get(item.name)?.estimatedCost ?? item.defaultCostRange;
+    const qty = getQuantity(item).finalQty;
+    return [base[0] * qty, base[1] * qty] as [number, number];
+  };
+
+  const totalCostEstimate: [number, number] = useMemo(() => {
+    let low = 0;
+    let high = 0;
+    for (const item of items) {
+      if (!checked[item.name]) continue;
+      const [itemLow, itemHigh] = itemCostEstimate(item);
+      low += itemLow;
+      high += itemHigh;
+    }
+    return [low, high];
+  }, [checked, items, qtyOverrides, planByName]);
 
   const handleConfirm = () => {
     const excludedItems = Object.entries(checked)
@@ -186,15 +229,19 @@ export default function CustomizeMenuPage({ form, onConfirm, onBack }: Customize
               {catItems.map((item) => {
                 const isChecked = checked[item.name] ?? true;
                 const isReq = item.required;
+                const { calculated, finalQty } = getQuantity(item);
+                const qtyLabel = `Qty: ${finalQty} × ${item.packageUnit}`;
+                const itemEstimate = itemCostEstimate(item);
+                const myPrice = prices[item.name];
                 return (
                   <div
                     key={item.name}
                     onClick={() => toggleItem(item.name, isReq)}
                     style={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: 12,
-                      padding: "10px 14px",
+                      display: "grid",
+                      gridTemplateColumns: "20px 1fr",
+                      gap: 10,
+                      padding: "12px 14px",
                       borderRadius: 8,
                       border: `1.5px solid ${isChecked ? "var(--color-primary)" : "var(--color-border)"}`,
                       background: isChecked ? "var(--color-primary-light, #fdf8ef)" : "var(--color-bg-card)",
@@ -220,72 +267,57 @@ export default function CustomizeMenuPage({ form, onConfirm, onBack }: Customize
                     </div>
 
                     {/* Label and meta */}
-                    <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ minWidth: 0 }}>
                       <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
-                        <span style={{ fontWeight: 500, fontSize: 14 }}>{item.name}</span>
-                        {isReq && (
-                          <span style={{
-                            fontSize: 10,
-                            fontWeight: 700,
-                            background: "var(--color-text-muted)",
-                            color: "white",
-                            padding: "1px 5px",
-                            borderRadius: 3,
-                            letterSpacing: "0.05em",
-                          }}>REQUIRED</span>
-                        )}
-                        {item.cookingOnly && (
-                          <span style={{
-                            fontSize: 10,
-                            color: "var(--color-text-muted)",
-                            fontStyle: "italic",
-                          }}>cooking only</span>
-                        )}
-                        {item.usageRate && item.usageRate < 1 && (
-                          <span style={{
-                            fontSize: 10,
-                            color: "var(--color-text-muted)",
-                          }}>~{Math.round(item.usageRate * 100)}% of guests</span>
-                        )}
+                        <span style={{ fontWeight: 600, fontSize: 14 }}>{item.name}</span>
+                        <span style={{ fontSize: 12, color: "var(--color-text-muted)" }}>• {item.packageUnit}</span>
+                        {isReq && <span style={{ fontSize: 10, fontWeight: 700, background: "var(--color-text-muted)", color: "white", padding: "1px 5px", borderRadius: 3 }}>REQUIRED</span>}
                       </div>
-                      <div style={{ fontSize: 12, color: "var(--color-text-muted)", marginTop: 1 }}>
-                        Default estimate: {fmt(item.defaultCostRange[0])} – {fmt(item.defaultCostRange[1])} per {item.packageUnit}
+                      <div style={{ fontSize: 12, color: "var(--color-text-muted)", marginTop: 2 }}>
+                        {item.usageRate && item.usageRate < 1 ? `~${Math.round(item.usageRate * 100)}% of guests` : " "}
                       </div>
-                    </div>
-
-                    {/* My price input */}
-                    {isChecked && (
-                      <div
-                        onClick={(e) => e.stopPropagation()}
-                        style={{ display: "flex", alignItems: "center", gap: 4, flexShrink: 0 }}
-                      >
-                        <span style={{ fontSize: 12, color: "var(--color-text-muted)" }}>$</span>
+                      <div style={{ fontSize: 12, marginTop: 4 }}>
+                        <strong>{qtyLabel}</strong>
+                      </div>
+                      <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", marginTop: 4 }}>
+                        <label style={{ fontSize: 12, color: "var(--color-text-muted)" }}>Adjust qty</label>
                         <input
                           type="number"
                           min="0"
-                          step="0.01"
-                          placeholder="My price"
-                          value={prices[item.name] ?? ""}
-                          onChange={(e) => setPrice(item.name, e.target.value)}
-                          style={{
-                            width: 80,
-                            padding: "4px 6px",
-                            border: "1px solid var(--color-border)",
-                            borderRadius: 5,
-                            fontSize: 13,
-                            background: "white",
-                          }}
-                          data-testid={`price-input-${item.name.replace(/\s+/g, "-")}`}
+                          step="1"
+                          value={qtyOverrides[item.name] ?? ""}
+                          onChange={(e) => setQtyOverride(item.name, e.target.value)}
+                          onClick={(e) => e.stopPropagation()}
+                          style={{ width: 76, padding: "4px 6px", border: "1px solid var(--color-border)", borderRadius: 5, fontSize: 13 }}
                         />
-                        <span style={{ fontSize: 11, color: "var(--color-text-muted)" }}>/{item.packageUnit.split(" ")[0]}</span>
+                        {qtyOverrides[item.name] ? (
+                          <span style={{ fontSize: 11, color: "var(--color-text-muted)" }}>Calculated: {calculated} — you entered: {qtyOverrides[item.name]}</span>
+                        ) : null}
                       </div>
-                    )}
+                      <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", marginTop: 6 }}>
+                        <div style={{ fontSize: 12, color: "var(--color-text-muted)" }}>
+                          Default: {fmt(item.defaultCostRange[0])}–{fmt(item.defaultCostRange[1])} per {item.packageUnit}
+                        </div>
+                        {isChecked && (
+                          <div onClick={(e) => e.stopPropagation()} style={{ display: "flex", alignItems: "center", gap: 4, flexShrink: 0 }}>
+                            <span style={{ fontSize: 12, color: "var(--color-text-muted)" }}>$</span>
+                            <input type="number" min="0" step="0.01" placeholder="My price" value={myPrice ?? ""} onChange={(e) => setPrice(item.name, e.target.value)} style={{ width: 80, padding: "4px 6px", border: "1px solid var(--color-border)", borderRadius: 5, fontSize: 13, background: "white" }} data-testid={`price-input-${item.name.replace(/\s+/g, "-")}`} />
+                          </div>
+                        )}
+                      </div>
+                      <div style={{ fontSize: 12, marginTop: 4 }}>
+                        <strong>Estimated cost:</strong> {fmt(itemEstimate[0])} – {fmt(itemEstimate[1])}
+                      </div>
+                    </div>
                   </div>
                 );
               })}
             </div>
           </div>
         ))}
+        <div style={{ marginTop: 24, padding: "14px 16px", border: "1px solid var(--color-border)", borderRadius: 10, background: "white", fontWeight: 700 }}>
+          Estimated Total Food Cost: {fmt(totalCostEstimate[0])} – {fmt(totalCostEstimate[1])}
+        </div>
 
         <div className="form-nav form-nav--split" style={{ marginTop: 32, paddingTop: 20, borderTop: "1px solid var(--color-border)" }}>
           <button type="button" onClick={onBack} className="btn-secondary">
