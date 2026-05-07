@@ -147,8 +147,8 @@ export default function PrintPage() {
           </div>
           <h2 className="print-locked-title">Your printable event plan is part of the Full Event Pack.</h2>
           <p className="print-locked-desc">
-            The Full Event Pack includes your complete shopping list, prep timeline, volunteer plan,
-            sign-up sheet, and this print-ready plan — all for a one-time $19 purchase.
+            The Founding Event Pack includes your food quantities, shopping list, prep timeline, volunteer plan,
+            basic budget range, announcement copy, Canva flyer brief, sign-up sheet, and this print-ready plan — all for a one-time $19 purchase.
           </p>
           <div className="print-locked-actions">
             <a
@@ -158,7 +158,7 @@ export default function PrintPage() {
               rel="noopener noreferrer"
               data-testid="button-get-full-pack"
             >
-              Get the Full Event Pack — $19
+              Get the Founding Event Pack — $19
             </a>
             <a href="/results" className="btn-secondary" data-testid="button-back-results">Back to Results</a>
           </div>

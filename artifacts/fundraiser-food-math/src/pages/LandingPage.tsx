@@ -23,7 +23,7 @@ export default function LandingPage() {
           <div className="hero-badge" data-testid="hero-badge">For churches, schools, teams & nonprofits</div>
           <h1 className="hero-headline" data-testid="hero-headline">Plan your food fundraiser without guessing.</h1>
           <p className="hero-subheadline" data-testid="hero-subheadline">
-            Get a shopping list, prep schedule, volunteer plan, and profit estimate in minutes.
+            Get your food quantities, shopping list, prep timeline, volunteer plan, basic budget range, announcement copy, and Canva flyer brief in one ready-to-use fundraiser plan.
           </p>
           <Link href="/planner" className="hero-cta" data-testid="button-hero-cta">
             Build My Fundraiser Plan <ArrowRight className="ml-2 w-5 h-5" />
@@ -80,7 +80,7 @@ export default function LandingPage() {
       <section id="pricing" className="pricing-section">
         <div className="section-inner">
           <h2 className="section-title">Simple pricing</h2>
-          <p className="section-sub">Start free. Upgrade when your event needs it.</p>
+          <p className="section-sub">Start free. Upgrade to the $19 Founding Event Pack when you want the full plan.</p>
           <div className="pricing-grid">
             {PRICING_TIERS.map((tier) => (
               <div key={tier.id} className={`pricing-card${tier.highlighted ? " pricing-card--highlighted" : ""}`} data-testid={`card-pricing-${tier.id}`}>
