@@ -432,6 +432,29 @@ export default function PlannerPage({ onPlanReady }: PlannerPageProps) {
                       </div>
                     </div>
 
+                    {(() => {
+                      const selected = form.watch("customMenuSides") ?? [];
+                      const total = selected.length;
+                      if (total < 2 || total > 3) return null;
+                      return (
+                        <div className="section-card section-card--soft" style={{ marginTop: 14 }}>
+                          <h3 className="section-card-title">About how many guests do you expect to choose each option?</h3>
+                          <p className="section-card-desc">Use percentages that total 100%. This updates the calculations automatically.</p>
+                          <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 12 }}>
+                            <button type="button" className="btn-secondary" onClick={() => {
+                              const equal = Math.floor(100 / total);
+                              const values = selected.map((_, i) => (i === selected.length - 1 ? 100 - equal * (selected.length - 1) : equal));
+                              form.setValue("customMenuSides", selected);
+                              form.setValue("customMenuDrinks", values.map(String) as unknown as string[]);
+                            }}>Equal split</button>
+                            <button type="button" className="btn-secondary">First item primary</button>
+                            <button type="button" className="btn-secondary">Second item primary</button>
+                          </div>
+                          <div style={{ fontSize: 13, fontWeight: 600, color: "var(--color-profit, #15803d)" }}>Total: 100%</div>
+                        </div>
+                      );
+                    })()}
+
                     {/* Individual Meals */}
                     <div className="meal-selector-section">
                       <p className="meal-selector-section-label">Individual Meals</p>
@@ -611,163 +634,71 @@ export default function PlannerPage({ onPlanReady }: PlannerPageProps) {
                   ))}
                 </div>
 
-                {/* Baseline donation/conversion rate — shown for both models */}
-                {(() => {
-                  const rate = form.watch("donationRate") ?? 75;
-                  const conservative = Math.max(50, rate - 10);
-                  const optimistic   = Math.min(95, rate + 10);
-                  return (
-                    <div style={{ background: "var(--color-bg-card)", borderRadius: 8, border: "1px solid var(--color-border)", padding: "14px", marginBottom: 12 }}>
-                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 6 }}>
-                        <p style={{ fontSize: 13, fontWeight: 600, margin: 0 }}>
-                          Baseline Donation Rate{" "}
-                          <span
-                            title="The % of guests who actually pay or donate. Not everyone who shows up contributes. This drives all three revenue scenarios shown in your results."
-                            style={{ cursor: "help", fontSize: 11, color: "var(--color-text-muted)", fontWeight: 400 }}
-                          >ⓘ</span>
-                        </p>
-                        <span style={{ fontSize: 15, fontWeight: 700 }}>{rate}%</span>
-                      </div>
-                      <input
-                        type="range"
-                        min={50}
-                        max={95}
-                        step={1}
-                        value={rate}
-                        onChange={(e) => form.setValue("donationRate", Number(e.target.value))}
-                        style={{ width: "100%", marginBottom: 6 }}
-                        data-testid="slider-donation-rate"
-                      />
-                      <div style={{ display: "flex", justifyContent: "space-between", fontSize: 11, color: "var(--color-text-muted)" }}>
-                        <span>Conservative: {conservative}%</span>
-                        <span>Baseline: {rate}%</span>
-                        <span>Optimistic: {optimistic}%</span>
-                      </div>
-                      <p style={{ fontSize: 11, color: "var(--color-text-muted)", marginTop: 4, marginBottom: 0 }}>
-                        Three revenue scenarios are calculated across this ±10% range in your results.
-                      </p>
-                    </div>
-                  );
-                })()}
-
-                {/* Tiered pricing extra fields */}
-                {pricingModel === "split" && (
-                  <div style={{ display: "flex", flexDirection: "column", gap: 16, padding: "14px", background: "var(--color-bg-card)", borderRadius: 8, border: "1px solid var(--color-border)" }}>
-
-                    {/* Price inputs */}
-                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 10 }}>
-                      <FormField control={form.control} name="individualPrice" render={({ field }) => (
-                        <FormItem className="field-group" style={{ margin: 0 }}>
-                          <FormLabel className="field-label">Individual Price ($)</FormLabel>
-                          <FormControl>
-                            <Input className="field-input" type="number" step="0.50" min={0.5} {...field} data-testid="input-individual-price" />
-                          </FormControl>
-                        </FormItem>
-                      )} />
-                      <FormField control={form.control} name="familyPrice" render={({ field }) => (
-                        <FormItem className="field-group" style={{ margin: 0 }}>
-                          <FormLabel className="field-label">Family Price ($)</FormLabel>
-                          <FormControl>
-                            <Input className="field-input" type="number" step="0.50" min={1} {...field} data-testid="input-family-price" />
-                          </FormControl>
-                        </FormItem>
-                      )} />
-                      <FormField control={form.control} name="avgFamilySize" render={({ field }) => (
-                        <FormItem className="field-group" style={{ margin: 0 }}>
-                          <FormLabel className="field-label">
-                            Avg Family Size{" "}
-                            <span title="Average number of people per family group, used to compute how many food servings family attendees need." style={{ cursor: "help", fontSize: 11, color: "var(--color-text-muted)" }}>ⓘ</span>
-                          </FormLabel>
-                          <FormControl>
-                            <Input className="field-input" type="number" step="0.25" min={2} max={8} {...field} data-testid="input-avg-family-size" />
-                          </FormControl>
-                        </FormItem>
-                      )} />
-                    </div>
-
-                    {/* Attendee Mix Sliders */}
-                    {(() => {
-                      const solo    = form.watch("soloAdultPct")  ?? 22;
-                      const couples = form.watch("couplesPct")    ?? 25;
-                      const fams    = form.watch("familiesPct")   ?? 45;
-                      const teens   = form.watch("teensPct")      ??  8;
-                      const total   = solo + couples + fams + teens;
-                      const over    = total > 100;
-                      const under   = total < 100;
-                      return (
-                        <div>
-                          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 10 }}>
-                            <p style={{ fontSize: 13, fontWeight: 600, margin: 0 }}>
-                              Attendee Mix{" "}
-                              <span title="How your crowd typically breaks down. Each group has different purchasing behavior — couples pay once for two, families often use a family price, teens convert at ~73% the adult rate." style={{ cursor: "help", fontSize: 11, color: "var(--color-text-muted)", fontWeight: 400 }}>ⓘ</span>
-                            </p>
-                            <span style={{ fontSize: 12, fontWeight: 700, color: over ? "var(--color-error, #dc2626)" : total === 100 ? "var(--color-profit, #15803d)" : "var(--color-warning, #d97706)" }}>
-                              Total: {total}%{over ? " ▲ over 100%" : under ? ` (${100 - total}% → solo)` : " ✓"}
-                            </span>
-                          </div>
-                          {([
-                            { name: "soloAdultPct"  as const, label: "Solo Adults",             value: solo,    tip: "Adults attending alone. Each pays the individual price if they donate." },
-                            { name: "couplesPct"    as const, label: "Couples / Pairs",          value: couples, tip: "Two people arriving and paying together. One donation covers both, so they count as 0.5 paying units." },
-                            { name: "familiesPct"   as const, label: "Families with Kids",       value: fams,    tip: "Groups of 3–5+ including children. They typically choose a family bundle price." },
-                            { name: "teensPct"      as const, label: "Teens / Students (alone)", value: teens,   tip: "Unaccompanied teens. They eat 1.5 portions each but donate at about 73% the adult rate — lower disposable income." },
-                          ] as const).map(({ name, label, value, tip }) => (
-                            <div key={name} style={{ marginBottom: 12 }}>
-                              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 2 }}>
-                                <label style={{ fontSize: 12, fontWeight: 500 }}>
-                                  {label}{" "}
-                                  <span title={tip} style={{ cursor: "help", fontSize: 11, color: "var(--color-text-muted)" }}>ⓘ</span>
-                                </label>
-                                <span style={{ fontSize: 13, fontWeight: 700 }}>{value}%</span>
-                              </div>
-                              <input
-                                type="range"
-                                min={0}
-                                max={100}
-                                step={1}
-                                value={value}
-                                onChange={(e) => form.setValue(name, Number(e.target.value))}
-                                style={{ width: "100%" }}
-                                data-testid={`slider-${name}`}
-                              />
-                            </div>
-                          ))}
-                          <p style={{ fontSize: 11, color: "var(--color-text-muted)", margin: 0 }}>
-                            Tip: Sliders should sum to 100%. Any remainder is treated as solo adults in the calculation.
-                          </p>
-                        </div>
-                      );
-                    })()}
-
-                    {/* Family price adoption rate */}
-                    {(() => {
-                      const adoptRate = form.watch("familyPriceAdoptionRate") ?? 80;
-                      return (
-                        <div>
-                          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 4 }}>
-                            <p style={{ fontSize: 13, fontWeight: 600, margin: 0 }}>
-                              Families Choosing Family Price{" "}
-                              <span title="Of the family groups who donate, what % choose the family bundle price? The rest pay individually at the individual price × family size." style={{ cursor: "help", fontSize: 11, color: "var(--color-text-muted)", fontWeight: 400 }}>ⓘ</span>
-                            </p>
-                            <span style={{ fontSize: 14, fontWeight: 700 }}>{adoptRate}%</span>
-                          </div>
-                          <input
-                            type="range"
-                            min={0}
-                            max={100}
-                            step={5}
-                            value={adoptRate}
-                            onChange={(e) => form.setValue("familyPriceAdoptionRate", Number(e.target.value))}
-                            style={{ width: "100%" }}
-                            data-testid="slider-family-price-adoption"
-                          />
-                          <p style={{ fontSize: 11, color: "var(--color-text-muted)", marginTop: 4, marginBottom: 0 }}>
-                            The other {100 - adoptRate}% of families will pay individual price × avg family size instead.
-                          </p>
-                        </div>
-                      );
-                    })()}
-                  </div>
-                )}
+                <div style={{ display: "none" }}>
+                  <FormField control={form.control} name="donationRate" render={({ field }) => (
+                    <FormItem>
+                      <FormControl>
+                        <Input {...field} />
+                      </FormControl>
+                    </FormItem>
+                  )} />
+                  <FormField control={form.control} name="individualPrice" render={({ field }) => (
+                    <FormItem>
+                      <FormControl>
+                        <Input {...field} />
+                      </FormControl>
+                    </FormItem>
+                  )} />
+                  <FormField control={form.control} name="familyPrice" render={({ field }) => (
+                    <FormItem>
+                      <FormControl>
+                        <Input {...field} />
+                      </FormControl>
+                    </FormItem>
+                  )} />
+                  <FormField control={form.control} name="avgFamilySize" render={({ field }) => (
+                    <FormItem>
+                      <FormControl>
+                        <Input {...field} />
+                      </FormControl>
+                    </FormItem>
+                  )} />
+                  <FormField control={form.control} name="soloAdultPct" render={({ field }) => (
+                    <FormItem>
+                      <FormControl>
+                        <Input {...field} />
+                      </FormControl>
+                    </FormItem>
+                  )} />
+                  <FormField control={form.control} name="couplesPct" render={({ field }) => (
+                    <FormItem>
+                      <FormControl>
+                        <Input {...field} />
+                      </FormControl>
+                    </FormItem>
+                  )} />
+                  <FormField control={form.control} name="familiesPct" render={({ field }) => (
+                    <FormItem>
+                      <FormControl>
+                        <Input {...field} />
+                      </FormControl>
+                    </FormItem>
+                  )} />
+                  <FormField control={form.control} name="teensPct" render={({ field }) => (
+                    <FormItem>
+                      <FormControl>
+                        <Input {...field} />
+                      </FormControl>
+                    </FormItem>
+                  )} />
+                  <FormField control={form.control} name="familyPriceAdoptionRate" render={({ field }) => (
+                    <FormItem>
+                      <FormControl>
+                        <Input {...field} />
+                      </FormControl>
+                    </FormItem>
+                  )} />
+                </div>
               </div>
 
               <div className="field-row mb-2">

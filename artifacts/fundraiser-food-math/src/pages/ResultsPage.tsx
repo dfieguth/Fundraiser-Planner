@@ -82,6 +82,7 @@ export default function ResultsPage({ plan, formData, onReset }: ResultsPageProp
   const safeRevenueConservative = plan?.revenueConservative;
   const safeRevenueGenerous = plan?.revenueGenerous;
   const safeScenarioBundle = plan?.scenarioBundle;
+  const showAdvancedRevenue = false;
 
   const MEAL_LABELS: Record<string, string> = {
     hotdogs: "Hot Dogs", burgers: "Burgers", bakedPotatoes: "Baked Potatoes",
@@ -299,53 +300,7 @@ export default function ResultsPage({ plan, formData, onReset }: ResultsPageProp
       </div>
 
       {/* ── Canva Ad Brief ──────────────────────────────────────── */}
-      <div style={{ maxWidth: 900, margin: "0 auto", padding: "0 20px 0" }}>
-        <button
-          type="button"
-          onClick={() => setShowCanvaBrief(!showCanvaBrief)}
-          className="btn-secondary"
-          style={{ marginBottom: 8, fontSize: 13 }}
-          data-testid="button-canva-brief"
-        >
-          <Lightbulb className="w-4 h-4 mr-2" />
-          {showCanvaBrief ? "Hide Canva Ad Brief" : "Generate Canva Ad Brief"}
-        </button>
-        {showCanvaBrief && (
-          <div style={{
-            background: "var(--color-bg-card)",
-            border: "1px solid var(--color-border)",
-            borderRadius: 10,
-            padding: "16px 20px",
-            marginBottom: 16,
-          }}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
-              <p style={{ fontWeight: 600, fontSize: 14, margin: 0 }}>Canva Ad Brief</p>
-              <button
-                type="button"
-                onClick={copyCanvaBrief}
-                className="btn-secondary"
-                style={{ fontSize: 12, padding: "4px 12px" }}
-                data-testid="button-copy-canva"
-              >
-                {copiedCanva
-                  ? <><CheckCircle2 className="w-3.5 h-3.5 mr-1.5" /> Copied!</>
-                  : <><Copy className="w-3.5 h-3.5 mr-1.5" /> Copy All</>}
-              </button>
-            </div>
-            <pre style={{
-              fontFamily: "monospace",
-              fontSize: 12,
-              lineHeight: 1.6,
-              whiteSpace: "pre-wrap",
-              wordBreak: "break-word",
-              color: "var(--color-text)",
-              margin: 0,
-            }}>
-              {generateCanvaBrief()}
-            </pre>
-          </div>
-        )}
-      </div>
+      <div style={{ maxWidth: 900, margin: "0 auto", padding: "0 20px 0" }} />
 
       {/* Risk Warnings — free preview shows up to FREE_WARNINGS_SHOWN */}
       {visibleWarnings.length > 0 && (
@@ -366,7 +321,7 @@ export default function ResultsPage({ plan, formData, onReset }: ResultsPageProp
       {/* Summary Cards — always visible */}
       <div className="summary-cards">
         <div className="summary-card" data-testid="card-revenue">
-          {safeRevenueConservative !== undefined && safeRevenueGenerous !== undefined ? (
+          {showAdvancedRevenue && safeRevenueConservative !== undefined && safeRevenueGenerous !== undefined ? (
             <>
               <div className="summary-label">Revenue Range (Split Pricing)</div>
               <div className="summary-value summary-value--revenue" style={{ fontSize: "1.1rem" }}>
@@ -407,8 +362,8 @@ export default function ResultsPage({ plan, formData, onReset }: ResultsPageProp
         </div>
       </div>
 
-      {/* ── Revenue Scenarios (3-scenario model) ──────────────── */}
-      {plan?.revenueScenarios && (
+      {/* ── Revenue Scenarios (hidden) ──────────────── */}
+      {showAdvancedRevenue && plan?.revenueScenarios && (
         <section className="results-section" data-testid="section-revenue-scenarios" style={{ margin: "0 0 8px" }}>
           <h2 className="section-heading">Revenue Projection Scenarios</h2>
           <p className="section-note">
@@ -456,8 +411,8 @@ export default function ResultsPage({ plan, formData, onReset }: ResultsPageProp
         </section>
       )}
 
-      {/* ScenarioCompare — attendance range mode */}
-      {safeScenarioBundle && (
+      {/* ScenarioCompare — hidden */}
+      {showAdvancedRevenue && safeScenarioBundle && (
         <section className="results-section" data-testid="section-scenarios" style={{ margin: "0 0 8px" }}>
           <h2 className="section-heading">Attendance Scenario Comparison</h2>
           <p className="section-note">
