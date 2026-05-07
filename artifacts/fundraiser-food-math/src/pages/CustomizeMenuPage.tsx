@@ -78,6 +78,31 @@ function fmt(n: number) {
   return `$${n.toFixed(2)}`;
 }
 
+// Extract the package count from strings like:
+//   "220 potatoes needed · buy 22 × 10-lb bag ..."
+//   "22 × 10-pack" (old format fallback)
+function parsePackageCount(value: string): number {
+  const afterBuy = value.match(/buy\s+(\d+)/);
+  if (afterBuy) return Number.parseInt(afterBuy[1], 10);
+  const leading = value.match(/^(\d+)/);
+  return leading ? Number.parseInt(leading[1], 10) : 1;
+}
+
+// Extract just the "X × packageUnit" part for a clean buy line display.
+// Input:  "220 potatoes needed · buy 22 × 10-lb bag · $7–$12 · total $154–$264"
+// Output: "22 × 10-lb bag"
+function extractBuyLine(value: string): string {
+  const match = value.match(/buy\s+(\d+\s*×\s*[^·]+)/);
+  if (match) return match[1].trim();
+  return value;
+}
+
+// Extract just the "X units needed" part for the needed-count display.
+function extractNeededLine(value: string): string {
+  const parts = value.split("·");
+  return parts[0]?.trim() ?? value;
+}
+
 interface CustomizeMenuPageProps {
   form: PlannerFormData;
   onConfirm: (form: PlannerFormData) => void;
@@ -86,15 +111,24 @@ interface CustomizeMenuPageProps {
 
 export default function CustomizeMenuPage({ form, onConfirm, onBack }: CustomizeMenuPageProps) {
   const items = useMemo(() => getPreviewItems(form), [form]);
-  const previewPlan = useMemo(() => calculatePlan({ ...form, excludedItems: undefined, customItemPrices: undefined }), [form]);
+
+  // Run the calculator once (no exclusions, no custom prices) to get the baseline numbers.
+  const previewPlan = useMemo(
+    () => calculatePlan({ ...form, excludedItems: undefined, customItemPrices: undefined }),
+    [form],
+  );
+
+  // Build a lookup: item name → { quantity string, estimatedCost from calculator }
+  // estimatedCost is already packages × costPerPackage — the correct total.
   const planByName = useMemo(() => {
     const map = new Map<string, { quantity: string; estimatedCost: [number, number] }>();
-    for (const item of previewPlan.shoppingList) map.set(item.item, { quantity: item.quantity, estimatedCost: item.estimatedCost });
-    for (const item of previewPlan.suppliesList) map.set(item.item, { quantity: item.quantity, estimatedCost: item.estimatedCost });
+    for (const item of previewPlan.shoppingList)
+      map.set(item.item, { quantity: item.quantity, estimatedCost: item.estimatedCost });
+    for (const item of previewPlan.suppliesList)
+      map.set(item.item, { quantity: item.quantity, estimatedCost: item.estimatedCost });
     return map;
   }, [previewPlan]);
 
-  // Initialize: all items checked, no custom prices
   const [checked, setChecked] = useState<Record<string, boolean>>(() => {
     const init: Record<string, boolean> = {};
     for (const item of items) init[item.name] = true;
@@ -115,36 +149,48 @@ export default function CustomizeMenuPage({ form, onConfirm, onBack }: Customize
     setQtyOverrides(prev => ({ ...prev, [name]: val }));
   };
 
-  const parseQuantity = (value: string) => {
-    const match = value.match(/([\d.]+)/);
-    return match ? Number.parseFloat(match[1]) : 0;
-  };
-
+  // Returns the baseline package count and any user override.
   const getQuantity = (item: PreviewItem) => {
-    const calculated = planByName.get(item.name)?.quantity ?? `1 ${item.packageUnit}`;
-    const qty = Number.parseFloat(qtyOverrides[item.name] ?? "");
-    const override = Number.isFinite(qty) && qty > 0 ? qty : null;
-    const baseQty = parseQuantity(calculated) || 1;
-    return { calculated, finalQty: override ?? baseQty };
+    const quantityStr = planByName.get(item.name)?.quantity ?? "";
+    const basePkgs = parsePackageCount(quantityStr) || 1;
+    const overrideRaw = qtyOverrides[item.name] ?? "";
+    const overrideVal = Number.parseInt(overrideRaw, 10);
+    const overridePkgs = Number.isFinite(overrideVal) && overrideVal > 0 ? overrideVal : null;
+    return { quantityStr, basePkgs, finalPkgs: overridePkgs ?? basePkgs, hasOverride: overridePkgs !== null };
   };
 
-  const itemCostEstimate = (item: PreviewItem) => {
-    const base = planByName.get(item.name)?.estimatedCost ?? item.defaultCostRange;
-    const qty = getQuantity(item).finalQty;
-    return [base[0] * qty, base[1] * qty] as [number, number];
+  // Compute the estimated cost for a single item, respecting overrides.
+  // KEY FIX: estimatedCost from the calculator already = packages × costPerPackage.
+  // Only re-multiply when the user has changed the package count or entered a custom price.
+  const itemCostEstimate = (item: PreviewItem): [number, number] => {
+    const { basePkgs, finalPkgs, hasOverride } = getQuantity(item);
+    const customPriceRaw = parseFloat(prices[item.name] ?? "");
+    const hasCustomPrice = Number.isFinite(customPriceRaw) && customPriceRaw > 0;
+
+    if (!hasOverride && !hasCustomPrice) {
+      // Use the calculator's pre-computed total directly — no extra multiplication.
+      return planByName.get(item.name)?.estimatedCost ?? item.defaultCostRange;
+    }
+
+    // User changed something: recompute from per-package price × package count.
+    const pricePerPkg: [number, number] = hasCustomPrice
+      ? [customPriceRaw, customPriceRaw]
+      : item.defaultCostRange;
+    const pkgs = finalPkgs;
+    return [pkgs * pricePerPkg[0], pkgs * pricePerPkg[1]];
   };
 
   const totalCostEstimate: [number, number] = useMemo(() => {
-    let low = 0;
-    let high = 0;
+    let low = 0, high = 0;
     for (const item of items) {
       if (!checked[item.name]) continue;
-      const [itemLow, itemHigh] = itemCostEstimate(item);
-      low += itemLow;
-      high += itemHigh;
+      const [lo, hi] = itemCostEstimate(item);
+      low += lo;
+      high += hi;
     }
     return [low, high];
-  }, [checked, items, qtyOverrides, planByName]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [checked, items, qtyOverrides, prices, planByName]);
 
   const handleConfirm = () => {
     const excludedItems = Object.entries(checked)
@@ -164,7 +210,6 @@ export default function CustomizeMenuPage({ form, onConfirm, onBack }: Customize
     });
   };
 
-  // Group items by category
   const grouped = useMemo(() => {
     const groups: Record<string, PreviewItem[]> = {};
     for (const item of items) {
@@ -209,7 +254,7 @@ export default function CustomizeMenuPage({ form, onConfirm, onBack }: Customize
           <span>
             <strong>{checkedCount} of {items.length} items selected.</strong>{" "}
             Items marked <Lock className="w-3 h-3 inline" /> are required and cannot be unchecked.
-            The "My price" field overrides the default estimate — enter the price per package.
+            The "My price" field overrides the default — enter the price per package.
           </span>
         </div>
 
@@ -229,13 +274,14 @@ export default function CustomizeMenuPage({ form, onConfirm, onBack }: Customize
               {catItems.map((item) => {
                 const isChecked = checked[item.name] ?? true;
                 const isReq = item.required;
-                const { calculated, finalQty } = getQuantity(item);
-                const itemEstimate = itemCostEstimate(item);
-                const packageBase = planByName.get(item.name);
+                const { quantityStr, basePkgs, finalPkgs, hasOverride } = getQuantity(item);
+                const [totalLow, totalHigh] = itemCostEstimate(item);
                 const myPrice = prices[item.name];
-                const packageQty = packageBase?.quantity ?? `${finalQty} × ${item.packageUnit}`;
-                const totalLow = itemEstimate[0];
-                const totalHigh = itemEstimate[1];
+
+                // Display strings parsed from the calculator's quantity string
+                const neededLine = extractNeededLine(quantityStr);   // "220 potatoes needed"
+                const buyLine    = extractBuyLine(quantityStr);       // "22 × 10-lb bag"
+
                 return (
                   <div
                     key={item.name}
@@ -271,48 +317,78 @@ export default function CustomizeMenuPage({ form, onConfirm, onBack }: Customize
 
                     {/* Label and meta */}
                     <div style={{ minWidth: 0 }}>
+                      {/* Item name + package unit + required badge */}
                       <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
                         <span style={{ fontWeight: 600, fontSize: 14 }}>{item.name}</span>
                         <span style={{ fontSize: 12, color: "var(--color-text-muted)" }}>• {item.packageUnit}</span>
-                        {isReq && <span style={{ fontSize: 10, fontWeight: 700, background: "var(--color-text-muted)", color: "white", padding: "1px 5px", borderRadius: 3 }}>REQUIRED</span>}
+                        {isReq && (
+                          <span style={{ fontSize: 10, fontWeight: 700, background: "var(--color-text-muted)", color: "white", padding: "1px 5px", borderRadius: 3 }}>
+                            REQUIRED
+                          </span>
+                        )}
                       </div>
+
+                      {/* Usage rate note */}
                       <div style={{ fontSize: 12, color: "var(--color-text-muted)", marginTop: 2 }}>
-                        {item.usageRate && item.usageRate < 1 ? `~${Math.round(item.usageRate * 100)}% of guests` : " "}
+                        {item.usageRate && item.usageRate < 1 ? `~${Math.round(item.usageRate * 100)}% of guests use this` : " "}
                       </div>
+
+                      {/* Needed + packages to buy */}
                       <div style={{ fontSize: 12, marginTop: 4 }}>
-                        <strong>{calculated}</strong>
+                        <strong style={{ color: "var(--color-text)" }}>{neededLine}</strong>
+                        {" · buy "}
+                        <strong style={{ color: "var(--color-primary)" }}>
+                          {hasOverride ? `${finalPkgs} × ${item.packageUnit}` : buyLine}
+                        </strong>
+                        {hasOverride && (
+                          <span style={{ fontSize: 11, color: "var(--color-text-muted)", marginLeft: 6 }}>
+                            (calc: {basePkgs})
+                          </span>
+                        )}
                       </div>
-                      <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", marginTop: 4 }}>
-                        <label style={{ fontSize: 12, color: "var(--color-text-muted)" }}>Adjust qty</label>
+
+                      {/* Adjust quantity */}
+                      <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", marginTop: 6 }}>
+                        <label style={{ fontSize: 12, color: "var(--color-text-muted)" }}>
+                          Adjust packages:
+                        </label>
                         <input
                           type="number"
                           min="0"
                           step="1"
+                          placeholder={String(basePkgs)}
                           value={qtyOverrides[item.name] ?? ""}
                           onChange={(e) => setQtyOverride(item.name, e.target.value)}
                           onClick={(e) => e.stopPropagation()}
                           style={{ width: 76, padding: "4px 6px", border: "1px solid var(--color-border)", borderRadius: 5, fontSize: 13 }}
                         />
-                        {qtyOverrides[item.name] ? (
-                          <span style={{ fontSize: 11, color: "var(--color-text-muted)" }}>Calculated: {calculated} — you entered: {qtyOverrides[item.name]}</span>
-                        ) : null}
                       </div>
+
+                      {/* Price per package + my price input */}
                       <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", marginTop: 6 }}>
                         <div style={{ fontSize: 12, color: "var(--color-text-muted)" }}>
-                          Buy: {packageQty}
+                          {fmt(item.defaultCostRange[0])}–{fmt(item.defaultCostRange[1])} per {item.packageUnit}
                         </div>
                         {isChecked && (
                           <div onClick={(e) => e.stopPropagation()} style={{ display: "flex", alignItems: "center", gap: 4, flexShrink: 0 }}>
-                            <span style={{ fontSize: 12, color: "var(--color-text-muted)" }}>$</span>
-                            <input type="number" min="0" step="0.01" placeholder="My price" value={myPrice ?? ""} onChange={(e) => setPrice(item.name, e.target.value)} style={{ width: 80, padding: "4px 6px", border: "1px solid var(--color-border)", borderRadius: 5, fontSize: 13, background: "white" }} data-testid={`price-input-${item.name.replace(/\s+/g, "-")}`} />
+                            <span style={{ fontSize: 12, color: "var(--color-text-muted)" }}>My price: $</span>
+                            <input
+                              type="number"
+                              min="0"
+                              step="0.01"
+                              placeholder="per pkg"
+                              value={myPrice ?? ""}
+                              onChange={(e) => setPrice(item.name, e.target.value)}
+                              style={{ width: 80, padding: "4px 6px", border: "1px solid var(--color-border)", borderRadius: 5, fontSize: 13, background: "white" }}
+                              data-testid={`price-input-${item.name.replace(/\s+/g, "-")}`}
+                            />
                           </div>
                         )}
                       </div>
-                      <div style={{ fontSize: 12, marginTop: 4 }}>
-                        <strong>Price per package:</strong> {fmt(item.defaultCostRange[0])}–{fmt(item.defaultCostRange[1])} per {item.packageUnit}
-                      </div>
-                      <div style={{ fontSize: 12, marginTop: 4 }}>
-                        <strong>Total estimated cost:</strong> {fmt(totalLow)} – {fmt(totalHigh)}
+
+                      {/* Total estimated cost for this item */}
+                      <div style={{ fontSize: 12, marginTop: 5, fontWeight: 600, color: "var(--color-text)" }}>
+                        Total: {fmt(totalLow)} – {fmt(totalHigh)}
                       </div>
                     </div>
                   </div>
@@ -321,6 +397,8 @@ export default function CustomizeMenuPage({ form, onConfirm, onBack }: Customize
             </div>
           </div>
         ))}
+
+        {/* Grand total */}
         <div style={{ marginTop: 24, padding: "14px 16px", border: "1px solid var(--color-border)", borderRadius: 10, background: "white", fontWeight: 700 }}>
           Estimated Total Food Cost: {fmt(totalCostEstimate[0])} – {fmt(totalCostEstimate[1])}
         </div>
