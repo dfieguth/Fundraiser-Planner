@@ -57,7 +57,7 @@ export interface SupplyDef {
 export const hotDogAssumptions: MealAssumption = {
   label: "hotdogs",
   displayName: "Hot Dogs",
-  adultServings: 1.65,  // 1.5 × 1.1 buffet premium
+  adultServings: 1.265, // 1.15 × 1.1 buffet premium
   kidServings: 1.10,    // 1.0 × 1.1 buffet premium
   wasteBuffer: 1.05,
   cookingComplexity: "low",

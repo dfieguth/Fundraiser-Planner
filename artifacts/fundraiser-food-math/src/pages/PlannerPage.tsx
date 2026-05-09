@@ -641,7 +641,7 @@ export default function PlannerPage({ onPlanReady }: PlannerPageProps) {
                   </div>
 
                   {/* Coverage indicator */}
-                  {selectedMeals.length > 0 && (() => {
+                    {false && selectedMeals.length > 0 && (() => {
                     const totalServings = selectedMeals.reduce((sum, m) => sum + (mealServings[m] ?? 0), 0);
                     const coveragePct = totalExpectedGuests > 0 ? Math.round((totalServings / totalExpectedGuests) * 100) : 0;
                     const color = coveragePct < 85 ? "#ca8a04" : coveragePct <= 100 ? "#16a34a" : coveragePct <= 130 ? "#2563eb" : "#ea580c";
