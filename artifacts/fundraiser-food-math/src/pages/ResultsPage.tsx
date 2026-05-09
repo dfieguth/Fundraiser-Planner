@@ -717,7 +717,7 @@ export default function ResultsPage({ plan, formData, onReset }: ResultsPageProp
             {activeTab === "shopping" && (
               <div className="tab-content" data-testid="tab-content-shopping">
                 <p className="tab-intro">
-                  Store preference: <strong>{plan?.summary?.storePreference ?? "—"}</strong>. Prices are estimates and vary by store and region.
+                  Store preference: <strong>{plan?.summary?.storePreference ?? "—"}</strong>.
                 </p>
 
                 {/* ── Multi-meal: split shopping list per meal ───── */}
@@ -737,8 +737,7 @@ export default function ResultsPage({ plan, formData, onReset }: ResultsPageProp
                             <thead>
                               <tr>
                                 <th>Item</th>
-                                <th>Quantity</th>
-                                <th>Est. Cost Range</th>
+                                <th>Quantity needed</th>
                                 <th>Notes</th>
                               </tr>
                             </thead>
@@ -747,13 +746,12 @@ export default function ResultsPage({ plan, formData, onReset }: ResultsPageProp
                                 ? section.shoppingListGrouped.map((group) => (
                                     <>
                                       <tr key={`grp-${section.mealType}-${group.label}`} className="shopping-group-row">
-                                        <td colSpan={4} className="shopping-group-header-cell">{group.label}</td>
+                                        <td colSpan={3} className="shopping-group-header-cell">{group.label}</td>
                                       </tr>
                                       {group.items.map((item, i) => (
                                         <tr key={`${section.mealType}-${group.label}-${i}`}>
                                           <td>{item.item}</td>
                                           <td><strong>{item.quantity}</strong></td>
-                                          <td>{fmt(item.estimatedCost[0])} – {fmt(item.estimatedCost[1])}</td>
                                           <td className="table-note">{item.notes || "—"}</td>
                                         </tr>
                                       ))}
@@ -763,14 +761,9 @@ export default function ResultsPage({ plan, formData, onReset }: ResultsPageProp
                                     <tr key={i}>
                                       <td>{item.item}</td>
                                       <td><strong>{item.quantity}</strong></td>
-                                      <td>{fmt(item.estimatedCost[0])} – {fmt(item.estimatedCost[1])}</td>
                                       <td className="table-note">{item.notes || "—"}</td>
                                     </tr>
                                   ))}
-                              <tr className="table-total">
-                                <td colSpan={2}><strong>{section.label} Food Cost</strong></td>
-                                <td colSpan={2}><strong>{fmt(section.costRange[0])} – {fmt(section.costRange[1])}</strong></td>
-                              </tr>
                             </tbody>
                           </table>
                         </div>
@@ -784,16 +777,9 @@ export default function ResultsPage({ plan, formData, onReset }: ResultsPageProp
                       </div>
                     )}
 
-                    <div className="table-wrap">
-                      <table className="data-table">
-                        <tbody>
-                          <tr className="table-total">
-                            <td colSpan={2}><strong>Combined Food Cost Estimate</strong></td>
-                            <td colSpan={2}><strong>{fmt(safeCostRange[0])} – {fmt(safeCostRange[1])}</strong></td>
-                          </tr>
-                        </tbody>
-                      </table>
-                    </div>
+                    <p style={{ fontSize: 14, fontWeight: 600, color: "var(--color-text)", marginTop: 8 }}>
+                      Estimated total food cost: <strong>{fmt(safeCostRange[0])} to {fmt(safeCostRange[1])}</strong>
+                    </p>
                   </>
                 ) : safeShoppingListGrouped.length > 0 ? (
                   <div className="table-wrap">
@@ -801,8 +787,7 @@ export default function ResultsPage({ plan, formData, onReset }: ResultsPageProp
                       <thead>
                         <tr>
                           <th>Item</th>
-                          <th>Quantity</th>
-                          <th>Est. Cost Range</th>
+                          <th>Quantity needed</th>
                           <th>Notes</th>
                         </tr>
                       </thead>
@@ -810,24 +795,22 @@ export default function ResultsPage({ plan, formData, onReset }: ResultsPageProp
                         {safeShoppingListGrouped.map((group) => (
                           <>
                             <tr key={`group-${group.label}`} className="shopping-group-row">
-                              <td colSpan={4} className="shopping-group-header-cell">{group.label}</td>
+                              <td colSpan={3} className="shopping-group-header-cell">{group.label}</td>
                             </tr>
                             {group.items.map((item, i) => (
                               <tr key={`${group.label}-${i}`} data-testid={`row-shopping-${group.label}-${i}`}>
                                 <td>{item.item}</td>
                                 <td><strong>{item.quantity}</strong></td>
-                                <td>{fmt(item.estimatedCost[0])} – {fmt(item.estimatedCost[1])}</td>
                                 <td className="table-note">{item.notes || "—"}</td>
                               </tr>
                             ))}
                           </>
                         ))}
-                        <tr className="table-total">
-                          <td colSpan={2}><strong>Total Food Cost Estimate</strong></td>
-                          <td colSpan={2}><strong>{fmt(safeCostRange[0])} – {fmt(safeCostRange[1])}</strong></td>
-                        </tr>
                       </tbody>
                     </table>
+                    <p style={{ fontSize: 14, fontWeight: 600, color: "var(--color-text)", marginTop: 12 }}>
+                      Estimated total food cost: <strong>{fmt(safeCostRange[0])} to {fmt(safeCostRange[1])}</strong>
+                    </p>
                   </div>
                 ) : (
                   <div className="table-wrap">
@@ -835,8 +818,7 @@ export default function ResultsPage({ plan, formData, onReset }: ResultsPageProp
                       <thead>
                         <tr>
                           <th>Item</th>
-                          <th>Quantity</th>
-                          <th>Est. Cost Range</th>
+                          <th>Quantity needed</th>
                           <th>Notes</th>
                         </tr>
                       </thead>
@@ -845,16 +827,14 @@ export default function ResultsPage({ plan, formData, onReset }: ResultsPageProp
                           <tr key={i} data-testid={`row-shopping-${i}`}>
                             <td>{item.item}</td>
                             <td><strong>{item.quantity}</strong></td>
-                            <td>{fmt(item.estimatedCost[0])} – {fmt(item.estimatedCost[1])}</td>
                             <td className="table-note">{item.notes || "—"}</td>
                           </tr>
                         ))}
-                        <tr className="table-total">
-                          <td colSpan={2}><strong>Total Food Cost Estimate</strong></td>
-                          <td colSpan={2}><strong>{fmt(safeCostRange[0])} – {fmt(safeCostRange[1])}</strong></td>
-                        </tr>
                       </tbody>
                     </table>
+                    <p style={{ fontSize: 14, fontWeight: 600, color: "var(--color-text)", marginTop: 12 }}>
+                      Estimated total food cost: <strong>{fmt(safeCostRange[0])} to {fmt(safeCostRange[1])}</strong>
+                    </p>
                   </div>
                 )}
               </div>
