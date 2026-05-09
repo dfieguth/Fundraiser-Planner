@@ -18,6 +18,11 @@ import { USE_STRIPE_TEST_MODE } from "@/config/paymentLinks";
 
 const queryClient = new QueryClient();
 
+// ── Feature flag ──────────────────────────────────────────────
+// Set to true to skip the Customize Your Menu screen entirely.
+// The screen's code and route are preserved; this flag bypasses them.
+const SKIP_CUSTOMIZE_MENU = true;
+
 function AppRoutes() {
   const [plan, setPlan] = useState<FundraiserPlan | null>(null);
   const [formData, setFormData] = useState<PlannerFormData | null>(null);
@@ -37,10 +42,18 @@ function AppRoutes() {
     }
   }, []);  // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Step 1: PlannerPage submits form → navigate to Customize Your Menu
+  // Step 1: PlannerPage submits form → skip Customize Your Menu if flag is set
   const handlePlanReady = (form: PlannerFormData) => {
-    setPendingForm(form);
-    setLocation("/customize");
+    if (SKIP_CUSTOMIZE_MENU) {
+      const newPlan = calculatePlan(form);
+      savePlanBeforePayment(newPlan, form);
+      setPlan(newPlan);
+      setFormData(form);
+      setLocation("/results");
+    } else {
+      setPendingForm(form);
+      setLocation("/customize");
+    }
   };
 
   // Step 2: CustomizeMenuPage confirms → run calculation → navigate to results
