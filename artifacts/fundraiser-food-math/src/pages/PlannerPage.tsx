@@ -3,6 +3,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import type { PlannerFormData, MealType, OrgType, StorePreference } from "@/lib/types";
+import { MEAL_ASSUMPTIONS } from "@/lib/mealAssumptions";
 import { SAMPLE_TEMPLATES } from "@/lib/sampleTemplates";
 import { Link } from "wouter";
 import { ArrowLeft, ArrowRight, Check, X } from "lucide-react";
@@ -168,6 +169,20 @@ function toggleValue(arr: string[], value: string): string[] {
   return arr.includes(value) ? arr.filter((v) => v !== value) : [...arr, value];
 }
 
+// ── Auto-calculate servings from guest count ──────────────────
+// Uses the meal's adult/kid serving ratios + waste buffer.
+// Result is the number of servings to prepare, not the guest count.
+function autoCalcServings(guests: number, mealKey: string, adultPct: number): number {
+  const assumption = MEAL_ASSUMPTIONS[mealKey as MealType];
+  if (!assumption || guests <= 0) return Math.max(1, guests);
+  const adultFrac = Math.max(0, Math.min(1, adultPct / 100));
+  const kidFrac = 1 - adultFrac;
+  return Math.ceil(
+    (guests * adultFrac * assumption.adultServings + guests * kidFrac * assumption.kidServings)
+    * assumption.wasteBuffer
+  );
+}
+
 export default function PlannerPage({ onPlanReady }: PlannerPageProps) {
   // Internal step: 1=Event Info, 2=Tell Us About Your Menu (custom only), 3=Timing, 4=Review
   const [step, setStep] = useState(1);
@@ -183,7 +198,9 @@ export default function PlannerPage({ onPlanReady }: PlannerPageProps) {
 
   // ── Multi-meal selection state ────────────────────────────────
   const [selectedMeals, setSelectedMeals] = useState<MealType[]>([DEFAULT_VALUES.mealType]);
-  const [mealServings, setMealServings] = useState<Record<string, number>>({ [DEFAULT_VALUES.mealType]: DEFAULT_VALUES.attendance });
+  const [mealServings, setMealServings] = useState<Record<string, number>>({
+    [DEFAULT_VALUES.mealType]: autoCalcServings(DEFAULT_VALUES.attendance, DEFAULT_VALUES.mealType, DEFAULT_VALUES.adultPercent),
+  });
   const [totalExpectedGuests, setTotalExpectedGuests] = useState<number>(DEFAULT_VALUES.attendance);
 
   // Sync first selected meal → form.mealType (for schema validation + downstream logic)
@@ -202,7 +219,12 @@ export default function PlannerPage({ onPlanReady }: PlannerPageProps) {
       if (prev.length >= 2) return [prev[0], mealType]; // replace second slot
       return [...prev, mealType];
     });
-    setMealServings((prev) => ({ ...prev, [mealType]: prev[mealType] ?? 100 }));
+    setMealServings((prev) => ({
+      ...prev,
+      [mealType]: prev[mealType] !== undefined
+        ? prev[mealType]
+        : autoCalcServings(totalExpectedGuests, mealType, form.getValues("adultPercent") ?? DEFAULT_VALUES.adultPercent),
+    }));
   };
 
   // On mount: check sessionStorage for Idea Finder pre-fill
@@ -244,8 +266,8 @@ export default function PlannerPage({ onPlanReady }: PlannerPageProps) {
     const mealT = template.formData.mealType;
     const att = template.formData.attendance;
     setSelectedMeals([mealT]);
-    setMealServings({ [mealT]: att });
     setTotalExpectedGuests(att);
+    setMealServings({ [mealT]: autoCalcServings(att, mealT, template.formData.adultPercent ?? DEFAULT_VALUES.adultPercent) });
     const formEl = document.querySelector("[data-testid='planner-form']");
     if (formEl) formEl.scrollIntoView({ behavior: "smooth", block: "start" });
   };
@@ -254,8 +276,8 @@ export default function PlannerPage({ onPlanReady }: PlannerPageProps) {
     form.reset(DEFAULT_VALUES);
     setActiveTemplateId(null);
     setSelectedMeals([DEFAULT_VALUES.mealType]);
-    setMealServings({ [DEFAULT_VALUES.mealType]: DEFAULT_VALUES.attendance });
     setTotalExpectedGuests(DEFAULT_VALUES.attendance);
+    setMealServings({ [DEFAULT_VALUES.mealType]: autoCalcServings(DEFAULT_VALUES.attendance, DEFAULT_VALUES.mealType, DEFAULT_VALUES.adultPercent) });
   };
 
   const pricingModel = form.watch("pricingModel");
@@ -263,11 +285,10 @@ export default function PlannerPage({ onPlanReady }: PlannerPageProps) {
 
   const onSubmit = (data: PlannerFormData) => {
     const primaryMeal = selectedMeals[0] ?? data.mealType;
-    const primaryServings = mealServings[primaryMeal] ?? totalExpectedGuests;
     const enriched: PlannerFormData = {
       ...data,
       mealType: primaryMeal,
-      attendance: selectedMeals.length >= 2 ? totalExpectedGuests : primaryServings,
+      attendance: totalExpectedGuests,
       selectedMeals: selectedMeals.length >= 2 ? selectedMeals : undefined,
       mealServings: selectedMeals.length >= 2 ? mealServings : undefined,
       totalExpectedGuests: selectedMeals.length >= 2 ? totalExpectedGuests : undefined,
@@ -279,8 +300,7 @@ export default function PlannerPage({ onPlanReady }: PlannerPageProps) {
     if (step === 1) {
       // Sync attendance from state so schema validation passes
       const primaryMeal = selectedMeals[0] ?? DEFAULT_VALUES.mealType;
-      const primaryServings = mealServings[primaryMeal] ?? totalExpectedGuests;
-      form.setValue("attendance", selectedMeals.length >= 2 ? totalExpectedGuests : primaryServings);
+      form.setValue("attendance", totalExpectedGuests);
       form.setValue("mealType", primaryMeal);
       const isValid = await form.trigger([
         "eventName", "orgType", "mealType", "attendance", "mealPrice",
@@ -581,82 +601,113 @@ export default function PlannerPage({ onPlanReady }: PlannerPageProps) {
 
               {/* ── Servings & Guest Count ─────────────────────── */}
               <div className="field-group">
-                <p className="field-label">How many servings are you planning? *</p>
+                {/* Primary: guest headcount */}
+                <p className="field-label">How many guests are you expecting? *</p>
                 <p className="field-hint" style={{ marginTop: 0, marginBottom: 12 }}>
-                  Enter how many servings you plan to prepare for each selected meal. Each meal is calculated independently.
+                  Enter your expected guest count. Servings to prepare are calculated automatically below.
                 </p>
 
-                {selectedMeals.map((meal, idx) => {
-                  const opt = [...INDIVIDUAL_OPTIONS, ...SNACK_OPTIONS].find((o) => o.value === meal);
-                  const label = opt ? `${opt.emoji} ${opt.label}` : meal;
-                  return (
-                    <div key={meal} style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 10 }}>
-                      <span style={{ flex: 1, fontWeight: 600, fontSize: 14, color: "var(--color-text)" }}>
-                        {label}
-                        {selectedMeals.length > 1 && (
-                          <span style={{ marginLeft: 6, fontSize: 11, fontWeight: 400, color: "var(--color-text-muted)" }}>
-                            Station {idx + 1}
-                          </span>
-                        )}
-                      </span>
-                      <input
-                        type="number"
-                        min={1}
-                        max={5000}
-                        value={mealServings[meal] ?? 100}
-                        onChange={(e) => setMealServings((prev) => ({
-                          ...prev,
-                          [meal]: e.target.value === "" ? 0 : Math.max(0, parseInt(e.target.value) || 0),
-                        }))}
-                        className="field-input"
-                        style={{ width: 90 }}
-                        data-testid={`input-servings-${meal}`}
-                      />
-                      <span style={{ fontSize: 13, color: "var(--color-text-muted)", whiteSpace: "nowrap" }}>servings</span>
-                    </div>
-                  );
-                })}
-
-                <div style={{ borderTop: "1px solid var(--color-border)", paddingTop: 12, marginTop: 6 }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 10 }}>
-                    <span style={{ flex: 1 }}>
-                      <span style={{ fontWeight: 600, fontSize: 14, color: "var(--color-text)", display: "block" }}>
-                        Total guests expected
-                      </span>
-                      <span style={{ fontSize: 11, color: "var(--color-text-muted)" }}>
-                        Used for revenue estimate, supplies, and coverage
-                      </span>
+                <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 16 }}>
+                  <span style={{ flex: 1 }}>
+                    <span style={{ fontWeight: 600, fontSize: 14, color: "var(--color-text)", display: "block" }}>
+                      Total guests expected
                     </span>
-                    <input
-                      type="number"
-                      min={1}
-                      max={5000}
-                      value={totalExpectedGuests}
-                      onChange={(e) => setTotalExpectedGuests(e.target.value === "" ? 0 : Math.max(0, parseInt(e.target.value) || 0))}
-                      className="field-input"
-                      style={{ width: 90 }}
-                      data-testid="input-total-guests"
-                    />
-                    <span style={{ fontSize: 13, color: "var(--color-text-muted)", whiteSpace: "nowrap" }}>guests</span>
-                  </div>
+                    <span style={{ fontSize: 11, color: "var(--color-text-muted)" }}>
+                      Used for revenue estimate, supplies, and volunteer ratios
+                    </span>
+                  </span>
+                  <input
+                    type="number"
+                    min={1}
+                    max={5000}
+                    value={totalExpectedGuests}
+                    onInput={(e) => {
+                      const t = e.currentTarget;
+                      const n = parseInt(t.value, 10);
+                      if (!isNaN(n) && t.value !== String(n)) t.value = String(n);
+                    }}
+                    onChange={(e) => {
+                      const guests = e.target.value === "" ? 0 : Math.max(0, parseInt(e.target.value) || 0);
+                      setTotalExpectedGuests(guests);
+                      if (guests > 0) {
+                        setMealServings((prev) => {
+                          const next = { ...prev };
+                          selectedMeals.forEach((meal) => {
+                            next[meal] = autoCalcServings(guests, meal, form.getValues("adultPercent") ?? DEFAULT_VALUES.adultPercent);
+                          });
+                          return next;
+                        });
+                      }
+                    }}
+                    className="field-input"
+                    style={{ width: 90 }}
+                    data-testid="input-total-guests"
+                  />
+                  <span style={{ fontSize: 13, color: "var(--color-text-muted)", whiteSpace: "nowrap" }}>guests</span>
+                </div>
 
-                  {/* Coverage indicator */}
-                    {false && selectedMeals.length > 0 && (() => {
-                    const totalServings = selectedMeals.reduce((sum, m) => sum + (mealServings[m] ?? 0), 0);
-                    const coveragePct = totalExpectedGuests > 0 ? Math.round((totalServings / totalExpectedGuests) * 100) : 0;
-                    const color = coveragePct < 85 ? "#ca8a04" : coveragePct <= 100 ? "#16a34a" : coveragePct <= 130 ? "#2563eb" : "#ea580c";
-                    const bg = coveragePct < 85 ? "#fefce8" : coveragePct <= 100 ? "#f0fdf4" : coveragePct <= 130 ? "#eff6ff" : "#fff7ed";
-                    const coverageLabel = coveragePct < 85 ? "May run short — consider preparing more" : coveragePct <= 100 ? "Good coverage" : coveragePct <= 130 ? "Smart buffer" : "Significant overage — consider reducing";
+                {/* Secondary: per-meal servings (auto-calculated, editable) */}
+                <div style={{ borderTop: "1px solid var(--color-border)", paddingTop: 12 }}>
+                  <p style={{ fontSize: 13, fontWeight: 600, color: "var(--color-text)", marginBottom: 4 }}>
+                    Servings to prepare
+                  </p>
+                  <p style={{ fontSize: 11, color: "var(--color-text-muted)", marginBottom: 10 }}>
+                    Auto-calculated from your guest count and meal ratios — edit if needed.
+                  </p>
+
+                  {selectedMeals.map((meal, idx) => {
+                    const opt = [...INDIVIDUAL_OPTIONS, ...SNACK_OPTIONS].find((o) => o.value === meal);
+                    const label = opt ? `${opt.emoji} ${opt.label}` : meal;
                     return (
-                      <div style={{ background: bg, border: `1px solid ${color}40`, borderRadius: 8, padding: "8px 12px", display: "flex", alignItems: "center", gap: 10 }}>
-                        <span style={{ fontSize: 14, fontWeight: 700, color, minWidth: 44 }}>{coveragePct}%</span>
-                        <span style={{ fontSize: 13, color: "var(--color-text)" }}>
-                          {totalServings.toLocaleString()} serving{totalServings !== 1 ? "s" : ""} planned for {totalExpectedGuests.toLocaleString()} guests — <strong>{coverageLabel}</strong>
+                      <div key={meal} style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 10 }}>
+                        <span style={{ flex: 1, fontWeight: 600, fontSize: 14, color: "var(--color-text)" }}>
+                          {label}
+                          {selectedMeals.length > 1 && (
+                            <span style={{ marginLeft: 6, fontSize: 11, fontWeight: 400, color: "var(--color-text-muted)" }}>
+                              Station {idx + 1}
+                            </span>
+                          )}
                         </span>
+                        <input
+                          type="number"
+                          min={1}
+                          max={5000}
+                          value={mealServings[meal] ?? autoCalcServings(totalExpectedGuests, meal, form.getValues("adultPercent") ?? DEFAULT_VALUES.adultPercent)}
+                          onInput={(e) => {
+                            const t = e.currentTarget;
+                            const n = parseInt(t.value, 10);
+                            if (!isNaN(n) && t.value !== String(n)) t.value = String(n);
+                          }}
+                          onChange={(e) => setMealServings((prev) => ({
+                            ...prev,
+                            [meal]: e.target.value === "" ? 0 : Math.max(0, parseInt(e.target.value) || 0),
+                          }))}
+                          className="field-input"
+                          style={{ width: 90 }}
+                          data-testid={`input-servings-${meal}`}
+                        />
+                        <span style={{ fontSize: 13, color: "var(--color-text-muted)", whiteSpace: "nowrap" }}>servings</span>
                       </div>
                     );
-                  })()}
+                  })}
                 </div>
+
+                {/* Coverage indicator — preserved for future use */}
+                {false && selectedMeals.length > 0 && (() => {
+                  const totalServings = selectedMeals.reduce((sum, m) => sum + (mealServings[m] ?? 0), 0);
+                  const coveragePct = totalExpectedGuests > 0 ? Math.round((totalServings / totalExpectedGuests) * 100) : 0;
+                  const color = coveragePct < 85 ? "#ca8a04" : coveragePct <= 100 ? "#16a34a" : coveragePct <= 130 ? "#2563eb" : "#ea580c";
+                  const bg = coveragePct < 85 ? "#fefce8" : coveragePct <= 100 ? "#f0fdf4" : coveragePct <= 130 ? "#eff6ff" : "#fff7ed";
+                  const coverageLabel = coveragePct < 85 ? "May run short — consider preparing more" : coveragePct <= 100 ? "Good coverage" : coveragePct <= 130 ? "Smart buffer" : "Significant overage — consider reducing";
+                  return (
+                    <div style={{ background: bg, border: `1px solid ${color}40`, borderRadius: 8, padding: "8px 12px", display: "flex", alignItems: "center", gap: 10, marginTop: 10 }}>
+                      <span style={{ fontSize: 14, fontWeight: 700, color, minWidth: 44 }}>{coveragePct}%</span>
+                      <span style={{ fontSize: 13, color: "var(--color-text)" }}>
+                        {totalServings.toLocaleString()} serving{totalServings !== 1 ? "s" : ""} planned for {totalExpectedGuests.toLocaleString()} guests — <strong>{coverageLabel}</strong>
+                      </span>
+                    </div>
+                  );
+                })()}
               </div>
 
               <FormField

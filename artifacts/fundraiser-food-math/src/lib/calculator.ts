@@ -23,6 +23,30 @@ function ceilToPackage(total: number, packageSize: number): number {
   return Math.ceil(total / packageSize);
 }
 
+// ── Store-specific package overrides ─────────────────────────
+// Applies warehouse-specific package size overrides without changing
+// base mealAssumptions. Only called when storePreference warrants it.
+function applyStorePackageOverrides(
+  component: MealAssumption,
+  storePreference?: string,
+): MealAssumption {
+  if (storePreference !== "Costco") return component;
+  return {
+    ...component,
+    ingredients: component.ingredients.map((ing) => {
+      if (ing.name === "Hot Dogs (all-beef, 10-pack)") {
+        return {
+          ...ing,
+          packageSize: 36,
+          packageUnit: "36-count pack",
+          costPerPackage: [14.00, 22.00] as [number, number],
+        };
+      }
+      return ing;
+    }),
+  };
+}
+
 function rangeAdd(a: [number, number], b: [number, number]): [number, number] {
   return [a[0] + b[0], a[1] + b[1]];
 }
@@ -1140,7 +1164,7 @@ export function calculatePlan(rawForm: PlannerFormData): FundraiserPlan {
   if (combo) {
     // Combo: compute each component independently and merge
     for (const component of combo.components) {
-      const r = computeIngredientResults(component, adults, kids, form.excludedItems, form.customItemPrices);
+      const r = computeIngredientResults(applyStorePackageOverrides(component, form.storePreference), adults, kids, form.excludedItems, form.customItemPrices);
       foodQuantities = foodQuantities.concat(r.foodQuantities);
       shoppingList = shoppingList.concat(r.shoppingItems);
       totalCostRange = rangeAdd(totalCostRange, r.cost);
@@ -1149,14 +1173,14 @@ export function calculatePlan(rawForm: PlannerFormData): FundraiserPlan {
     // Tier 2 custom: generate shopping list from menu details if provided
     const customIngredients = buildCustomMenuIngredients(form);
     const r = computeIngredientResults({
-      ...meal,
+      ...applyStorePackageOverrides(meal, form.storePreference),
       ingredients: customIngredients,
     }, adults, kids, form.excludedItems, form.customItemPrices);
     foodQuantities = r.foodQuantities;
     shoppingList = r.shoppingItems;
     totalCostRange = rangeAdd(totalCostRange, r.cost);
   } else {
-    const r = computeIngredientResults(meal, adults, kids, form.excludedItems, form.customItemPrices);
+    const r = computeIngredientResults(applyStorePackageOverrides(meal, form.storePreference), adults, kids, form.excludedItems, form.customItemPrices);
     foodQuantities = r.foodQuantities;
     shoppingList = r.shoppingItems;
     totalCostRange = rangeAdd(totalCostRange, r.cost);
@@ -1175,9 +1199,7 @@ export function calculatePlan(rawForm: PlannerFormData): FundraiserPlan {
       return true;
     })
     .map((sup) => {
-      const rawTotal = (sup.name === "Plates" || sup.name === "Paper Plates" || sup.name === "Napkins" || sup.name === "Utensils")
-        ? (form.attendance * sup.perPerson)
-        : (form.attendance * sup.perPerson);
+      const rawTotal = form.attendance * sup.perPerson;
       const packages = sup.packageSize > 0 ? ceilToPackage(rawTotal, sup.packageSize) : 0;
       const totalUnits = packages * sup.packageSize;
       // FIX 5: Use custom price if user entered one
