@@ -562,7 +562,7 @@ export const breakfastBurritoAssumptions: MealAssumption = {
 export const tacoAssumptions: MealAssumption = {
   label: "tacos",
   displayName: "Tacos",
-  adultServings: 2.2,   // 2 × 1.1 buffet premium
+  adultServings: 2.3,   // 2 × 1.15 per-person buffer
   kidServings: 1.65,    // 1.5 × 1.1 buffet premium
   wasteBuffer: 1.05,
   cookingComplexity: "low",
@@ -874,7 +874,7 @@ export const spaghettiAssumptions: MealAssumption = {
 export const pancakeAssumptions: MealAssumption = {
   label: "pancakes",
   displayName: "Pancake Breakfast",
-  adultServings: 3.3,   // 3 pancakes × 1.1 buffet premium
+  adultServings: 3.45,  // 3 pancakes × 1.15 per-person buffer
   kidServings: 2.2,     // 2 pancakes × 1.1 buffet premium
   wasteBuffer: 1.05,
   cookingComplexity: "medium",
