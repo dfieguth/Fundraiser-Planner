@@ -1200,20 +1200,17 @@ export function calculatePlan(rawForm: PlannerFormData): FundraiserPlan {
     })
     .map((sup) => {
       const rawTotal = form.attendance * sup.perPerson;
-      const packages = sup.packageSize > 0 ? ceilToPackage(rawTotal, sup.packageSize) : 0;
-      const totalUnits = packages * sup.packageSize;
+      const quantity = Math.ceil(rawTotal);
       // FIX 5: Use custom price if user entered one
       const supCost: [number, number] = form.customItemPrices?.[sup.name] !== undefined
         ? [form.customItemPrices[sup.name], form.customItemPrices[sup.name]]
         : sup.costPerPackage;
-      const itemCost: [number, number] = packages > 0
-        ? [packages * supCost[0], packages * supCost[1]]
+      const packageCount = sup.packageSize > 0 ? ceilToPackage(rawTotal, sup.packageSize) : 0;
+      const itemCost: [number, number] = packageCount > 0
+        ? [packageCount * supCost[0], packageCount * supCost[1]]
         : [0, 0];
       totalCostRange = rangeAdd(totalCostRange, itemCost);
-      const quantityStr = packages > 0
-        ? `${packages} pack${packages > 1 ? "s" : ""} (${totalUnits} units)`
-        : "As needed / already owned";
-      return { item: sup.name, quantity: quantityStr, estimatedCost: itemCost };
+      return { item: sup.name, quantity: `${quantity} needed`, estimatedCost: itemCost };
     });
 
   // Add a misc contingency buffer (5%)

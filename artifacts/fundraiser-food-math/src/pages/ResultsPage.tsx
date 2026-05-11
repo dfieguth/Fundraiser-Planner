@@ -478,7 +478,7 @@ export default function ResultsPage({ plan, formData, onReset }: ResultsPageProp
             <tbody>
               {previewItems.map((item, i) => (
                 <tr key={i} data-testid={`row-preview-${i}`}>
-                  <td>{item.item}</td>
+                  <td>{item.item} — {item.quantity}</td>
                   <td><strong>{item.quantity}</strong></td>
                   <td>{fmt(item.estimatedCost[0])} – {fmt(item.estimatedCost[1])}</td>
                 </tr>
@@ -496,6 +496,9 @@ export default function ResultsPage({ plan, formData, onReset }: ResultsPageProp
             </tbody>
           </table>
         </div>
+        <p className="section-note" style={{ marginTop: 8 }}>
+          Pack sizes vary by store. Use these quantities to guide your shopping.
+        </p>
 
         {/* Pricing methodology note (Part 5) */}
         {plan?.pricingMethodologyNote && (
