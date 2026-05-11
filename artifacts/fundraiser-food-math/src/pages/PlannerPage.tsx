@@ -12,6 +12,9 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 
+const ENABLE_TIERED_PRICING = false;
+const ENABLE_AUDIENCE_SPLIT = false;
+
 // ── Schema ───────────────────────────────────────────────────
 const schema = z.object({
   eventName: z.string().min(1, "Event name is required"),
@@ -190,7 +193,12 @@ export default function PlannerPage({ onPlanReady }: PlannerPageProps) {
 
   const form = useForm<PlannerFormData>({
     resolver: zodResolver(schema),
-    defaultValues: DEFAULT_VALUES,
+    defaultValues: {
+      ...DEFAULT_VALUES,
+      pricingModel: "flat",
+      adultPercent: 60,
+      kidPercent: 40,
+    },
     mode: "onChange",
   });
 
@@ -282,6 +290,13 @@ export default function PlannerPage({ onPlanReady }: PlannerPageProps) {
 
   const pricingModel = form.watch("pricingModel");
   const attendanceMode = form.watch("attendanceMode");
+  const orgType = form.watch("orgType");
+
+  const priceLabel = orgType === "Church" || orgType === "Nonprofit"
+    ? "Suggested Donation per Plate ($) *"
+    : orgType === "School" || orgType === "Sports Team"
+      ? "Ticket Price / Plate Price ($) *"
+      : "Price per Plate ($) *";
 
   const onSubmit = (data: PlannerFormData) => {
     const primaryMeal = selectedMeals[0] ?? data.mealType;
@@ -715,9 +730,7 @@ export default function PlannerPage({ onPlanReady }: PlannerPageProps) {
                 name="mealPrice"
                 render={({ field }) => (
                   <FormItem className="field-group">
-                    <FormLabel className="field-label">
-                      {pricingModel === "split" ? "Base Price per Person ($) *" : "Suggested Donation / Meal Price ($) *"}
-                    </FormLabel>
+                    <FormLabel className="field-label">{priceLabel}</FormLabel>
                     <FormControl>
                       <Input
                         className="field-input"
@@ -734,138 +747,118 @@ export default function PlannerPage({ onPlanReady }: PlannerPageProps) {
               />
 
               {/* ── Pricing & Attendance Model ───────────────────── */}
-              <div className="field-group" data-testid="pricing-model-section">
-                <p className="field-label">Pricing Model</p>
-                <div style={{ display: "flex", gap: 10, marginBottom: 12 }}>
-                  {(["flat", "split"] as const).map((model) => (
-                    <button
-                      key={model}
-                      type="button"
-                      onClick={() => form.setValue("pricingModel", model)}
-                      className={pricingModel === model ? "meal-card meal-card--active" : "meal-card"}
-                      style={{ flex: 1, padding: "10px 14px", minHeight: "unset" }}
-                      data-testid={`pricing-model-${model}`}
-                    >
-                      <span className="meal-card-label">
-                        {model === "flat" ? "Flat Price" : "Tiered (Ind. + Family)"}
-                      </span>
-                      <span className="meal-card-desc" style={{ fontSize: 12 }}>
-                        {model === "flat"
-                          ? "Single price — everyone pays the same"
-                          : "Different rates for individuals, couples & families"}
-                      </span>
-                    </button>
-                  ))}
-                </div>
-
-                <div style={{ display: "none" }}>
-                  <FormField control={form.control} name="donationRate" render={({ field }) => (
-                    <FormItem>
-                      <FormControl>
-                        <Input {...field} />
-                      </FormControl>
-                    </FormItem>
-                  )} />
-                  <FormField control={form.control} name="individualPrice" render={({ field }) => (
-                    <FormItem>
-                      <FormControl>
-                        <Input {...field} />
-                      </FormControl>
-                    </FormItem>
-                  )} />
-                  <FormField control={form.control} name="familyPrice" render={({ field }) => (
-                    <FormItem>
-                      <FormControl>
-                        <Input {...field} />
-                      </FormControl>
-                    </FormItem>
-                  )} />
-                  <FormField control={form.control} name="avgFamilySize" render={({ field }) => (
-                    <FormItem>
-                      <FormControl>
-                        <Input {...field} />
-                      </FormControl>
-                    </FormItem>
-                  )} />
-                  <FormField control={form.control} name="soloAdultPct" render={({ field }) => (
-                    <FormItem>
-                      <FormControl>
-                        <Input {...field} />
-                      </FormControl>
-                    </FormItem>
-                  )} />
-                  <FormField control={form.control} name="couplesPct" render={({ field }) => (
-                    <FormItem>
-                      <FormControl>
-                        <Input {...field} />
-                      </FormControl>
-                    </FormItem>
-                  )} />
-                  <FormField control={form.control} name="familiesPct" render={({ field }) => (
-                    <FormItem>
-                      <FormControl>
-                        <Input {...field} />
-                      </FormControl>
-                    </FormItem>
-                  )} />
-                  <FormField control={form.control} name="teensPct" render={({ field }) => (
-                    <FormItem>
-                      <FormControl>
-                        <Input {...field} />
-                      </FormControl>
-                    </FormItem>
-                  )} />
-                  <FormField control={form.control} name="familyPriceAdoptionRate" render={({ field }) => (
-                    <FormItem>
-                      <FormControl>
-                        <Input {...field} />
-                      </FormControl>
-                    </FormItem>
-                  )} />
-                </div>
+              <div style={{ display: "none" }}>
+                {ENABLE_TIERED_PRICING && (
+                  <>
+                    <FormField control={form.control} name="donationRate" render={({ field }) => (
+                      <FormItem>
+                        <FormControl>
+                          <Input {...field} />
+                        </FormControl>
+                      </FormItem>
+                    )} />
+                    <FormField control={form.control} name="individualPrice" render={({ field }) => (
+                      <FormItem>
+                        <FormControl>
+                          <Input {...field} />
+                        </FormControl>
+                      </FormItem>
+                    )} />
+                    <FormField control={form.control} name="familyPrice" render={({ field }) => (
+                      <FormItem>
+                        <FormControl>
+                          <Input {...field} />
+                        </FormControl>
+                      </FormItem>
+                    )} />
+                    <FormField control={form.control} name="avgFamilySize" render={({ field }) => (
+                      <FormItem>
+                        <FormControl>
+                          <Input {...field} />
+                        </FormControl>
+                      </FormItem>
+                    )} />
+                    <FormField control={form.control} name="soloAdultPct" render={({ field }) => (
+                      <FormItem>
+                        <FormControl>
+                          <Input {...field} />
+                        </FormControl>
+                      </FormItem>
+                    )} />
+                    <FormField control={form.control} name="couplesPct" render={({ field }) => (
+                      <FormItem>
+                        <FormControl>
+                          <Input {...field} />
+                        </FormControl>
+                      </FormItem>
+                    )} />
+                    <FormField control={form.control} name="familiesPct" render={({ field }) => (
+                      <FormItem>
+                        <FormControl>
+                          <Input {...field} />
+                        </FormControl>
+                      </FormItem>
+                    )} />
+                    <FormField control={form.control} name="teensPct" render={({ field }) => (
+                      <FormItem>
+                        <FormControl>
+                          <Input {...field} />
+                        </FormControl>
+                      </FormItem>
+                    )} />
+                    <FormField control={form.control} name="familyPriceAdoptionRate" render={({ field }) => (
+                      <FormItem>
+                        <FormControl>
+                          <Input {...field} />
+                        </FormControl>
+                      </FormItem>
+                    )} />
+                  </>
+                )}
               </div>
 
-              <div className="field-row mb-2">
-                <FormField
-                  control={form.control}
-                  name="adultPercent"
-                  render={({ field }) => (
-                    <FormItem className="field-group">
-                      <FormLabel className="field-label">% Adults</FormLabel>
-                      <FormControl>
-                        <Input
-                          className="field-input"
-                          type="number"
-                          min={0}
-                          max={100}
-                          {...field}
-                          data-testid="input-adult-percent"
-                        />
-                      </FormControl>
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="kidPercent"
-                  render={({ field }) => (
-                    <FormItem className="field-group">
-                      <FormLabel className="field-label">% Kids / Students</FormLabel>
-                      <FormControl>
-                        <Input
-                          className="field-input"
-                          type="number"
-                          min={0}
-                          max={100}
-                          {...field}
-                          data-testid="input-kid-percent"
-                        />
-                      </FormControl>
-                    </FormItem>
-                  )}
-                />
-              </div>
-              <p className="field-hint">Adults and kids eat different amounts. Totals don't need to equal 100% exactly.</p>
+              {ENABLE_AUDIENCE_SPLIT && (
+                <div className="field-row mb-2">
+                  <FormField
+                    control={form.control}
+                    name="adultPercent"
+                    render={({ field }) => (
+                      <FormItem className="field-group">
+                        <FormLabel className="field-label">% Adults</FormLabel>
+                        <FormControl>
+                          <Input
+                            className="field-input"
+                            type="number"
+                            min={0}
+                            max={100}
+                            {...field}
+                            data-testid="input-adult-percent"
+                          />
+                        </FormControl>
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="kidPercent"
+                    render={({ field }) => (
+                      <FormItem className="field-group">
+                        <FormLabel className="field-label">% Kids / Students</FormLabel>
+                        <FormControl>
+                          <Input
+                            className="field-input"
+                            type="number"
+                            min={0}
+                            max={100}
+                            {...field}
+                            data-testid="input-kid-percent"
+                          />
+                        </FormControl>
+                      </FormItem>
+                    )}
+                  />
+                </div>
+              )}
 
               <FormField
                 control={form.control}

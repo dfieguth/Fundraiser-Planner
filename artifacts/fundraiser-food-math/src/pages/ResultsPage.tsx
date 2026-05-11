@@ -83,6 +83,9 @@ export default function ResultsPage({ plan, formData, onReset }: ResultsPageProp
   const safeRevenueGenerous = plan?.revenueGenerous;
   const safeScenarioBundle = plan?.scenarioBundle;
   const showAdvancedRevenue = false;
+  const revenueNote = safeFormData?.orgType === "Church" || safeFormData?.orgType === "Nonprofit"
+    ? "Based on suggested donation. Actual revenue will vary."
+    : "Based on flat plate price.";
 
   const MEAL_LABELS: Record<string, string> = {
     hotdogs: "Hot Dogs", burgers: "Burgers", bakedPotatoes: "Baked Potatoes",
@@ -336,6 +339,7 @@ export default function ResultsPage({ plan, formData, onReset }: ResultsPageProp
               <div className="summary-label">Expected Revenue</div>
               <div className="summary-value summary-value--revenue">{fmt(safeEstimatedRevenue)}</div>
               <div className="summary-note">{safeAttendance} guests × ${safeMealPrice}</div>
+              <div className="summary-note">{revenueNote}</div>
             </>
           )}
         </div>
