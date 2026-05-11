@@ -752,7 +752,7 @@ export default function ResultsPage({ plan, formData, onReset }: ResultsPageProp
                               {section.shoppingListGrouped.length > 0
                                 ? section.shoppingListGrouped.map((group) => (
                                     <>
-                                      <tr key={`grp-${section.mealType}-${group.label}`} className="shopping-group-row">
+                                      <tr className="shopping-group-row">
                                         <td colSpan={3} className="shopping-group-header-cell">{group.label}</td>
                                       </tr>
                                       {group.items.map((item, i) => (
@@ -801,7 +801,7 @@ export default function ResultsPage({ plan, formData, onReset }: ResultsPageProp
                       <tbody>
                         {safeShoppingListGrouped.map((group) => (
                           <>
-                            <tr key={`group-${group.label}`} className="shopping-group-row">
+                            <tr className="shopping-group-row">
                               <td colSpan={3} className="shopping-group-header-cell">{group.label}</td>
                             </tr>
                             {group.items.map((item, i) => (

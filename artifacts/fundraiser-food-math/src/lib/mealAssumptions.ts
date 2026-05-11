@@ -91,6 +91,7 @@ export const hotDogAssumptions: MealAssumption = {
       costPerPackage: [3.50, 6.00],
       category: "condiment",
       usageRate: 0.60,
+      required: true,
     },
     {
       name: "Mustard (20 oz squeeze bottle)",
@@ -101,6 +102,7 @@ export const hotDogAssumptions: MealAssumption = {
       costPerPackage: [2.00, 4.00],
       category: "condiment",
       usageRate: 0.45,
+      required: true,
     },
     {
       name: "Relish (10 oz jar)",
@@ -111,6 +113,7 @@ export const hotDogAssumptions: MealAssumption = {
       costPerPackage: [2.50, 4.00],
       category: "condiment",
       usageRate: 0.25,
+      required: true,
     },
     {
       name: "Diced White Onion (optional topping)",
@@ -121,6 +124,7 @@ export const hotDogAssumptions: MealAssumption = {
       costPerPackage: [3.00, 5.00],
       category: "produce",
       usageRate: 0.25,
+      required: false,
     },
     {
       name: "Canned Chili (optional topping for chili dogs)",
@@ -131,6 +135,7 @@ export const hotDogAssumptions: MealAssumption = {
       costPerPackage: [1.50, 3.00],
       category: "other",
       usageRate: 0.20,
+      required: false,
     },
     {
       // Individual bags preferred for self-serve lines — no sharing issues
@@ -142,6 +147,7 @@ export const hotDogAssumptions: MealAssumption = {
       costPerPackage: [18.00, 28.00],
       category: "other",
       usageRate: 0.70,
+      required: true,
     },
   ],
   supplies: [
