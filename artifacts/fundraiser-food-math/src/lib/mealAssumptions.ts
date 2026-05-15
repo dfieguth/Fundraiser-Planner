@@ -39,6 +39,9 @@ export interface IngredientDef {
   required?: boolean;
   // If true, this is a batch cooking ingredient (oil, salt, spray), not a per-guest serving.
   cookingOnly?: boolean;
+  // Display tier for shopping list grouping. When set, shopping list uses
+  // tier-based sections instead of category-based sections.
+  tier?: "essential" | "recommended" | "optional";
 }
 
 export interface SupplyDef {
@@ -315,6 +318,7 @@ export const bakedPotatoAssumptions: MealAssumption = {
       costPerPackage: [7.00, 12.00],
       category: "carb",
       required: true,
+      tier: "essential",
     },
     {
       // Cooking ingredient — 1 tbsp per 10 potatoes.
@@ -352,6 +356,7 @@ export const bakedPotatoAssumptions: MealAssumption = {
       costPerPackage: [4.50, 8.00],
       category: "dairy",
       usageRate: 0.80,
+      tier: "essential",
     },
     {
       // 60% usage — core topping; 1 x 3-lb tub per 100 guests
@@ -363,6 +368,7 @@ export const bakedPotatoAssumptions: MealAssumption = {
       costPerPackage: [5.99, 5.99],
       category: "dairy",
       usageRate: 0.60,
+      tier: "essential",
     },
     {
       // 65% usage — core topping; 2.5 lbs per 100 guests, buy in 5-lb bags
@@ -374,6 +380,7 @@ export const bakedPotatoAssumptions: MealAssumption = {
       costPerPackage: [10.99, 10.99],
       category: "dairy",
       usageRate: 0.65,
+      tier: "essential",
     },
     {
       // 30% usage — fresh garnish; 3 bunches per 100 guests
@@ -385,6 +392,7 @@ export const bakedPotatoAssumptions: MealAssumption = {
       costPerPackage: [1.25, 3.00],
       category: "produce",
       usageRate: 0.30,
+      tier: "essential",
     },
     {
       // 50% usage — popular add-on; 2 large cans per 100 guests
@@ -396,6 +404,7 @@ export const bakedPotatoAssumptions: MealAssumption = {
       costPerPackage: [3.50, 6.00],
       category: "protein",
       usageRate: 0.50,
+      tier: "recommended",
     },
     {
       // 40% usage — popular add-on; 1 large can per 100 guests
@@ -407,6 +416,7 @@ export const bakedPotatoAssumptions: MealAssumption = {
       costPerPackage: [4.00, 7.50],
       category: "dairy",
       usageRate: 0.40,
+      tier: "recommended",
     },
     {
       // 30% usage — fresh topping; 2 large onions per 100 guests
@@ -418,6 +428,7 @@ export const bakedPotatoAssumptions: MealAssumption = {
       costPerPackage: [1.00, 2.00],
       category: "produce",
       usageRate: 0.30,
+      tier: "recommended",
     },
   ],
   supplies: [

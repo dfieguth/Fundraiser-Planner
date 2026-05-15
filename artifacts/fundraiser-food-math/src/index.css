@@ -1440,6 +1440,12 @@
   .shopping-group-header-cell {
     @apply bg-secondary/60 px-4 py-2 text-xs font-bold uppercase tracking-wider text-muted-foreground;
   }
+  .shopping-group-desc-row td {
+    @apply py-0;
+  }
+  .shopping-group-desc-cell {
+    @apply bg-secondary/30 px-4 pb-2 pt-0 text-xs italic text-muted-foreground;
+  }
 
   /* Timeline leader notes and watch-outs */
   .timeline-leader-note {

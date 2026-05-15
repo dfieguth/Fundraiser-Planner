@@ -835,6 +835,39 @@ We are grateful for this community. Stay tuned for more updates!
 }
 
 function buildShoppingListGrouped(shoppingList: ShoppingItem[]): ShoppingGroup[] {
+  // When any item carries a tier, use three-tier display (essential → recommended → optional).
+  // Items without a tier (cooking-only) are placed in a leading "Cooking Ingredients" group.
+  const hasTiers = shoppingList.some(item => item.tier !== undefined);
+
+  if (hasTiers) {
+    const TIER_CONFIG: Array<{ key: ShoppingItem["tier"]; label: string; description: string }> = [
+      { key: "essential",    label: "ESSENTIAL",    description: "You need these to run your event" },
+      { key: "recommended",  label: "RECOMMENDED",  description: "These make your event better and guests expect them" },
+      { key: "optional",     label: "OPTIONAL",     description: "Nice to have but adds to your cost" },
+    ];
+
+    const buckets: Record<string, ShoppingItem[]> = {
+      essential: [], recommended: [], optional: [], untiered: [],
+    };
+    for (const item of shoppingList) {
+      if (item.tier) {
+        buckets[item.tier].push(item);
+      } else {
+        buckets.untiered.push(item);
+      }
+    }
+
+    const result: ShoppingGroup[] = [];
+    if (buckets.untiered.length > 0) {
+      result.push({ label: "Cooking Ingredients", items: buckets.untiered });
+    }
+    for (const { key, label, description } of TIER_CONFIG) {
+      result.push({ label, items: buckets[key!] ?? [], description });
+    }
+    return result;
+  }
+
+  // Default: category-based grouping
   const LABEL_MAP: Record<string, string> = {
     protein: "Proteins & Main Items",
     carb: "Bread, Grains & Tortillas",
@@ -975,6 +1008,7 @@ function computeIngredientResults(
       estimatedCost: itemCost,
       notes: cookingNote ?? usageNote ?? (ing.category === "condiment" ? "May have leftovers — saves money at your next event" : undefined),
       category: ing.category,
+      tier: ing.tier,
     });
   }
 

@@ -755,6 +755,11 @@ export default function ResultsPage({ plan, formData, onReset }: ResultsPageProp
                                       <tr className="shopping-group-row">
                                         <td colSpan={3} className="shopping-group-header-cell">{group.label}</td>
                                       </tr>
+                                      {group.description && (
+                                        <tr className="shopping-group-desc-row">
+                                          <td colSpan={3} className="shopping-group-desc-cell">{group.description}</td>
+                                        </tr>
+                                      )}
                                       {group.items.map((item, i) => (
                                         <tr key={`${section.mealType}-${group.label}-${i}`}>
                                           <td>{item.item}</td>
@@ -804,6 +809,11 @@ export default function ResultsPage({ plan, formData, onReset }: ResultsPageProp
                             <tr className="shopping-group-row">
                               <td colSpan={3} className="shopping-group-header-cell">{group.label}</td>
                             </tr>
+                            {group.description && (
+                              <tr className="shopping-group-desc-row">
+                                <td colSpan={3} className="shopping-group-desc-cell">{group.description}</td>
+                              </tr>
+                            )}
                             {group.items.map((item, i) => (
                               <tr key={`${group.label}-${i}`} data-testid={`row-shopping-${group.label}-${i}`}>
                                 <td>{item.item}</td>

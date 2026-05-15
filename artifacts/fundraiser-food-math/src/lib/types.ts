@@ -92,11 +92,13 @@ export interface ShoppingItem {
   estimatedCost: [number, number];
   notes?: string;
   category?: string; // ingredient category key for grouping
+  tier?: "essential" | "recommended" | "optional"; // display tier for tiered grouping
 }
 
 export interface ShoppingGroup {
-  label: string;      // display name for this category
+  label: string;       // display name for this category/tier
   items: ShoppingItem[];
+  description?: string; // optional one-line description shown under the group header
 }
 
 export interface SupplyItem {
