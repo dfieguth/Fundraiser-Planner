@@ -171,7 +171,7 @@ function buildVolunteerPlan(
         count: Math.max(1, Math.ceil(attendance / 75)),
         type: "Parent Oversight",
         duties: [
-          "Keep topping bar stocked: butter, sour cream, cheese, bacon bits, chives",
+          "Keep topping bar stocked: butter, sour cream, fiesta blend cheese, chili, nacho cheese, chives, and white onion",
           "Assist guests if the bar is not fully self-serve",
           "Maintain cleanliness and organization of the topping station",
         ],
@@ -599,7 +599,7 @@ function buildSetupLayout(mealType: string): SetupStation[] {
     bakedPotatoes: [
       { position: "1", label: "Welcome / Donation Table", detail: "Near the entrance. Keep donation sign clearly visible." },
       { position: "2", label: "Potato Station", detail: "Hot potatoes transferred from oven to warm-holding. One potato per guest." },
-      { position: "3", label: "Topping Bar", detail: "Butter, sour cream, shredded cheese, bacon bits, chives — each clearly labeled." },
+      { position: "3", label: "Topping Bar", detail: "Butter, sour cream, fiesta blend cheese, chili, nacho cheese, chives, white onion — each clearly labeled." },
       { position: "4", label: "Drink Station", detail: "Water, coffee, or lemonade — separate from the food line." },
       { position: "5", label: "Seating Area", detail: "Set with forks, napkins, and any event materials in advance." },
       { position: "6", label: "Trash & Recycling", detail: "Two labeled bins near exits." },
@@ -694,7 +694,7 @@ function buildLeftoverPlan(mealType: string): LeftoverPlan {
       ],
       discard: [
         "Potatoes that were cut open but not served",
-        "Sour cream, butter, or shredded cheese that sat out for more than 2 hours",
+        "Sour cream, butter, fiesta blend cheese, or nacho cheese that sat out for more than 2 hours",
         "Any dairy product that smells or looks off",
       ],
       packaging: "Wrap each unserved uncut potato in foil and label with the date. Transfer opened sour cream and cheese to sealed containers and refrigerate immediately.",

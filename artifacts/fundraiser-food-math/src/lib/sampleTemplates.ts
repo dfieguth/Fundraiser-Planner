@@ -78,7 +78,7 @@ export const SAMPLE_TEMPLATES: SampleTemplate[] = [
       serveEndTime: "14:00",
       adultVolunteers: 8,
       studentVolunteers: 6,
-      notes: "Raising funds for summer mission trip. Topping bar includes butter, sour cream, shredded cheese, bacon bits, chives, and broccoli.",
+      notes: "Raising funds for summer mission trip. Topping bar includes butter, sour cream, fiesta blend cheese, chili, nacho cheese, chives, and white onion.",
       customMealName: "",
       customServingSize: "",
       customIngredients: "",

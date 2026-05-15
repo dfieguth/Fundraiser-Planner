@@ -343,34 +343,31 @@ export const bakedPotatoAssumptions: MealAssumption = {
       cookingOnly: true,
     },
     {
-      // 80% usage, 1 tbsp (0.5 oz = 0.031 lb) per serving
-      // 1 × 5-lb tub covers up to 200 guests
-      name: "Butter (1-lb blocks)",
-      perServing: 0.031,
-      unit: "lb",
+      // 80% usage — core topping; 1 box per 100 guests
+      name: "Butter (1-lb block box)",
+      perServing: 0.0125,
+      unit: "box",
       packageSize: 1,
-      packageUnit: "1-lb block (4 sticks)",
+      packageUnit: "1-lb block box (4 sticks)",
       costPerPackage: [4.50, 8.00],
       category: "dairy",
       usageRate: 0.80,
     },
     {
-      // 60% usage, 2 tbsp (1 oz = 0.0625 lb) per serving
-      // 1 × 5-lb tub for up to 125 guests; 2 × for up to 250 guests
-      name: "Sour Cream",
-      perServing: 0.0625,
-      unit: "lb",
-      packageSize: 5,
-      packageUnit: "5-lb tub",
+      // 60% usage — core topping; 1 x 3-lb tub per 100 guests
+      name: "Sour Cream (3-lb tub)",
+      perServing: 0.0167,
+      unit: "tub",
+      packageSize: 1,
+      packageUnit: "3-lb tub",
       costPerPackage: [5.99, 5.99],
       category: "dairy",
       usageRate: 0.60,
     },
     {
-      // 65% usage, 1.5 oz (0.094 lb) per serving
-      // 2 × 5-lb bags for up to 200 guests
-      name: "Shredded Cheddar Cheese",
-      perServing: 0.094,
+      // 65% usage — core topping; 2.5 lbs per 100 guests, buy in 5-lb bags
+      name: "Fiesta Blend Shredded Cheese",
+      perServing: 0.0385,
       unit: "lb",
       packageSize: 5,
       packageUnit: "5-lb bag",
@@ -379,21 +376,9 @@ export const bakedPotatoAssumptions: MealAssumption = {
       usageRate: 0.65,
     },
     {
-      // 45% usage, 0.5 oz per serving
-      // 2 × 12 oz bags for 100 guests; 3 bags max for 200
-      name: "Real Bacon Bits (12 oz bag)",
-      perServing: 0.5,
-      unit: "oz",
-      packageSize: 12,
-      packageUnit: "12 oz bag",
-      costPerPackage: [6.00, 11.00],
-      category: "protein",
-      usageRate: 0.45,
-    },
-    {
-      // 30% usage — few guests use chives
+      // 30% usage — fresh garnish; 3 bunches per 100 guests
       name: "Chives or Green Onions (bunches)",
-      perServing: 0.02,
+      perServing: 0.10,
       unit: "bunch",
       packageSize: 1,
       packageUnit: "bunch",
@@ -402,15 +387,37 @@ export const bakedPotatoAssumptions: MealAssumption = {
       usageRate: 0.30,
     },
     {
-      // 15% usage — low-uptake optional item; flag clearly
-      name: "Broccoli Florets — optional healthy topping (2-lb bag)",
-      perServing: 0.03,
-      unit: "lb",
-      packageSize: 2,
-      packageUnit: "2-lb bag",
+      // 50% usage — popular add-on; 2 large cans per 100 guests
+      name: "Chili (large can)",
+      perServing: 0.04,
+      unit: "can",
+      packageSize: 1,
+      packageUnit: "large can (~30 oz)",
+      costPerPackage: [3.50, 6.00],
+      category: "protein",
+      usageRate: 0.50,
+    },
+    {
+      // 40% usage — popular add-on; 1 large can per 100 guests
+      name: "Nacho Cheese (large can)",
+      perServing: 0.025,
+      unit: "can",
+      packageSize: 1,
+      packageUnit: "large can (~30 oz)",
       costPerPackage: [4.00, 7.50],
+      category: "dairy",
+      usageRate: 0.40,
+    },
+    {
+      // 30% usage — fresh topping; 2 large onions per 100 guests
+      name: "White Onion (large)",
+      perServing: 0.067,
+      unit: "onion",
+      packageSize: 1,
+      packageUnit: "large onion",
+      costPerPackage: [1.00, 2.00],
       category: "produce",
-      usageRate: 0.15,
+      usageRate: 0.30,
     },
   ],
   supplies: [
@@ -423,7 +430,7 @@ export const bakedPotatoAssumptions: MealAssumption = {
     { name: "Disposable Gloves (box of 100)", perPerson: 0.02, packageSize: 100, costPerPackage: [9.00, 16.00] },
     { name: "Trash Bags (13-gallon)", perPerson: 0.03, packageSize: 30, costPerPackage: [9.00, 17.00] },
   ],
-  prepNotes: "Wash and pierce potatoes the night before. Rub each potato with olive oil and kosher salt, then wrap in foil. Bake in batches at 400°F for 60–75 minutes. Set up a self-serve topping bar: butter, sour cream, cheese, bacon bits, chives, and broccoli (optional).",
+  prepNotes: "Wash and pierce potatoes the night before. Rub each potato with olive oil and kosher salt, then wrap in foil. Bake in batches at 400°F for 60–75 minutes. Set up a self-serve topping bar: butter, sour cream, fiesta blend cheese, chives, chili, nacho cheese, and white onion.",
   cookNote: "Pre-baked potatoes hold well in towel-lined coolers or low-heat ovens for 2–3 hours. Keep the topping bar stocked — toppings run out faster than potatoes.",
 };
 
