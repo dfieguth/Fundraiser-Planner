@@ -16,6 +16,10 @@ import { getUnlocked, hasExpiredCodeUnlock, setUnlocked, savePlanBeforePayment, 
 const FREE_SHOPPING_ITEMS = 5;  // how many shopping list rows to show
 const FREE_WARNINGS_SHOWN = 3;  // how many risk warnings to show
 
+// ── PRICING VISIBILITY FLAG ───────────────────────────────────
+// Set to true to show per-item price ranges, cost totals, revenue, and profit sections.
+const SHOW_PRICING = false;
+
 interface ResultsPageProps {
   plan: FundraiserPlan;
   formData: PlannerFormData;
@@ -323,42 +327,48 @@ export default function ResultsPage({ plan, formData, onReset }: ResultsPageProp
 
       {/* Summary Cards — always visible */}
       <div className="summary-cards">
-        <div className="summary-card" data-testid="card-revenue">
-          {showAdvancedRevenue && safeRevenueConservative !== undefined && safeRevenueGenerous !== undefined ? (
-            <>
-              <div className="summary-label">Revenue Range (Split Pricing)</div>
-              <div className="summary-value summary-value--revenue" style={{ fontSize: "1.1rem" }}>
-                {fmt(safeRevenueConservative)} – {fmt(safeRevenueGenerous)}
-              </div>
-              <div className="summary-note">
-                Expected: {fmt(safeEstimatedRevenue)} · 60–90% donation rate
-              </div>
-            </>
-          ) : (
-            <>
-              <div className="summary-label">Expected Revenue</div>
-              <div className="summary-value summary-value--revenue">{fmt(safeEstimatedRevenue)}</div>
-              <div className="summary-note">{safeAttendance} guests × ${safeMealPrice}</div>
-              <div className="summary-note">{revenueNote}</div>
-            </>
-          )}
-        </div>
-        <div className="summary-card" data-testid="card-cost">
-          <div className="summary-label">Est. Total Cost</div>
-          <div className="summary-value">{fmt(safeCostRange[0])} – {fmt(safeCostRange[1])}</div>
-          <div className="summary-note">Food + supplies + 5% buffer</div>
-        </div>
-        <div className={`summary-card summary-card--${profitStatus}`} data-testid="card-profit">
-          <div className="summary-label">Est. Profit</div>
-          <div className={`summary-value summary-value--${profitStatus}`}>
-            {fmt(profit[0])} – {fmt(profit[1])}
+        {SHOW_PRICING && (
+          <div className="summary-card" data-testid="card-revenue">
+            {showAdvancedRevenue && safeRevenueConservative !== undefined && safeRevenueGenerous !== undefined ? (
+              <>
+                <div className="summary-label">Revenue Range (Split Pricing)</div>
+                <div className="summary-value summary-value--revenue" style={{ fontSize: "1.1rem" }}>
+                  {fmt(safeRevenueConservative)} – {fmt(safeRevenueGenerous)}
+                </div>
+                <div className="summary-note">
+                  Expected: {fmt(safeEstimatedRevenue)} · 60–90% donation rate
+                </div>
+              </>
+            ) : (
+              <>
+                <div className="summary-label">Expected Revenue</div>
+                <div className="summary-value summary-value--revenue">{fmt(safeEstimatedRevenue)}</div>
+                <div className="summary-note">{safeAttendance} guests × ${safeMealPrice}</div>
+                <div className="summary-note">{revenueNote}</div>
+              </>
+            )}
           </div>
-          <div className="summary-note">
-            {profitStatus === "loss" ? "Consider raising price or cutting costs" :
-             profitStatus === "risky" ? "Margin is tight — watch costs" :
-             "Looking good!"}
+        )}
+        {SHOW_PRICING && (
+          <div className="summary-card" data-testid="card-cost">
+            <div className="summary-label">Est. Total Cost</div>
+            <div className="summary-value">{fmt(safeCostRange[0])} – {fmt(safeCostRange[1])}</div>
+            <div className="summary-note">Food + supplies + 5% buffer</div>
           </div>
-        </div>
+        )}
+        {SHOW_PRICING && (
+          <div className={`summary-card summary-card--${profitStatus}`} data-testid="card-profit">
+            <div className="summary-label">Est. Profit</div>
+            <div className={`summary-value summary-value--${profitStatus}`}>
+              {fmt(profit[0])} – {fmt(profit[1])}
+            </div>
+            <div className="summary-note">
+              {profitStatus === "loss" ? "Consider raising price or cutting costs" :
+               profitStatus === "risky" ? "Margin is tight — watch costs" :
+               "Looking good!"}
+            </div>
+          </div>
+        )}
         <div className="summary-card" data-testid="card-attendance">
           <div className="summary-label">Attendance Split</div>
           <div className="summary-value">{safeAdults} adults</div>
@@ -476,7 +486,7 @@ export default function ResultsPage({ plan, formData, onReset }: ResultsPageProp
               <tr>
                 <th>Item</th>
                 <th>Quantity</th>
-                <th>Est. Cost Range</th>
+                {SHOW_PRICING && <th>Est. Cost Range</th>}
               </tr>
             </thead>
             <tbody>
@@ -484,12 +494,12 @@ export default function ResultsPage({ plan, formData, onReset }: ResultsPageProp
                 <tr key={i} data-testid={`row-preview-${i}`}>
                   <td>{item.item} — {item.quantity}</td>
                   <td><strong>{item.quantity}</strong></td>
-                  <td>{fmt(item.estimatedCost[0])} – {fmt(item.estimatedCost[1])}</td>
+                  {SHOW_PRICING && <td>{fmt(item.estimatedCost[0])} – {fmt(item.estimatedCost[1])}</td>}
                 </tr>
               ))}
               {!unlocked && hiddenItemCount > 0 && (
                 <tr className="table-locked-row">
-                  <td colSpan={3}>
+                  <td colSpan={SHOW_PRICING ? 3 : 2}>
                     <span className="table-locked-msg">
                       <Lock className="w-3.5 h-3.5 mr-1.5" />
                       {hiddenItemCount} more item{hiddenItemCount !== 1 ? "s" : ""} included in the Full Event Pack
@@ -505,7 +515,7 @@ export default function ResultsPage({ plan, formData, onReset }: ResultsPageProp
         </p>
 
         {/* Pricing methodology note (Part 5) */}
-        {plan?.pricingMethodologyNote && (
+        {SHOW_PRICING && plan?.pricingMethodologyNote && (
           <p style={{ fontSize: 11, color: "var(--color-text-muted)", marginTop: 10, padding: "8px 12px", background: "var(--color-bg-card)", borderRadius: 6, border: "1px solid var(--color-border)", lineHeight: 1.5 }}>
             <strong>About these prices:</strong> {plan.pricingMethodologyNote}
           </p>
@@ -789,9 +799,11 @@ export default function ResultsPage({ plan, formData, onReset }: ResultsPageProp
                       </div>
                     )}
 
-                    <p style={{ fontSize: 14, fontWeight: 600, color: "var(--color-text)", marginTop: 8 }}>
-                      Estimated total food cost: <strong>{fmt(safeCostRange[0])} to {fmt(safeCostRange[1])}</strong>
-                    </p>
+                    {SHOW_PRICING && (
+                      <p style={{ fontSize: 14, fontWeight: 600, color: "var(--color-text)", marginTop: 8 }}>
+                        Estimated total food cost: <strong>{fmt(safeCostRange[0])} to {fmt(safeCostRange[1])}</strong>
+                      </p>
+                    )}
                   </>
                 ) : safeShoppingListGrouped.length > 0 ? (
                   <div className="table-wrap">
@@ -825,9 +837,11 @@ export default function ResultsPage({ plan, formData, onReset }: ResultsPageProp
                         ))}
                       </tbody>
                     </table>
-                    <p style={{ fontSize: 14, fontWeight: 600, color: "var(--color-text)", marginTop: 12 }}>
-                      Estimated total food cost: <strong>{fmt(safeCostRange[0])} to {fmt(safeCostRange[1])}</strong>
-                    </p>
+                    {SHOW_PRICING && (
+                      <p style={{ fontSize: 14, fontWeight: 600, color: "var(--color-text)", marginTop: 12 }}>
+                        Estimated total food cost: <strong>{fmt(safeCostRange[0])} to {fmt(safeCostRange[1])}</strong>
+                      </p>
+                    )}
                   </div>
                 ) : (
                   <div className="table-wrap">
@@ -849,9 +863,11 @@ export default function ResultsPage({ plan, formData, onReset }: ResultsPageProp
                         ))}
                       </tbody>
                     </table>
-                    <p style={{ fontSize: 14, fontWeight: 600, color: "var(--color-text)", marginTop: 12 }}>
-                      Estimated total food cost: <strong>{fmt(safeCostRange[0])} to {fmt(safeCostRange[1])}</strong>
-                    </p>
+                    {SHOW_PRICING && (
+                      <p style={{ fontSize: 14, fontWeight: 600, color: "var(--color-text)", marginTop: 12 }}>
+                        Estimated total food cost: <strong>{fmt(safeCostRange[0])} to {fmt(safeCostRange[1])}</strong>
+                      </p>
+                    )}
                   </div>
                 )}
               </div>
@@ -865,7 +881,7 @@ export default function ResultsPage({ plan, formData, onReset }: ResultsPageProp
                       <tr>
                         <th>Supply</th>
                         <th>Quantity</th>
-                        <th>Est. Cost Range</th>
+                        {SHOW_PRICING && <th>Est. Cost Range</th>}
                       </tr>
                     </thead>
                     <tbody>
@@ -873,11 +889,13 @@ export default function ResultsPage({ plan, formData, onReset }: ResultsPageProp
                         <tr key={i} data-testid={`row-supply-${i}`}>
                           <td>{item.item}</td>
                           <td><strong>{item.quantity}</strong></td>
-                          <td>
-                            {item.estimatedCost[0] === 0
-                              ? "Already owned / donated"
-                              : `${fmt(item.estimatedCost[0])} – ${fmt(item.estimatedCost[1])}`}
-                          </td>
+                          {SHOW_PRICING && (
+                            <td>
+                              {item.estimatedCost[0] === 0
+                                ? "Already owned / donated"
+                                : `${fmt(item.estimatedCost[0])} – ${fmt(item.estimatedCost[1])}`}
+                            </td>
+                          )}
                         </tr>
                       ))}
                     </tbody>
@@ -1017,42 +1035,44 @@ export default function ResultsPage({ plan, formData, onReset }: ResultsPageProp
           </section>
 
           {/* Profit Strategy */}
-          <section className="results-section" data-testid="section-profit">
-            <h2 className="section-heading">Profit Strategy</h2>
-            <p className="section-note">
-              Pricing recommendations, upsell ideas, and signage language for your event.
-            </p>
-            <div className="profit-strategy-block">
-              <div className="profit-row">
-                <div className="profit-row-label">Price Check</div>
-                <p className="profit-row-value">{safeProfitStrategy?.priceCheck ?? "—"}</p>
-              </div>
-              <div className="profit-row">
-                <div className="profit-row-label">Recommended Pricing Model</div>
-                <p className="profit-row-value">{safeProfitStrategy?.pricingModel ?? "—"}</p>
-              </div>
-              <div className="profit-row">
-                <div className="profit-row-label">Upsell Ideas</div>
-                <ul className="profit-upsell-list">
-                  {safeProfitStrategy?.upsellIdeas?.map((idea, i) => (
-                    <li key={i}>{idea}</li>
-                  )) ?? null}
-                </ul>
-              </div>
-              <div className="profit-row">
-                <div className="profit-row-label">Donation Table Note</div>
-                <p className="profit-row-value">{safeProfitStrategy?.donationTableNote ?? "—"}</p>
-              </div>
-              <div className="profit-row">
-                <div className="profit-row-label">Suggested Signage</div>
-                <div className="profit-signage-list">
-                  {safeProfitStrategy?.signageLines?.map((line, i) => (
-                    <div key={i} className="profit-signage-item">{line}</div>
-                  )) ?? null}
+          {SHOW_PRICING && (
+            <section className="results-section" data-testid="section-profit">
+              <h2 className="section-heading">Profit Strategy</h2>
+              <p className="section-note">
+                Pricing recommendations, upsell ideas, and signage language for your event.
+              </p>
+              <div className="profit-strategy-block">
+                <div className="profit-row">
+                  <div className="profit-row-label">Price Check</div>
+                  <p className="profit-row-value">{safeProfitStrategy?.priceCheck ?? "—"}</p>
+                </div>
+                <div className="profit-row">
+                  <div className="profit-row-label">Recommended Pricing Model</div>
+                  <p className="profit-row-value">{safeProfitStrategy?.pricingModel ?? "—"}</p>
+                </div>
+                <div className="profit-row">
+                  <div className="profit-row-label">Upsell Ideas</div>
+                  <ul className="profit-upsell-list">
+                    {safeProfitStrategy?.upsellIdeas?.map((idea, i) => (
+                      <li key={i}>{idea}</li>
+                    )) ?? null}
+                  </ul>
+                </div>
+                <div className="profit-row">
+                  <div className="profit-row-label">Donation Table Note</div>
+                  <p className="profit-row-value">{safeProfitStrategy?.donationTableNote ?? "—"}</p>
+                </div>
+                <div className="profit-row">
+                  <div className="profit-row-label">Suggested Signage</div>
+                  <div className="profit-signage-list">
+                    {safeProfitStrategy?.signageLines?.map((line, i) => (
+                      <div key={i} className="profit-signage-item">{line}</div>
+                    )) ?? null}
+                  </div>
                 </div>
               </div>
-            </div>
-          </section>
+            </section>
+          )}
 
           {/* Volunteer Briefing */}
           <section className="results-section" data-testid="section-briefing">
@@ -1186,7 +1206,7 @@ export default function ResultsPage({ plan, formData, onReset }: ResultsPageProp
           )}
 
           {/* Pricing Sensitivity Calculator */}
-          <section className="results-section sensitivity-section" data-testid="section-sensitivity">
+          {SHOW_PRICING && <section className="results-section sensitivity-section" data-testid="section-sensitivity">
             <h2 className="section-heading">Pricing Sensitivity</h2>
             <p className="section-note">
               Try a different suggested donation or meal price to see how your fundraiser estimate changes.
@@ -1287,7 +1307,7 @@ export default function ResultsPage({ plan, formData, onReset }: ResultsPageProp
                 </>
               );
             })()}
-          </section>
+          </section>}
 
           {/* Bottom CTA */}
           <div className="results-footer">
