@@ -946,8 +946,7 @@ function buildCustomMenuIngredients(form: PlannerFormData): IngredientDef[] {
 // ES module strict mode where combo branch returns empty ingredient arrays.
 function computeIngredientResults(
   component: MealAssumption,
-  adults: number,
-  kids: number,
+  guestCount: number,
   excludedItems?: string[],
   customItemPrices?: Record<string, number>,
 ): {
@@ -955,9 +954,7 @@ function computeIngredientResults(
   shoppingItems: ShoppingItem[];
   cost: [number, number];
 } {
-  const servings = Math.ceil(
-    (adults * component.adultServings + kids * component.kidServings) * component.wasteBuffer
-  );
+  const servings = Math.ceil(guestCount * component.adultServings);
   const activeIngredients = component.ingredients.filter(
     (ing) => !excludedItems?.includes(ing.name)
   );
@@ -1110,7 +1107,6 @@ const MEAL_EMOJIS: Record<string, string> = {
 function calculateMultiMealPlan(rawForm: PlannerFormData): FundraiserPlan {
   const primaryMeal = (rawForm.selectedMeals?.[0] ?? rawForm.mealType) as MealType;
   const totalGuests = Math.max(1, rawForm.totalExpectedGuests ?? rawForm.attendance);
-  const adultFraction = Math.max(0, Math.min(1, (rawForm.adultPercent ?? 70) / 100));
 
   // Base plan: primary meal + totalGuests → provides timeline, volunteer plan, risk warnings, revenue
   const basePlan = calculatePlan({
@@ -1123,13 +1119,10 @@ function calculateMultiMealPlan(rawForm: PlannerFormData): FundraiserPlan {
   // Per-meal shopping sections (each uses its own independent serving count)
   const multiMealSections: MultiMealSection[] = (rawForm.selectedMeals ?? [primaryMeal]).map((mealType) => {
     const servings = Math.max(1, rawForm.mealServings?.[mealType] ?? totalGuests);
-    const adults = Math.round(servings * adultFraction);
-    const kids = servings - adults;
     const mealAssumption = MEAL_ASSUMPTIONS[mealType as MealType] ?? MEAL_ASSUMPTIONS["custom"]!;
     const r = computeIngredientResults(
       mealAssumption,
-      adults,
-      kids,
+      servings,
       rawForm.excludedItems,
       rawForm.customItemPrices,
     );
@@ -1198,7 +1191,7 @@ export function calculatePlan(rawForm: PlannerFormData): FundraiserPlan {
   if (combo) {
     // Combo: compute each component independently and merge
     for (const component of combo.components) {
-      const r = computeIngredientResults(applyStorePackageOverrides(component, form.storePreference), adults, kids, form.excludedItems, form.customItemPrices);
+      const r = computeIngredientResults(applyStorePackageOverrides(component, form.storePreference), form.attendance, form.excludedItems, form.customItemPrices);
       foodQuantities = foodQuantities.concat(r.foodQuantities);
       shoppingList = shoppingList.concat(r.shoppingItems);
       totalCostRange = rangeAdd(totalCostRange, r.cost);
@@ -1209,12 +1202,12 @@ export function calculatePlan(rawForm: PlannerFormData): FundraiserPlan {
     const r = computeIngredientResults({
       ...applyStorePackageOverrides(meal, form.storePreference),
       ingredients: customIngredients,
-    }, adults, kids, form.excludedItems, form.customItemPrices);
+    }, form.attendance, form.excludedItems, form.customItemPrices);
     foodQuantities = r.foodQuantities;
     shoppingList = r.shoppingItems;
     totalCostRange = rangeAdd(totalCostRange, r.cost);
   } else {
-    const r = computeIngredientResults(applyStorePackageOverrides(meal, form.storePreference), adults, kids, form.excludedItems, form.customItemPrices);
+    const r = computeIngredientResults(applyStorePackageOverrides(meal, form.storePreference), form.attendance, form.excludedItems, form.customItemPrices);
     foodQuantities = r.foodQuantities;
     shoppingList = r.shoppingItems;
     totalCostRange = rangeAdd(totalCostRange, r.cost);
