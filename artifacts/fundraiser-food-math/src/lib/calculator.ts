@@ -1237,7 +1237,7 @@ export function calculatePlan(rawForm: PlannerFormData): FundraiserPlan {
         ? [packageCount * supCost[0], packageCount * supCost[1]]
         : [0, 0];
       totalCostRange = rangeAdd(totalCostRange, itemCost);
-      return { item: sup.name, quantity: `${quantity} needed`, estimatedCost: itemCost };
+      return { item: sup.name, quantity: `${quantity}`, estimatedCost: itemCost };
     });
 
   // Add a misc contingency buffer (5%)
