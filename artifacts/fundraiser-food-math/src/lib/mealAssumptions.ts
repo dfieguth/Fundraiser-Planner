@@ -471,7 +471,7 @@ export const breakfastBurritoAssumptions: MealAssumption = {
     },
     {
       name: "Eggs (large, by the flat — 30-count)",
-      perServing: 1.6,
+      perServing: 1.45,
       unit: "egg",
       packageSize: 30,
       packageUnit: "30-egg flat",
@@ -481,7 +481,7 @@ export const breakfastBurritoAssumptions: MealAssumption = {
     },
     {
       name: "Breakfast Sausage (bulk, 2-lb pack)",
-      perServing: 0.12,
+      perServing: 0.109,
       unit: "lb",
       packageSize: 2,
       packageUnit: "2-lb pack",
@@ -491,7 +491,7 @@ export const breakfastBurritoAssumptions: MealAssumption = {
     },
     {
       name: "O'Brien Potatoes (1-lb bag)",
-      perServing: 0.04,
+      perServing: 0.036,
       unit: "lb",
       packageSize: 1,
       packageUnit: "1-lb bag",
