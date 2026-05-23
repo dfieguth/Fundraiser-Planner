@@ -37,6 +37,7 @@ function applyStorePackageOverrides(
       if (ing.name === "Hot Dogs (all-beef, 10-pack)") {
         return {
           ...ing,
+          name: "Hot Dogs (Kirkland beef, 36-count pack)",
           packageSize: 36,
           packageUnit: "36-count pack",
           costPerPackage: [14.00, 22.00] as [number, number],
