@@ -470,9 +470,8 @@ export const breakfastBurritoAssumptions: MealAssumption = {
       required: true,
     },
     {
-      // 2 eggs per burrito + 10% buffer baked into wasteBuffer
       name: "Eggs (large, by the flat — 30-count)",
-      perServing: 2,
+      perServing: 1.6,
       unit: "egg",
       packageSize: 30,
       packageUnit: "30-egg flat",
@@ -481,9 +480,8 @@ export const breakfastBurritoAssumptions: MealAssumption = {
       required: true,
     },
     {
-      // 2 oz cooked per burrito = 0.125 lb cooked (buy raw: ~0.156 lb)
       name: "Breakfast Sausage (bulk, 2-lb pack)",
-      perServing: 0.125,
+      perServing: 0.12,
       unit: "lb",
       packageSize: 2,
       packageUnit: "2-lb pack",
@@ -492,29 +490,18 @@ export const breakfastBurritoAssumptions: MealAssumption = {
       required: true,
     },
     {
-      // 3.5 oz per burrito = 0.22 lb
-      name: "Frozen Diced Hash Brown Potatoes (5-lb bag)",
-      perServing: 0.22,
+      name: "O'Brien Potatoes (1-lb bag)",
+      perServing: 0.04,
       unit: "lb",
-      packageSize: 5,
-      packageUnit: "5-lb bag",
-      costPerPackage: [6.00, 11.00],
+      packageSize: 1,
+      packageUnit: "1-lb bag",
+      costPerPackage: [2.50, 4.50],
       category: "carb",
+      required: true,
     },
     {
-      name: "Diced Bell Peppers (fresh or frozen — for eggs)",
-      perServing: 0.03,
-      unit: "lb",
-      packageSize: 2,
-      packageUnit: "2-lb bag or 3-pack",
-      costPerPackage: [3.50, 7.00],
-      category: "produce",
-      usageRate: 0.70,
-    },
-    {
-      // 1 oz per burrito = 0.0625 lb, 90% of burritos get cheese
-      name: "Shredded Mexican Blend Cheese (2-lb bag)",
-      perServing: 0.0625,
+      name: "Fiesta Blend Shredded Cheese",
+      perServing: 0.035,
       unit: "lb",
       packageSize: 2,
       packageUnit: "2-lb bag",
