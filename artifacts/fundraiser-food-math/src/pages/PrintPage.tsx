@@ -171,10 +171,6 @@ export default function PrintPage() {
   const mealLabel = MEAL_LABELS[plan.summary.mealType] ?? plan.summary.mealType;
   const checklist  = buildDayOfChecklist(plan.summary.mealType);
 
-  const top5Items = [...plan.shoppingList]
-    .sort((a, b) => b.estimatedCost[1] - a.estimatedCost[1])
-    .slice(0, 5);
-
   function printExecSummary() {
     const prevTitle = document.title;
     document.title = `${plan?.summary.eventName || "Fundraiser"} — Executive Summary`;
@@ -232,7 +228,6 @@ export default function PrintPage() {
           <KVTable rows={[
             ["Serving Window",   `${formatTime12(formData.serveStartTime)} – ${formatTime12(formData.serveEndTime)}`],
             ["Prep Start",       formatTime12(formData.prepStartTime)],
-            ["Suggested Price",  `$${formData.mealPrice} per person`],
             ["Audience Mix",     `${formData.adultPercent}% adults · ${formData.kidPercent}% kids`],
             ["Adult Volunteers", String(formData.adultVolunteers)],
             ["Student Volunteers", String(formData.studentVolunteers)],
@@ -244,20 +239,8 @@ export default function PrintPage() {
         </div>
       )}
 
-      {/* ── 3. Revenue / Cost / Profit ── */}
+      {/* ── 3. Guest Summary ── */}
       <div className="print-summary-grid">
-        <div className="print-summary-card">
-          <div className="print-label">Expected Revenue</div>
-          <div className="print-value">{fmt(plan.estimatedRevenue)}</div>
-        </div>
-        <div className="print-summary-card">
-          <div className="print-label">Est. Food Cost</div>
-          <div className="print-value">{fmt(plan.costRange[0])} – {fmt(plan.costRange[1])}</div>
-        </div>
-        <div className="print-summary-card">
-          <div className="print-label">Est. Net Profit</div>
-          <div className="print-value">{fmt(plan.estimatedProfit[0])} – {fmt(plan.estimatedProfit[1])}</div>
-        </div>
         <div className="print-summary-card">
           <div className="print-label">Guests</div>
           <div className="print-value">{plan.summary.adults}A + {plan.summary.kids}K</div>
@@ -308,48 +291,38 @@ export default function PrintPage() {
         {plan.shoppingListGrouped.length > 0 ? (
           <table className="print-table">
             <thead>
-              <tr><th>Item</th><th>Quantity</th><th>Est. Cost</th><th>Notes</th></tr>
+              <tr><th>Item</th><th>Quantity</th><th>Notes</th></tr>
             </thead>
             <tbody>
               {plan.shoppingListGrouped.map((group) => (
                 <>
                   <tr key={`cat-${group.label}`} className="print-table-category-row">
-                    <td colSpan={4}>{group.label}</td>
+                    <td colSpan={3}>{group.label}</td>
                   </tr>
                   {group.items.map((item, i) => (
                     <tr key={i}>
                       <td>{item.item}</td>
                       <td>{item.quantity}</td>
-                      <td>{fmt(item.estimatedCost[0])} – {fmt(item.estimatedCost[1])}</td>
                       <td>{item.notes ?? ""}</td>
                     </tr>
                   ))}
                 </>
               ))}
-              <tr className="print-table-total-row">
-                <td colSpan={2}><strong>Total Food Cost Estimate</strong></td>
-                <td colSpan={2}><strong>{fmt(plan.costRange[0])} – {fmt(plan.costRange[1])}</strong></td>
-              </tr>
             </tbody>
           </table>
         ) : (
           <table className="print-table">
             <thead>
-              <tr><th>Item</th><th>Quantity</th><th>Est. Cost</th><th>Notes</th></tr>
+              <tr><th>Item</th><th>Quantity</th><th>Notes</th></tr>
             </thead>
             <tbody>
               {plan.shoppingList.map((item, i) => (
                 <tr key={i}>
                   <td>{item.item}</td>
                   <td>{item.quantity}</td>
-                  <td>{fmt(item.estimatedCost[0])} – {fmt(item.estimatedCost[1])}</td>
                   <td>{item.notes ?? ""}</td>
                 </tr>
               ))}
-              <tr className="print-table-total-row">
-                <td colSpan={2}><strong>Total Food Cost Estimate</strong></td>
-                <td colSpan={2}><strong>{fmt(plan.costRange[0])} – {fmt(plan.costRange[1])}</strong></td>
-              </tr>
             </tbody>
           </table>
         )}
@@ -360,18 +333,13 @@ export default function PrintPage() {
         <SectionTitle>Supplies List</SectionTitle>
         <table className="print-table">
           <thead>
-            <tr><th>Supply Item</th><th>Quantity</th><th>Est. Cost</th></tr>
+            <tr><th>Supply Item</th><th>Quantity</th></tr>
           </thead>
           <tbody>
             {plan.suppliesList.map((item, i) => (
               <tr key={i}>
                 <td>{item.item}</td>
                 <td>{item.quantity}</td>
-                <td>
-                  {item.estimatedCost[0] === 0
-                    ? "As needed"
-                    : `${fmt(item.estimatedCost[0])} – ${fmt(item.estimatedCost[1])}`}
-                </td>
               </tr>
             ))}
           </tbody>
@@ -472,19 +440,7 @@ export default function PrintPage() {
         </table>
       </div>
 
-      {/* ── 10. Profit Strategy ── */}
-      <div className="print-section">
-        <SectionTitle>Profit Strategy</SectionTitle>
-        <KVTable rows={[
-          ["Price Check",      plan.profitStrategy?.priceCheck ?? "—"],
-          ["Pricing Model",    plan.profitStrategy?.pricingModel ?? "—"],
-          ["Upsell Ideas",     plan.profitStrategy?.upsellIdeas?.join(" · ") ?? "—"],
-          ["Donation Station", plan.profitStrategy?.donationTableNote ?? "—"],
-          ["Suggested Signs",  plan.profitStrategy?.signageLines?.join(" / ") ?? "—"],
-        ]} />
-      </div>
-
-      {/* ── 11. Risk Plan with Fixes ── */}
+      {/* ── 10. Risk Plan with Fixes ── */}
       {plan.riskPlan.length > 0 && (
         <div className="print-section">
           <SectionTitle>Risk Plan with Fixes</SectionTitle>
@@ -570,11 +526,7 @@ export default function PrintPage() {
         <p><strong>Generated by Fundraiser Food Math</strong> · fundraiserfoodmath.com</p>
         <p>
           {plan.disclaimer
-            ?? "These are planning estimates. Adjust for your group, appetite, store prices, and local context."}
-        </p>
-        <p>
-          All cost ranges are estimates based on bulk-store pricing as of the plan date.
-          Watch your local prices and adjust quantities for your actual event.
+            ?? "These are planning estimates. Adjust for your group, appetite, and local context."}
         </p>
       </div>
 
@@ -587,24 +539,8 @@ export default function PrintPage() {
           <div className="exec-brand">Fundraiser Food Math · Executive Summary</div>
           <h1 className="exec-title">{plan.summary.eventName || "Fundraiser Plan"}</h1>
           <p className="exec-subtitle">
-            {mealLabel} · {plan.summary.orgType} · {plan.summary.attendance} guests ·{" "}
-            ${plan.summary.mealPrice}/person suggested
+            {mealLabel} · {plan.summary.orgType} · {plan.summary.attendance} guests
           </p>
-        </div>
-
-        <div className="exec-financials">
-          <div className="exec-fin-card">
-            <div className="exec-fin-label">Expected Revenue</div>
-            <div className="exec-fin-value">{fmt(plan.estimatedRevenue)}</div>
-          </div>
-          <div className="exec-fin-card">
-            <div className="exec-fin-label">Est. Food Cost</div>
-            <div className="exec-fin-value">{fmt(plan.costRange[0])} – {fmt(plan.costRange[1])}</div>
-          </div>
-          <div className="exec-fin-card">
-            <div className="exec-fin-label">Est. Net Profit</div>
-            <div className="exec-fin-value">{fmt(plan.estimatedProfit[0])} – {fmt(plan.estimatedProfit[1])}</div>
-          </div>
         </div>
 
         <div className="exec-body">
@@ -622,10 +558,6 @@ export default function PrintPage() {
                       <tr>
                         <td className="exec-key">Prep Starts</td>
                         <td>{formatTime12(formData.prepStartTime)}</td>
-                      </tr>
-                      <tr>
-                        <td className="exec-key">Suggested Price</td>
-                        <td>${plan.summary.mealPrice} per person</td>
                       </tr>
                       <tr>
                         <td className="exec-key">Adult Volunteers</td>
@@ -649,21 +581,6 @@ export default function PrintPage() {
               </table>
             </div>
 
-            <div className="exec-block">
-              <div className="exec-block-title">Top Shopping Items by Cost</div>
-              <table className="exec-table">
-                <tbody>
-                  {top5Items.map((item, i) => (
-                    <tr key={i}>
-                      <td>{item.item}</td>
-                      <td className="exec-cost">
-                        {fmt(item.estimatedCost[0])} – {fmt(item.estimatedCost[1])}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
           </div>
 
           <div className="exec-col">
@@ -686,7 +603,7 @@ export default function PrintPage() {
           <strong>Generated by Fundraiser Food Math</strong> · fundraiserfoodmath.com
           {" · "}
           {plan.disclaimer
-            ?? "These are planning estimates. Adjust for your group, appetite, store prices, and local context."}
+            ?? "These are planning estimates. Adjust for your group, appetite, and local context."}
         </div>
 
       </div>{/* end .exec-summary */}

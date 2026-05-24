@@ -30,14 +30,24 @@ function applyStorePackageOverrides(
   component: MealAssumption,
   storePreference?: string,
 ): MealAssumption {
-  if (storePreference !== "Costco") return component;
+  // Always normalize hot dog display name regardless of store
+  const renamedIngredients = component.ingredients.map((ing) => {
+    if (ing.name === "Hot Dogs (all-beef, 10-pack)") {
+      return { ...ing, name: "Hot Dogs" };
+    }
+    return ing;
+  });
+
+  if (storePreference !== "Costco") {
+    return { ...component, ingredients: renamedIngredients };
+  }
+
   return {
     ...component,
-    ingredients: component.ingredients.map((ing) => {
-      if (ing.name === "Hot Dogs (all-beef, 10-pack)") {
+    ingredients: renamedIngredients.map((ing) => {
+      if (ing.name === "Hot Dogs") {
         return {
           ...ing,
-          name: "Hot Dogs (Kirkland beef, 36-count pack)",
           packageSize: 36,
           packageUnit: "36-count pack",
           costPerPackage: [14.00, 22.00] as [number, number],
@@ -983,9 +993,6 @@ function computeIngredientResults(
 
     const neededCount = Math.ceil(rawTotal);
     const neededDisplay = `${neededCount} ${ing.unit}${neededCount === 1 ? "" : "s"} needed`;
-    const packageDisplay = `${packages} × ${ing.packageUnit}`;
-    const priceDisplay = `${fmt$(costRange[0])}–${fmt$(costRange[1])} per ${ing.packageUnit}`;
-    const totalDisplay = `${fmt$(itemCost[0])}–${fmt$(itemCost[1])}`;
 
     const usageNote = (ing.usageRate !== undefined && ing.usageRate < 1.0)
       ? `~${Math.round(ing.usageRate * 100)}% of guests typically use this`
@@ -997,12 +1004,12 @@ function computeIngredientResults(
 
     foodQuantities.push({
       ingredient: ing.name,
-      quantity: `${neededDisplay} · buy ${packageDisplay}`,
+      quantity: neededDisplay,
       notes: note,
     });
     shoppingItems.push({
       item: ing.name,
-      quantity: `${neededDisplay} · buy ${packageDisplay} · ${priceDisplay} · total ${totalDisplay}`,
+      quantity: neededDisplay,
       estimatedCost: itemCost,
       notes: cookingNote ?? usageNote ?? (ing.category === "condiment" ? "May have leftovers — saves money at your next event" : undefined),
       category: ing.category,
