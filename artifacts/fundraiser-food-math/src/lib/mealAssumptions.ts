@@ -207,7 +207,7 @@ export const burgerAssumptions: MealAssumption = {
       packageUnit: "24-slice pack",
       costPerPackage: [5.00, 9.00],
       category: "dairy",
-      usageRate: 0.30,
+      usageRate: 0.80,
     },
     {
       name: "Shredded Lettuce (pre-bagged)",
