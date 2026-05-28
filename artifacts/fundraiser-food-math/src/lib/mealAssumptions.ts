@@ -120,7 +120,7 @@ export const hotDogAssumptions: MealAssumption = {
     },
     {
       name: "Diced White Onion (optional topping)",
-      perServing: 0.016,
+      perServing: 0.0158,
       unit: "onion",
       packageSize: 3,
       packageUnit: "3-lb bag (~9 medium onions)",
