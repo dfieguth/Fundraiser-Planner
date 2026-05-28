@@ -71,7 +71,7 @@ export default function ResultsPage({ plan, formData, onReset }: ResultsPageProp
   const safeCommsPack = plan?.commsPack;
   const safeVolunteerBriefing = plan?.volunteerBriefing ?? "";
   const safeEmailBlurb = plan?.emailBlurb ?? "";
-  const safeDisclaimer = plan?.disclaimer ?? "These are planning estimates. Adjust for your group, appetite, store prices, and local context.";
+  const safeDisclaimer = plan?.disclaimer ?? "These are planning estimates. Adjust for your group, appetite, and local context.";
   const [sensitivityPrice, setSensitivityPrice] = useState<number>(safeMealPrice);
   const [accessCode, setAccessCode] = useState("");
   const [codeStatus, setCodeStatus] = useState<"idle" | "success" | "error">("idle");
@@ -465,7 +465,7 @@ export default function ResultsPage({ plan, formData, onReset }: ResultsPageProp
             </table>
           </div>
           <p className="field-hint" style={{ marginTop: 8 }}>
-            Shop for the midpoint. If turnout is higher, key bulk items like hot dogs and buns are easy to grab extras of on the day before.
+            Shop for the midpoint. If turnout is higher, key items like hot dogs and buns are easy to grab extras of on the day before.
           </p>
         </section>
       )}
@@ -511,7 +511,7 @@ export default function ResultsPage({ plan, formData, onReset }: ResultsPageProp
           </table>
         </div>
         <p className="section-note" style={{ marginTop: 8 }}>
-          Pack sizes vary by store. Use these quantities to guide your shopping.
+          Pack sizes vary. Use these quantities to guide your shopping.
         </p>
 
         {/* Pricing methodology note (Part 5) */}
@@ -733,10 +733,6 @@ export default function ResultsPage({ plan, formData, onReset }: ResultsPageProp
 
             {activeTab === "shopping" && (
               <div className="tab-content" data-testid="tab-content-shopping">
-                <p className="tab-intro">
-                  Store preference: <strong>{plan?.summary?.storePreference ?? "—"}</strong>.
-                </p>
-
                 {/* ── Multi-meal: split shopping list per meal ───── */}
                 {plan?.multiMealSections && plan.multiMealSections.length >= 2 ? (
                   <>

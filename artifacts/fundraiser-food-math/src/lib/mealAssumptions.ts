@@ -261,7 +261,7 @@ export const burgerAssumptions: MealAssumption = {
     },
     {
       name: "Mustard (20 oz squeeze bottle)",
-      perServing: 0.012,
+      perServing: 0.021,
       unit: "bottle",
       packageSize: 1,
       packageUnit: "20 oz bottle",

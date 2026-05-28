@@ -286,7 +286,7 @@ export default function PrintPage() {
         </table>
 
         {/* Shopping list grouped */}
-        <p className="print-sub-heading">Store Shopping List</p>
+        <p className="print-sub-heading">Shopping List</p>
         {plan.shoppingListGrouped.length > 0 ? (
           <table className="print-table">
             <thead>
