@@ -149,7 +149,7 @@ export const hotDogAssumptions: MealAssumption = {
       packageUnit: "40-count variety pack",
       costPerPackage: [18.00, 28.00],
       category: "other",
-      usageRate: 0.70,
+      usageRate: 1.0,
       required: true,
     },
   ],
