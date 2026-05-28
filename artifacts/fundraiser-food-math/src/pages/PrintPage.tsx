@@ -216,7 +216,6 @@ export default function PrintPage() {
           ["Organization",    plan.summary.orgType],
           ["Meal Type",       mealLabel],
           ["Attendance",      `${plan.summary.attendance} guests (${plan.summary.adults} adults, ${plan.summary.kids} kids)`],
-          ["Store Preference",plan.summary.storePreference],
           ...(formData?.notes ? [["Notes", formData.notes] as [string, React.ReactNode]] : []),
         ]} />
       </div>
@@ -569,10 +568,6 @@ export default function PrintPage() {
                       </tr>
                     </>
                   )}
-                  <tr>
-                    <td className="exec-key">Store Preference</td>
-                    <td>{plan.summary.storePreference}</td>
-                  </tr>
                   <tr>
                     <td className="exec-key">Audience Mix</td>
                     <td>{plan.summary.adults} adults · {plan.summary.kids} kids</td>
