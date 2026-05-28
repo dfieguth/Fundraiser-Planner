@@ -13,6 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 
 const ENABLE_TIERED_PRICING = false;
+const SHOW_STORE_SELECTOR = false;
 const ENABLE_AUDIENCE_SPLIT = false;
 
 // ── Schema ───────────────────────────────────────────────────
@@ -319,7 +320,7 @@ export default function PlannerPage({ onPlanReady }: PlannerPageProps) {
       form.setValue("mealType", primaryMeal);
       const isValid = await form.trigger([
         "eventName", "orgType", "mealType", "attendance", "mealPrice",
-        "adultPercent", "kidPercent", "storePreference", "notes",
+        "adultPercent", "kidPercent", "notes",
       ]);
       if (!isValid) return;
       // Custom meal: go to menu details step; otherwise jump to timing
@@ -860,25 +861,27 @@ export default function PlannerPage({ onPlanReady }: PlannerPageProps) {
                 </div>
               )}
 
-              <FormField
-                control={form.control}
-                name="storePreference"
-                render={({ field }) => (
-                  <FormItem className="field-group">
-                    <FormLabel className="field-label">Preferred Store</FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value}>
-                      <FormControl>
-                        <SelectTrigger className="field-select" data-testid="select-store-preference">
-                          <SelectValue placeholder="Select store" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {STORE_PREFS.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}
-                      </SelectContent>
-                    </Select>
-                  </FormItem>
-                )}
-              />
+              {SHOW_STORE_SELECTOR && (
+                <FormField
+                  control={form.control}
+                  name="storePreference"
+                  render={({ field }) => (
+                    <FormItem className="field-group">
+                      <FormLabel className="field-label">Preferred Store</FormLabel>
+                      <Select onValueChange={field.onChange} value={field.value}>
+                        <FormControl>
+                          <SelectTrigger className="field-select" data-testid="select-store-preference">
+                            <SelectValue placeholder="Select store" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {STORE_PREFS.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+                        </SelectContent>
+                      </Select>
+                    </FormItem>
+                  )}
+                />
+              )}
 
               <FormField
                 control={form.control}
