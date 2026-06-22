@@ -540,7 +540,7 @@ export const breakfastBurritoAssumptions: MealAssumption = {
       cookingOnly: true,
     },
     {
-      name: "Salt & Pepper Shakers (for eggs and hash browns)",
+      name: "Salt & Pepper Shakers (for eggs and potatoes)",
       perServing: 0.002,
       unit: "set",
       packageSize: 1,
