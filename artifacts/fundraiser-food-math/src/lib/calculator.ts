@@ -205,7 +205,7 @@ function buildVolunteerPlan(
         type: "Adult Volunteer",
         duties: [
           "Pre-cook sausage and hold warm in roasters or foil pans",
-          "Cook and season hash brown potatoes and bell peppers",
+          "Cook and season O'Brien potatoes",
           "Keep the protein and potato station continuously stocked",
         ],
       },
@@ -214,7 +214,7 @@ function buildVolunteerPlan(
         count: Math.max(2, Math.ceil(attendance / 45)),
         type: "Parent Oversight",
         duties: [
-          "Assemble burritos in order: eggs → sausage → hash browns → cheese",
+          "Assemble burritos in order: eggs → sausage → O'Brien potatoes → cheese",
           "Fold and wrap each burrito tightly in foil",
           "Pass finished burritos to the Serving Team",
         ],
@@ -420,7 +420,7 @@ function buildStrategySummary(form: PlannerFormData): StrategySection {
     breakfastBurritos: {
       bestFit: "Breakfast burritos are popular at morning church events, Saturday school spirit breakfasts, and sports team fundraisers where the crowd arrives early.",
       mainProfitDriver: "A steady assembly line keeps output high. Adding a $1–$2 coffee or juice station dramatically increases per-person revenue with minimal added labor.",
-      mainExecutionRisk: "Multi-station coordination. Eggs, sausage, hash browns, and assembly must stay in sync. A delay at any one station stalls the entire line.",
+      mainExecutionRisk: "Multi-station coordination. Eggs, sausage, O'Brien potatoes, and assembly must stay in sync. A delay at any one station stalls the entire line.",
       recommendedFocus: "Assemble and wrap one test burrito before service starts to confirm flow. Assign one person per station and do not rotate — speed comes from staying in one role.",
     },
     tacos: {
@@ -721,7 +721,7 @@ function buildLeftoverPlan(mealType: string): LeftoverPlan {
       discard: [
         "Scrambled eggs held at room temperature for more than 2 hours (serious food safety risk)",
         "Any burrito that cannot be confirmed refrigerated within 2 hours of cooking",
-        "Cooked hash browns held unrefrigerated for more than 2 hours",
+        "Cooked O'Brien potatoes held unrefrigerated for more than 2 hours",
       ],
       packaging: "Label each foil-wrapped burrito with the date and contents. Refrigerate immediately after service — these are great reheated the next morning.",
       whoDecides: "The Adult Volunteer at the egg and griddle station has final authority on food safety calls.",

@@ -559,7 +559,7 @@ export const breakfastBurritoAssumptions: MealAssumption = {
     { name: "Aluminum Foil Pans with Lids (for holding finished eggs)", perPerson: 0.02, packageSize: 5, costPerPackage: [7.00, 13.00] },
     { name: "Trash Bags (13-gallon)", perPerson: 0.03, packageSize: 30, costPerPackage: [9.00, 17.00] },
   ],
-  prepNotes: "Pre-cook sausage and hash browns the morning of. Set up a two-person assembly line: tortilla → scrambled eggs → sausage → hash browns → bell peppers → cheese → fold and wrap in foil. Use measuring cups to portion each filling component — this keeps every burrito consistent and prevents running out of filling before tortillas.",
+  prepNotes: "Pre-cook sausage and O'Brien potatoes the morning of. Set up a two-person assembly line: tortilla → scrambled eggs → sausage → O'Brien potatoes → cheese → fold and wrap in foil. Use measuring cups to portion each filling component — this keeps every burrito consistent and prevents running out of filling before tortillas.",
   cookNote: "Electric griddles or large commercial flat-tops work best for eggs. Scramble in batches of 12–18 eggs at a time. Budget 60–80 burritos per hour with a 2-person assembly line.",
 };
 
