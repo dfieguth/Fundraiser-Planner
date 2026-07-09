@@ -559,7 +559,7 @@ export const breakfastBurritoAssumptions: MealAssumption = {
     { name: "Aluminum Foil Pans with Lids (for holding finished eggs)", perPerson: 0.02, packageSize: 5, costPerPackage: [7.00, 13.00] },
     { name: "Trash Bags (13-gallon)", perPerson: 0.03, packageSize: 30, costPerPackage: [9.00, 17.00] },
   ],
-  prepNotes: "Pre-cook sausage and O'Brien potatoes the morning of. Set up a two-person assembly line: tortilla → scrambled eggs → sausage → O'Brien potatoes → cheese → fold and wrap in foil. Use measuring cups to portion each filling component — this keeps every burrito consistent and prevents running out of filling before tortillas. Make 10 to 15 percent of burritos without cheese for dairy-free guests. Label them clearly with a marker on the foil.",
+  prepNotes: "Pre-cook sausage and O'Brien potatoes the morning of. Set up a two-person assembly line: tortilla → scrambled eggs → sausage → O'Brien potatoes → cheese → fold and wrap in foil. Use measuring cups to portion each filling component — this keeps every burrito consistent and prevents running out of filling before tortillas. Make 10 to 15 percent of burritos without cheese for dairy-free guests. Label them clearly with a marker on the foil. Consider portioning salsa into individual 2 oz cups with lids before service. Guests grab and go, the line moves faster, and there is no jar handling at the table.",
   cookNote: "Electric griddles or large commercial flat-tops work best for eggs. Scramble in batches of 12–18 eggs at a time. Budget 60–80 burritos per hour with a 2-person assembly line.",
 };
 
