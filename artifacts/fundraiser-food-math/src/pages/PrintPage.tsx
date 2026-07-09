@@ -235,6 +235,9 @@ export default function PrintPage() {
             These inputs drive all quantities, timelines, and estimates in this plan.
             Adjust values if your situation changes before the event.
           </p>
+          <div className="print-advisory-callout">
+            <strong>Plan for fewer guests than you expect.</strong> Free and suggested-donation events typically draw 20 to 30 percent fewer people than RSVPs or estimates. If you are unsure, enter your realistic number, not your hopeful number. It is easier to serve a smaller crowd well than to throw away food.
+          </div>
         </div>
       )}
 

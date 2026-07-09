@@ -894,6 +894,18 @@
     @apply text-xs text-muted-foreground text-center italic px-4 pb-1 max-w-2xl mx-auto;
   }
 
+  /* ── Advisory callout box (attendance warning) ── */
+  .advisory-callout {
+    @apply mx-auto max-w-2xl mb-5 px-4 py-3 rounded-lg border text-sm leading-relaxed;
+    background: #fefce8;
+    border-color: #fde047;
+    color: #713f12;
+  }
+  .advisory-callout strong {
+    display: block;
+    margin-bottom: 4px;
+  }
+
   /* ── Locked row in free preview table ── */
   .table-locked-row td {
     @apply bg-secondary/40 border-0 py-3 px-4;
@@ -1546,6 +1558,22 @@
   /* Small helper note below sections */
   .print-assumption-note {
     @apply text-xs text-gray-500 mt-3 italic;
+  }
+
+  /* ── Print advisory callout (attendance warning) ── */
+  .print-advisory-callout {
+    margin-top: 10px;
+    padding: 8px 12px;
+    border-left: 3px solid #ca8a04;
+    background: #fefce8;
+    color: #713f12;
+    font-size: 11px;
+    line-height: 1.5;
+    border-radius: 3px;
+  }
+  .print-advisory-callout strong {
+    display: block;
+    margin-bottom: 2px;
   }
 
   /* Allow page breaks inside large sections (tables) */

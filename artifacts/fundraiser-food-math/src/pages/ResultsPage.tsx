@@ -473,6 +473,11 @@ export default function ResultsPage({ plan, formData, onReset }: ResultsPageProp
       {/* Disclaimer — always visible */}
       <p className="results-disclaimer" data-testid="results-disclaimer">{safeDisclaimer}</p>
 
+      {/* Advisory note */}
+      <div className="advisory-callout" data-testid="advisory-attendance-note">
+        <strong>Plan for fewer guests than you expect.</strong> Free and suggested-donation events typically draw 20 to 30 percent fewer people than RSVPs or estimates. If you are unsure, enter your realistic number, not your hopeful number. It is easier to serve a smaller crowd well than to throw away food.
+      </div>
+
       {/* Shopping List Preview — always visible, limited */}
       <section className="results-section" data-testid="section-preview">
         <h2 className="section-heading">Shopping List Preview</h2>
