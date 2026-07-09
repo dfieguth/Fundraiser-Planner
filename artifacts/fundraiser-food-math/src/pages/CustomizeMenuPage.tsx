@@ -258,6 +258,20 @@ export default function CustomizeMenuPage({ form, onConfirm, onBack }: Customize
           </span>
         </div>
 
+        {combo && (
+          <div className="info-banner" style={{
+            background: "#fefce8",
+            border: "1px solid #fde047",
+            borderRadius: 8,
+            padding: "12px 16px",
+            marginBottom: 24,
+            fontSize: 14,
+            color: "#713f12",
+          }}>
+            Offering two entrees at one event? Expect most guests to take both, especially with student servers. Plan quantities for both or stick to one entree.
+          </div>
+        )}
+
         {Object.entries(grouped).map(([cat, catItems]) => (
           <div key={cat} style={{ marginBottom: 28 }}>
             <p style={{
