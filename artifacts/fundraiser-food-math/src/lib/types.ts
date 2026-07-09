@@ -107,6 +107,11 @@ export interface SupplyItem {
   estimatedCost: [number, number];
 }
 
+export interface DrinkItem {
+  item: string;
+  quantity: string;
+}
+
 export interface PrepStep {
   time: string;
   task: string;
@@ -210,6 +215,7 @@ export interface FundraiserPlan {
   shoppingList: ShoppingItem[];
   shoppingListGrouped: ShoppingGroup[];
   suppliesList: SupplyItem[];
+  drinksList: DrinkItem[];
   costRange: [number, number];
   estimatedRevenue: number;
   revenueConservative?: number;

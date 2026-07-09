@@ -60,6 +60,7 @@ export default function ResultsPage({ plan, formData, onReset }: ResultsPageProp
   const safeRiskWarnings = Array.isArray(plan?.riskWarnings) ? plan.riskWarnings : [];
   const safeFoodQuantities = Array.isArray(plan?.foodQuantities) ? plan.foodQuantities : [];
   const safeSuppliesList = Array.isArray(plan?.suppliesList) ? plan.suppliesList : [];
+  const safeDrinksList = Array.isArray(plan?.drinksList) ? plan.drinksList : [];
   const safePrepTimeline = Array.isArray(plan?.prepTimeline) ? plan.prepTimeline : [];
   const safeVolunteerPlan = Array.isArray(plan?.volunteerPlan) ? plan.volunteerPlan : [];
   const safeStrategySummary = plan?.strategySummary;
@@ -1011,6 +1012,34 @@ export default function ResultsPage({ plan, formData, onReset }: ResultsPageProp
               </div>
             )}
           </section>
+
+          {/* ── Drinks section ── */}
+          {safeDrinksList.length > 0 && (
+            <section className="results-section" data-testid="section-drinks">
+              <h2 className="section-heading">Drinks</h2>
+              <p className="section-note">
+                A $1 to $2 drink donation station is the easiest revenue add at any food fundraiser.
+              </p>
+              <div className="table-wrap">
+                <table className="data-table" data-testid="table-drinks">
+                  <thead>
+                    <tr>
+                      <th>Item</th>
+                      <th>Quantity</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {safeDrinksList.map((drink, i) => (
+                      <tr key={i} data-testid={`row-drink-${i}`}>
+                        <td>{drink.item}</td>
+                        <td><strong>{drink.quantity}</strong></td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </section>
+          )}
 
           {/* ── NEW FULL EVENT PACK SECTIONS ───────────────────────── */}
 

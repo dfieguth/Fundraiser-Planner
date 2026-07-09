@@ -348,7 +348,30 @@ export default function PrintPage() {
         </table>
       </div>
 
-      {/* ── 7. Prep Timeline ── */}
+      {/* ── 7. Drinks ── */}
+      {plan.drinksList && plan.drinksList.length > 0 && (
+        <div className="print-section">
+          <SectionTitle>Drinks</SectionTitle>
+          <p className="print-assumption-note" style={{ marginBottom: "8px" }}>
+            A $1 to $2 drink donation station is the easiest revenue add at any food fundraiser.
+          </p>
+          <table className="print-table">
+            <thead>
+              <tr><th>Item</th><th>Quantity</th></tr>
+            </thead>
+            <tbody>
+              {plan.drinksList.map((drink, i) => (
+                <tr key={i}>
+                  <td>{drink.item}</td>
+                  <td>{drink.quantity}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+
+      {/* ── 8. Prep Timeline ── */}
       <div className="print-section print-section--breakable print-page-break">
         <SectionTitle>Prep Timeline</SectionTitle>
         <table className="print-table">

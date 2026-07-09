@@ -6,11 +6,11 @@
 
 import type {
   PlannerFormData, FundraiserPlan, ShoppingItem,
-  SupplyItem, PrepStep, VolunteerRole, RiskWarning, RiskPlanItem,
+  SupplyItem, DrinkItem, PrepStep, VolunteerRole, RiskWarning, RiskPlanItem,
   StrategySection, ProfitStrategy, SetupStation,
   LeftoverPlan, CommsPack, ShoppingGroup, MealType, MultiMealSection,
 } from "./types";
-import { MEAL_ASSUMPTIONS, isComboMeal, COMBO_DEFINITIONS } from "./mealAssumptions";
+import { MEAL_ASSUMPTIONS, isComboMeal, COMBO_DEFINITIONS, drinkAssumptions } from "./mealAssumptions";
 import type { MealAssumption, IngredientDef } from "./mealAssumptions";
 
 // ── Planning disclaimer ───────────────────────────────────────
@@ -1248,6 +1248,16 @@ export function calculatePlan(rawForm: PlannerFormData): FundraiserPlan {
       return { item: sup.name, quantity: `${quantity}`, estimatedCost: itemCost };
     });
 
+  // ── Drinks List ───────────────────────────────────────────
+  const morningMealTypes = new Set<string>(["pancakes", "breakfastBurritos", "combo_pancakes_sausage"]);
+  const mealTimeCategory: "morning" | "midday" = morningMealTypes.has(form.mealType) ? "morning" : "midday";
+  const drinksList: DrinkItem[] = drinkAssumptions
+    .filter(d => d.mealTime === "universal" || d.mealTime === mealTimeCategory)
+    .map(d => {
+      const qty = Math.ceil(form.attendance * d.perServing);
+      return { item: d.name, quantity: `${qty} ${d.unit}${qty !== 1 ? "s" : ""}` };
+    });
+
   // Add a misc contingency buffer (5%)
   totalCostRange = [
     Math.round(totalCostRange[0] * 1.05),
@@ -1669,6 +1679,7 @@ Thank you for supporting ${form.eventName}!`.trim();
     shoppingList,
     shoppingListGrouped,
     suppliesList,
+    drinksList,
     costRange: totalCostRange,
     estimatedRevenue,
     revenueConservative,

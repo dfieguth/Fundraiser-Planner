@@ -1272,6 +1272,26 @@ export function isComboMeal(mealType: string): boolean {
 }
 
 // ============================================================
+// Drinks assumptions (universal + morning/midday)
+// ============================================================
+export interface DrinkAssumption {
+  name: string;
+  perServing: number;
+  unit: string;
+  packageUnit: string;
+  mealTime: "morning" | "midday" | "universal";
+}
+
+export const drinkAssumptions: DrinkAssumption[] = [
+  { name: "Bottled Water",        perServing: 1.5,   unit: "bottle",  packageUnit: "bottle",  mealTime: "universal" },
+  { name: "Ice",                  perServing: 1.0,   unit: "lb",      packageUnit: "lb",      mealTime: "universal" },
+  { name: "Cups (9 oz)",         perServing: 1.5,   unit: "cup",     packageUnit: "cup",     mealTime: "universal" },
+  { name: "Ground Coffee",        perServing: 0.015, unit: "lb",      packageUnit: "lb",      mealTime: "morning"   },
+  { name: "Orange Juice",         perServing: 0.07,  unit: "gallon",  packageUnit: "gallon",  mealTime: "morning"   },
+  { name: "Lemonade or Iced Tea", perServing: 0.10,  unit: "gallon",  packageUnit: "gallon",  mealTime: "midday"    },
+];
+
+// ============================================================
 // Map meal type keys to their assumption objects
 // ============================================================
 import type { MealType } from "./types";
