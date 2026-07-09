@@ -162,7 +162,7 @@ export const hotDogAssumptions: MealAssumption = {
     { name: "Disposable Gloves (box of 100)", perPerson: 0.03, packageSize: 100, costPerPackage: [9.00, 16.00] },
     { name: "Trash Bags (13-gallon)", perPerson: 0.03, packageSize: 30, costPerPackage: [9.00, 17.00] },
   ],
-  prepNotes: "Pre-slit hot dogs before grilling to prevent bursting. Set up a topping bar with ketchup, mustard, relish, and onion. Place buns in foil pans and warm on a low area of the grill.",
+  prepNotes: "Pre-slit hot dogs before grilling to prevent bursting. Set up a topping bar with ketchup, mustard, relish, and onion. Place buns in foil pans and warm on a low area of the grill. Set aside a few plain dogs with no bun for gluten-free guests if requested ahead of time.",
   cookNote: "Budget 80–100 hot dogs per hour on a full-size grill. Keep cooked dogs in covered foil pans to hold heat. Rotate older dogs to the front of the pan.",
 };
 
@@ -290,7 +290,7 @@ export const burgerAssumptions: MealAssumption = {
     { name: "Disposable Gloves (box of 100)", perPerson: 0.03, packageSize: 100, costPerPackage: [9.00, 16.00] },
     { name: "Trash Bags (13-gallon)", perPerson: 0.03, packageSize: 30, costPerPackage: [9.00, 17.00] },
   ],
-  prepNotes: "Form and season patties ahead of time using a burger press for consistency (1/3 lb each). Chill patties until 30 min before grill time. Set up a dedicated assembly station with cheese, toppings, and buns.",
+  prepNotes: "Form and season patties ahead of time using a burger press for consistency (1/3 lb each). Chill patties until 30 min before grill time. Set up a dedicated assembly station with cheese, toppings, and buns. Set aside a few patties with no bun or cheese for gluten-free and dairy-free guests if requested ahead of time.",
   cookNote: "Budget 60–80 burgers per hour on a full-size grill. Season patties with salt and pepper before grilling. Grill to 160°F internal temp. Keep finished burgers in covered foil pans to hold heat.",
 };
 
@@ -441,7 +441,7 @@ export const bakedPotatoAssumptions: MealAssumption = {
     { name: "Disposable Gloves (box of 100)", perPerson: 0.02, packageSize: 100, costPerPackage: [9.00, 16.00] },
     { name: "Trash Bags (13-gallon)", perPerson: 0.03, packageSize: 30, costPerPackage: [9.00, 17.00] },
   ],
-  prepNotes: "Wash and pierce potatoes the night before. Rub each potato with olive oil and kosher salt, then wrap in foil. Bake in batches at 400°F for 60–75 minutes. Set up a self-serve topping bar: butter, sour cream, fiesta blend cheese, chives, chili, nacho cheese, and white onion.",
+  prepNotes: "Wash and pierce potatoes the night before. Rub each potato with olive oil and kosher salt, then wrap in foil. Bake in batches at 400°F for 60–75 minutes. Set up a self-serve topping bar: butter, sour cream, fiesta blend cheese, chives, chili, nacho cheese, and white onion. The potato bar is naturally gluten-free. Keep chili and nacho cheese labeled so dairy-free guests can skip them.",
   cookNote: "Pre-baked potatoes hold well in towel-lined coolers or low-heat ovens for 2–3 hours. Keep the topping bar stocked — toppings run out faster than potatoes.",
 };
 
@@ -559,7 +559,7 @@ export const breakfastBurritoAssumptions: MealAssumption = {
     { name: "Aluminum Foil Pans with Lids (for holding finished eggs)", perPerson: 0.02, packageSize: 5, costPerPackage: [7.00, 13.00] },
     { name: "Trash Bags (13-gallon)", perPerson: 0.03, packageSize: 30, costPerPackage: [9.00, 17.00] },
   ],
-  prepNotes: "Pre-cook sausage and O'Brien potatoes the morning of. Set up a two-person assembly line: tortilla → scrambled eggs → sausage → O'Brien potatoes → cheese → fold and wrap in foil. Use measuring cups to portion each filling component — this keeps every burrito consistent and prevents running out of filling before tortillas.",
+  prepNotes: "Pre-cook sausage and O'Brien potatoes the morning of. Set up a two-person assembly line: tortilla → scrambled eggs → sausage → O'Brien potatoes → cheese → fold and wrap in foil. Use measuring cups to portion each filling component — this keeps every burrito consistent and prevents running out of filling before tortillas. Make 10 to 15 percent of burritos without cheese for dairy-free guests. Label them clearly with a marker on the foil.",
   cookNote: "Electric griddles or large commercial flat-tops work best for eggs. Scramble in batches of 12–18 eggs at a time. Budget 60–80 burritos per hour with a 2-person assembly line.",
 };
 
@@ -721,7 +721,7 @@ export const tacoAssumptions: MealAssumption = {
     { name: "Disposable Gloves (box of 100)", perPerson: 0.02, packageSize: 100, costPerPackage: [9.00, 16.00] },
     { name: "Trash Bags (13-gallon)", perPerson: 0.03, packageSize: 30, costPerPackage: [9.00, 17.00] },
   ],
-  prepNotes: "Brown meat in large batches (5 lbs at a time). Season each batch per packet directions. Set up a self-serve taco bar: meat → shells/tortillas → cheese → lettuce → tomato → onion → cilantro → sour cream → salsa → lime wedges.",
+  prepNotes: "Brown meat in large batches (5 lbs at a time). Season each batch per packet directions. Set up a self-serve taco bar: meat → shells/tortillas → cheese → lettuce → tomato → onion → cilantro → sour cream → salsa → lime wedges. Corn tortillas or shells are naturally gluten-free. Keep cheese and sour cream at the end of the line so dairy-free guests can skip them.",
   cookNote: "One large skillet or roaster handles 5 lbs of meat at a time. Keep meat warm in covered foil pans or an electric roaster at 170°F.",
 };
 
@@ -870,7 +870,7 @@ export const spaghettiAssumptions: MealAssumption = {
     { name: "Disposable Gloves (box of 100)", perPerson: 0.02, packageSize: 100, costPerPackage: [9.00, 16.00] },
     { name: "Trash Bags (13-gallon)", perPerson: 0.03, packageSize: 30, costPerPackage: [9.00, 17.00] },
   ],
-  prepNotes: "Sauce can be made 1–2 days ahead and refrigerated — flavor improves overnight. Cook pasta in large stockpots in batches (1 lb pasta per pot of salted boiling water). Toss drained pasta with a splash of olive oil to prevent sticking.",
+  prepNotes: "Sauce can be made 1–2 days ahead and refrigerated — flavor improves overnight. Cook pasta in large stockpots in batches (1 lb pasta per pot of salted boiling water). Toss drained pasta with a splash of olive oil to prevent sticking. Consider one small pot of gluten-free pasta if requested ahead of time. Keep parmesan separate.",
   cookNote: "Plan 1 large stockpot per 50 servings of pasta. Stagger cooking in 15-minute intervals to keep fresh pasta flowing. Sauce goes in a separate roaster — designate one person solely to sauce temperature and stirring.",
 };
 
@@ -998,7 +998,7 @@ export const pancakeAssumptions: MealAssumption = {
     { name: "Aluminum Foil Pans (for holding finished pancakes)", perPerson: 0.02, packageSize: 5, costPerPackage: [7.00, 12.00] },
     { name: "Trash Bags (13-gallon)", perPerson: 0.03, packageSize: 30, costPerPackage: [9.00, 17.00] },
   ],
-  prepNotes: "Mix batter in large batches 20–30 minutes before service. Keep batter cold in coolers between batches. Designate 1–2 Griddle Operators who stay at the griddles continuously. Pre-cook sausage links and hold warm in foil pans.",
+  prepNotes: "Mix batter in large batches 20–30 minutes before service. Keep batter cold in coolers between batches. Designate 1–2 Griddle Operators who stay at the griddles continuously. Pre-cook sausage links and hold warm in foil pans. Gluten-free guests generally cannot eat standard pancakes. Offer fruit or a gluten-free mix batch if requested ahead of time.",
   cookNote: "One large 22\" electric griddle produces ~80–100 pancakes per hour. Use a 1/4-cup ladle for consistent sizing. Flip when bubbles form across the surface and the edges look set.",
 };
 
@@ -1103,7 +1103,7 @@ export const walkingTacosAssumptions: MealAssumption = {
     { name: "Disposable Gloves (box of 100)", perPerson: 0.02, packageSize: 100, costPerPackage: [9.00, 16.00] },
     { name: "Trash Bags (13-gallon)", perPerson: 0.03, packageSize: 30, costPerPackage: [9.00, 17.00] },
   ],
-  prepNotes: "Brown and season meat ahead of time — can be done the day before and reheated. At service: open chip bags at the top, let guests add meat and toppings directly into the bag. No plates or assembly table needed — just a topping bar and forks.",
+  prepNotes: "Brown and season meat ahead of time — can be done the day before and reheated. At service: open chip bags at the top, let guests add meat and toppings directly into the bag. No plates or assembly table needed — just a topping bar and forks. Fritos are gluten-free but Doritos are not certified. Keep cheese and sour cream separate for dairy-free guests.",
   cookNote: "Walking tacos are the fastest-serving taco format. One person can serve 100 guests in under 20 minutes with a single meat station. Keep meat warm in a covered foil pan or electric roaster at 170°F.",
 };
 
