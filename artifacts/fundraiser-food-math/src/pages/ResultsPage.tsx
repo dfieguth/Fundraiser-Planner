@@ -287,15 +287,17 @@ export default function ResultsPage({ plan, formData, onReset }: ResultsPageProp
                 >
                   <Printer className="w-4 h-4 mr-2" /> Print / Save PDF
                 </a>
-                <button
-                  onClick={copyKeySummary}
-                  className="btn-secondary"
-                  data-testid="button-copy-summary"
-                >
-                  {copiedSummary
-                    ? <><CheckCircle2 className="w-4 h-4 mr-2" /> Copied!</>
-                    : <><Copy className="w-4 h-4 mr-2" /> Copy Key Summary</>}
-                </button>
+                {SHOW_PRICING && (
+                  <button
+                    onClick={copyKeySummary}
+                    className="btn-secondary"
+                    data-testid="button-copy-summary"
+                  >
+                    {copiedSummary
+                      ? <><CheckCircle2 className="w-4 h-4 mr-2" /> Copied!</>
+                      : <><Copy className="w-4 h-4 mr-2" /> Copy Key Summary</>}
+                  </button>
+                )}
               </>
             )}
           </div>
