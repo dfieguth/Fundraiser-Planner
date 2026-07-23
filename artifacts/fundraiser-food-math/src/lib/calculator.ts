@@ -530,9 +530,9 @@ function buildProfitStrategy(
     upsellIdeas: upsellMap[form.mealType] ?? upsellMap["custom"]!,
     donationTableNote: "Place the donation table near the exit, not the entrance. Guests who have just eaten tend to give more generously than guests who have not yet eaten. Use a clear sign with your suggested donation amount.",
     signageLines: [
-      `Suggested Donation: ${fmt$(form.mealPrice)} per person · Kids under 10 eat free`,
+      ...(form.mealPrice > 0 ? [`Suggested Donation: ${fmt$(form.mealPrice)} per person · Kids under 10 eat free`] : []),
       `Every plate supports ${org} — thank you for being here!`,
-      `Help us reach our goal — ${fmt$(form.attendance * form.mealPrice)} raised means a successful event.`,
+      ...(form.mealPrice > 0 ? [`Help us reach our goal — ${fmt$(form.attendance * form.mealPrice)} raised means a successful event.`] : []),
     ],
     pricingModel: pricingModelMap[form.orgType] ?? pricingModelMap["Other"]!,
   };
@@ -565,7 +565,7 @@ function buildVolunteerBriefing(
 
   return `Good ${timeOfDay}, ${form.eventName} team!
 
-Thank you for being here. Today we're raising money for ${org} by serving ${mealName} to ${form.attendance} guests. Our suggested donation is ${fmt$(form.mealPrice)} per person — every plate helps.
+Thank you for being here. Today we're raising money for ${org} by serving ${mealName} to ${form.attendance} guests.${form.mealPrice > 0 ? ` Our suggested donation is ${fmt$(form.mealPrice)} per person — every plate helps.` : ""}
 
 YOUR ROLE TODAY
 ${rolesText}
@@ -796,13 +796,16 @@ function buildCommsPack(
   const org = form.orgType === "Other" ? "our group" : form.orgType;
   const rolesText = volunteerPlan.map(r => `  • ${r.role} (${r.type}) — ${r.count} needed`).join("\n");
 
-  const announcement = `${form.eventName} — ${mealName} Fundraiser!
+  const announcementDonationLine = form.mealPrice > 0
+    ? `  Suggested Donation: ${fmt$(form.mealPrice)} per person`
+    : "";
+  const announcement = `${form.eventName}
+A Fundraiser for ${org}
 
 Join us for our ${mealName} fundraiser! This is a great opportunity to support ${org} while enjoying a delicious meal with your community.
 
   When: ${formatTime(serveStart)} – ${formatTime(serveEnd)}
-  Suggested Donation: ${fmt$(form.mealPrice)} per person
-  We're expecting ${form.attendance} guests.
+${announcementDonationLine ? announcementDonationLine + "\n" : ""}  We're expecting ${form.attendance} guests.
 
 Come out, eat well, and help us reach our goal. Every plate makes a difference.
 
@@ -822,12 +825,15 @@ Reply to this message or contact your group leader to sign up. Every hand matter
 
 Thank you for supporting ${org}!`.trim();
 
+  const dayBeforeDonationLine = form.mealPrice > 0
+    ? ` and a suggested donation of ${fmt$(form.mealPrice)} per person`
+    : "";
   const dayBeforeReminder = `Quick reminder: ${form.eventName} is TOMORROW!
 
 If you're VOLUNTEERING: please arrive by ${formatTime(prepStart)} ready to help set up and prep.
 If you're ATTENDING: doors open at ${formatTime(serveStart)}.
 
-What to bring: your appetite and a suggested donation of ${fmt$(form.mealPrice)} per person.
+What to bring: your appetite${dayBeforeDonationLine}.
 
 We're looking forward to a great event — see you there!
 — The ${form.eventName} Team`.trim();
@@ -1613,7 +1619,7 @@ Event: ${form.eventName}
 Meal: ${mealName}
 Serving: ${formatTime(serveStart)} – ${formatTime(serveEnd)}
 Volunteers needed by: ${formatTime(prepStart)}
-Suggested donation: $${form.mealPrice} per person
+${form.mealPrice > 0 ? `Suggested donation: ${fmt$(form.mealPrice)} per person` : ""}
 Attendance goal: ${form.attendance} guests
 
 We're looking for Adult Volunteers, Parent Volunteers, and Student Runners to help with cooking, serving, setup, and cleanup. Every role matters and we couldn't do it without you!
