@@ -1,54 +1,90 @@
 // ============================================================
-// STRIPE WEBHOOK — PLACEHOLDER ROUTE
+// STRIPE WEBHOOK — SERVER-SIDE PAYMENT CONFIRMATION
 //
-// This route exists as future infrastructure only.
-// It does NOT verify payments and is NOT required for the
-// current MVP launch flow.
+// Verifies checkout.session.completed events and records the
+// purchase in the database, keyed by the Stripe session ID.
+// This makes the unlock durable even if the buyer's browser
+// never returns to the /success page.
 //
-// CURRENT MVP FLOW (client-side, no backend required):
-//   1. User clicks the $19 Full Event Pack payment link
-//   2. Stripe processes the payment
-//   3. Stripe redirects the browser to /success?unlock=full-event-pack
-//   4. The frontend reads the ?unlock param and sets localStorage
-//   5. The plan is unlocked locally — no server call needed
+// Requires environment variables:
+//   STRIPE_SECRET_KEY     — Stripe API key
+//   STRIPE_WEBHOOK_SECRET — signing secret from the webhook endpoint config
 //
-// FUTURE SECURE FLOW (replace the above with this):
-//   1. User clicks the Full Event Pack payment link
-//   2. Stripe processes the payment
-//   3. Stripe sends a POST to /api/stripe/webhook with a signed event
-//   4. This server verifies the Stripe signature using STRIPE_WEBHOOK_SECRET
-//      (via stripe.webhooks.constructEvent — requires the raw request body,
-//      NOT the JSON-parsed body; express.raw() must be applied BEFORE express.json())
-//   5. Server confirms event.type === "checkout.session.completed" and that
-//      the line item matches the Full Event Pack product
-//   6. Server creates a short-lived signed token (e.g. JWT) or stores a
-//      verified paid order record in the database
-//   7. Stripe redirects the browser to /success?session_id=<session_id>
-//   8. The frontend exchanges the session_id for the signed token via a
-//      GET /api/stripe/verify?session_id=... endpoint
-//   9. The frontend uses the verified token to unlock the Full Event Pack
-//      instead of trusting the ?unlock param directly
+// If they are not set, the route logs a warning and acknowledges
+// events without recording anything (never inserts unverified data).
 //
-// TO ACTIVATE:
-//   - Install the Stripe Node SDK: pnpm add stripe
-//   - Set STRIPE_SECRET_KEY and STRIPE_WEBHOOK_SECRET in your environment
-//   - Add express.raw() middleware ONLY for this route (before express.json())
-//   - Replace the placeholder body below with real signature verification
+// NOTE: this route needs the RAW request body for signature
+// verification. app.ts applies express.raw() to this path before
+// express.json().
 // ============================================================
 
 import { Router, type IRouter } from "express";
+import Stripe from "stripe";
+import { db, purchases } from "@workspace/db";
+import { eq } from "drizzle-orm";
 
 const router: IRouter = Router();
 
-// POST /api/stripe/webhook
-// Placeholder — returns a safe acknowledgement without verifying anything.
-// Stripe requires a 2xx response within 30 seconds or it will retry.
-router.post("/stripe/webhook", (req, res) => {
-  req.log.info({ mode: "placeholder" }, "Stripe webhook received (placeholder — no verification)");
+const stripeSecretKey = process.env.STRIPE_SECRET_KEY;
+const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
+const stripe = stripeSecretKey ? new Stripe(stripeSecretKey) : null;
 
-  // TODO: Replace with real Stripe signature verification before going live.
-  // See the FUTURE SECURE FLOW comments above.
-  res.json({ received: true, mode: "placeholder" });
+// POST /api/stripe/webhook
+router.post("/stripe/webhook", async (req, res) => {
+  if (!stripe || !webhookSecret) {
+    req.log.warn(
+      "Stripe webhook received but STRIPE_SECRET_KEY / STRIPE_WEBHOOK_SECRET are not configured — event ignored",
+    );
+    return res.json({ received: true, mode: "unconfigured" });
+  }
+
+  const signature = req.headers["stripe-signature"];
+  if (typeof signature !== "string") {
+    return res.status(400).json({ error: "Missing stripe-signature header" });
+  }
+
+  let event: Stripe.Event;
+  try {
+    event = stripe.webhooks.constructEvent(req.body, signature, webhookSecret);
+  } catch (err) {
+    req.log.warn({ err }, "Stripe webhook signature verification failed");
+    return res.status(400).json({ error: "Invalid signature" });
+  }
+
+  try {
+    if (event.type === "checkout.session.completed") {
+      const session = event.data.object as Stripe.Checkout.Session;
+      const sessionId = session.id;
+      const email = session.customer_details?.email ?? session.customer_email ?? null;
+
+      const existing = await db
+        .select({ id: purchases.id, customerEmail: purchases.customerEmail })
+        .from(purchases)
+        .where(eq(purchases.stripeSessionId, sessionId))
+        .limit(1);
+
+      if (existing.length > 0) {
+        if (!existing[0]!.customerEmail && email) {
+          await db
+            .update(purchases)
+            .set({ customerEmail: email })
+            .where(eq(purchases.id, existing[0]!.id));
+        }
+        req.log.info({ sessionId }, "Stripe webhook: purchase already recorded");
+      } else {
+        await db.insert(purchases).values({
+          stripeSessionId: sessionId,
+          customerEmail: email,
+        });
+        req.log.info({ sessionId }, "Stripe webhook: purchase recorded");
+      }
+    }
+    return res.json({ received: true });
+  } catch (err) {
+    req.log.error({ err }, "Stripe webhook processing failed");
+    // Non-2xx makes Stripe retry, which is what we want for DB errors.
+    return res.status(500).json({ error: "Webhook processing failed" });
+  }
 });
 
 export default router;

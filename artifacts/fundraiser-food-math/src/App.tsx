@@ -9,6 +9,7 @@ import CustomizeMenuPage from "@/pages/CustomizeMenuPage";
 import ResultsPage from "@/pages/ResultsPage";
 import PrintPage from "@/pages/PrintPage";
 import SuccessPage from "@/pages/SuccessPage";
+import PlanPage from "@/pages/PlanPage";
 import IdeaFinderPage from "@/pages/IdeaFinderPage";
 import NotFound from "@/pages/not-found";
 import type { FundraiserPlan, PlannerFormData } from "@/lib/types";
@@ -118,6 +119,9 @@ function AppRoutes() {
       </Route>
       <Route path="/print" component={PrintPage} />
       <Route path="/success" component={SuccessPage} />
+      <Route path="/plan/:planId">
+        {(params) => <PlanPage planId={params.planId} />}
+      </Route>
       <Route path="/idea-finder" component={IdeaFinderPage} />
       <Route component={NotFound} />
     </Switch>

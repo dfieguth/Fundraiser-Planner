@@ -19,6 +19,26 @@ import { ACCESS_CODES } from "@/config/paymentLinks";
 export const UNLOCK_KEY = "ffm_unlocked";
 export const PLAN_SAVE_KEY = "ffm_plan_saved";
 
+// Durable plan id returned by the server after a verified purchase.
+// The permanent link is /plan/<planId> and works on any device.
+export const PLAN_ID_KEY = "ffm_plan_id";
+
+export function savePlanId(planId: string): void {
+  try {
+    localStorage.setItem(PLAN_ID_KEY, planId);
+  } catch {
+    // ignore
+  }
+}
+
+export function getPlanId(): string | null {
+  try {
+    return localStorage.getItem(PLAN_ID_KEY);
+  } catch {
+    return null;
+  }
+}
+
 // Expiration timestamp (ms since epoch) for access-code-based unlocks.
 // Only written when unlocking via an access code — Stripe unlocks do not expire.
 export const UNLOCK_EXPIRES_KEY = "ffm_unlock_expires";

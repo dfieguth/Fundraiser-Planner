@@ -1,41 +1,93 @@
 import { useEffect, useState } from "react";
-import { CheckCircle2, AlertCircle, ArrowLeft, FileText } from "lucide-react";
-import { setUnlocked, getStoredPlan, FULL_PACK_UNLOCK_VALUE } from "@/lib/unlock";
+import { CheckCircle2, AlertCircle, ArrowLeft, FileText, Link2, Copy } from "lucide-react";
+import { setUnlocked, getStoredPlan, savePlanId, FULL_PACK_UNLOCK_VALUE } from "@/lib/unlock";
 import { buildSupportMailto } from "@/config/paymentLinks";
 
 // ── /success route ────────────────────────────────────────────
-// Stripe or Gumroad redirects here after payment.
-// Configure your payment link's success/redirect URL to:
-//   [your-app-url]/success?unlock=full-event-pack
+// Stripe redirects here after payment. Configure the payment link's
+// success/redirect URL to:
+//   [your-app-url]/success?unlock=full-event-pack&session_id={CHECKOUT_SESSION_ID}
 //
-// This page reads the ?unlock= param, grants access, and sends
-// the user back to their results. No login, no backend call.
+// This page grants local access AND records the purchase in the
+// database (keyed by the Stripe session id) so the unlock is durable.
+// The server returns a permanent plan id; the customer gets a
+// /plan/<id> link that works on any browser or device.
 
 type PageState = "unlocked" | "no-plan-after-unlock" | "unconfirmed" | "loading";
 
 export default function SuccessPage() {
   const [state, setState] = useState<PageState>("loading");
+  const [permanentLink, setPermanentLink] = useState<string | null>(null);
+  const [linkCopied, setLinkCopied] = useState(false);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const unlockParam = params.get("unlock");
+    const sessionId = params.get("session_id");
 
     if (unlockParam === FULL_PACK_UNLOCK_VALUE) {
-      // Valid unlock param — grant access and restore saved plan.
+      // Valid unlock param — grant local access and restore saved plan.
       setUnlocked();
       const saved = getStoredPlan();
-      if (saved) {
-        setState("unlocked");
-      } else {
-        // Payment succeeded but no plan was saved before the redirect.
-        // The unlock is still set — they'll get full access when they rebuild.
-        setState("no-plan-after-unlock");
-      }
+      setState(saved ? "unlocked" : "no-plan-after-unlock");
+
+      // Record the purchase in the database so the unlock survives
+      // browser data loss and device switches. Failure here is non-fatal:
+      // the local unlock still works, and the webhook records the payment.
+      fetch("/api/purchases", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          sessionId: sessionId || undefined,
+          planData: saved?.plan ?? undefined,
+          formData: saved?.formData ?? undefined,
+        }),
+      })
+        .then((res) => (res.ok ? res.json() : null))
+        .then((data) => {
+          if (data?.planId) {
+            savePlanId(data.planId);
+            setPermanentLink(`${window.location.origin}/plan/${data.planId}`);
+          }
+        })
+        .catch(() => {
+          // Non-fatal — see note above.
+        });
     } else {
       // No valid unlock param — do not grant access.
       setState("unconfirmed");
     }
   }, []);
+
+  const copyPermanentLink = () => {
+    if (!permanentLink) return;
+    navigator.clipboard?.writeText(permanentLink).then(() => {
+      setLinkCopied(true);
+      setTimeout(() => setLinkCopied(false), 2000);
+    }).catch(() => {});
+  };
+
+  const permanentLinkBlock = permanentLink ? (
+    <div className="success-permanent-link" data-testid="permanent-link-block">
+      <p className="success-note" style={{ fontWeight: 600 }}>
+        <Link2 className="w-4 h-4 inline mr-1" />
+        Your permanent plan link — save this. It works on any device, any time:
+      </p>
+      <p className="success-note" style={{ wordBreak: "break-all" }}>
+        <a href={permanentLink} data-testid="link-permanent-plan">{permanentLink}</a>
+        <button
+          type="button"
+          onClick={copyPermanentLink}
+          className="btn-secondary"
+          style={{ marginLeft: 8, padding: "2px 8px" }}
+          data-testid="button-copy-permanent-link"
+        >
+          <Copy className="w-3 h-3 inline mr-1" />
+          {linkCopied ? "Copied!" : "Copy"}
+        </button>
+      </p>
+    </div>
+  ) : null;
 
   if (state === "loading") {
     return <div className="success-page" data-testid="success-page-loading" />;
@@ -58,8 +110,9 @@ export default function SuccessPage() {
               Return to My Plan
             </a>
           </div>
+          {permanentLinkBlock}
           <p className="success-note">
-            Your access is saved to this browser. Clear your browser data to reset.
+            Your access is also saved to this browser for convenience.
           </p>
         </div>
       </div>
@@ -87,8 +140,9 @@ export default function SuccessPage() {
               <FileText className="w-4 h-4 mr-2" /> Rebuild My Plan
             </a>
           </div>
+          {permanentLinkBlock}
           <p className="success-note">
-            Your access is saved to this browser. Clear your browser data to reset.
+            Your access is also saved to this browser for convenience.
           </p>
           <p className="success-note">
             If you have trouble,{" "}
