@@ -296,7 +296,7 @@ export default function PlannerPage({ onPlanReady }: PlannerPageProps) {
   const priceLabel = orgType === "Church" || orgType === "Nonprofit"
     ? "Suggested Donation per Plate ($) *"
     : orgType === "School" || orgType === "Sports Team"
-      ? "Ticket Price / Plate Price ($) *"
+      ? "Suggested Donation / Ticket Price ($) *"
       : "Price per Plate ($) *";
 
   const onSubmit = (data: PlannerFormData) => {

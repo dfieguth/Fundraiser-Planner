@@ -565,7 +565,7 @@ function buildVolunteerBriefing(
 
   return `Good ${timeOfDay}, ${form.eventName} team!
 
-Thank you for being here. Today we're raising money for ${org} by serving ${mealName} to ${form.attendance} guests.${form.mealPrice > 0 ? ` Our suggested donation is ${fmt$(form.mealPrice)} per person — every plate helps.` : ""}
+Thank you for being here. Today we're raising money for ${org} by serving ${mealName} to ${form.attendance} guests.${form.mealPrice > 0 ? ` Our suggested donation is ${fmt$(form.mealPrice)} per person (cash or card) — every plate helps.` : ""}
 
 YOUR ROLE TODAY
 ${rolesText}
@@ -797,7 +797,7 @@ function buildCommsPack(
   const rolesText = volunteerPlan.map(r => `  • ${r.role} (${r.type}) — ${r.count} needed`).join("\n");
 
   const announcementDonationLine = form.mealPrice > 0
-    ? `  Suggested Donation: ${fmt$(form.mealPrice)} per person`
+    ? `  Suggested Donation: ${fmt$(form.mealPrice)} per person (cash or card)`
     : "";
   const announcement = `${form.eventName}
 A Fundraiser for ${org}
