@@ -8,8 +8,8 @@ const DEFAULT_MEAL: MealType = "hotdogs";
  * plan.
  */
 export function toggleMealSelection(current: MealType[], mealType: MealType): MealType[] {
-  if (mealType === "custom") {
-    return ["custom"];
+  if (mealType === "walkingTacos" || mealType === "custom") {
+    return [mealType];
   }
 
   if (current.length === 1 && current[0] === DEFAULT_MEAL && mealType !== DEFAULT_MEAL) {

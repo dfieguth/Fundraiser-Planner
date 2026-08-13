@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { calculatePlan } from "./calculator";
 import { selectSingleMeal, toggleMealSelection } from "./mealSelection";
+import { SAMPLE_TEMPLATES } from "./sampleTemplates";
 import type { MealType, PlannerFormData } from "./types";
 
 const BASE_FORM: PlannerFormData = {
@@ -75,6 +76,20 @@ function quantitySnapshot(plan: ReturnType<typeof calculatePlan>) {
   assert.equal(plan.summary.mealType, "Custom Meal");
   assert.equal(plan.multiMealSections, undefined);
   assert.ok(!itemNames(plan).some((name) => /hot dog|bun|canned chili/i.test(name)));
+}
+
+for (const template of SAMPLE_TEMPLATES) {
+  const sampleMeal = template.formData.mealType as MealType;
+  assert.deepEqual(
+    toggleMealSelection([sampleMeal], "walkingTacos"),
+    ["walkingTacos"],
+    `${template.displayName} did not replace its sample meal with Walking Tacos`,
+  );
+  assert.deepEqual(
+    toggleMealSelection([sampleMeal], "custom"),
+    ["custom"],
+    `${template.displayName} did not replace its sample meal with Custom Meal`,
+  );
 }
 
 const SUPPORTED_MEALS: Array<{ mealType: MealType; label: string }> = [
