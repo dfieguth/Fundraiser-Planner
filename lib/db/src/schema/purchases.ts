@@ -11,6 +11,7 @@ export const purchases = pgTable("purchases", {
   customerEmail: text("customer_email"),
   planData: jsonb("plan_data"),
   formData: jsonb("form_data"),
+  confirmationEmailSentAt: timestamp("confirmation_email_sent_at", { withTimezone: true }),
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
 });
 

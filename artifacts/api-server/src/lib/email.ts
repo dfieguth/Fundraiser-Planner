@@ -1,6 +1,5 @@
-import { ReplitConnectors } from "@replit/connectors-sdk";
+import nodemailer from "nodemailer";
 
-const RESEND_EMAILS_PATH = "/emails";
 const appUrl = (process.env.APP_URL ?? "https://fundraiserplanner.online").replace(/\/$/, "");
 
 type SendPlanConfirmationInput = {
@@ -14,45 +13,48 @@ export async function sendPlanConfirmationEmail({
   planId,
   stripeSessionId,
 }: SendPlanConfirmationInput): Promise<void> {
-  const resendFromEmail = process.env.RESEND_FROM_EMAIL;
-  if (!resendFromEmail) {
-    throw new Error("RESEND_FROM_EMAIL is not configured for Fundraiser Food Math");
+  const smtpUser = process.env.SMTP_USER;
+  const smtpAppPassword = process.env.SMTP_APP_PASSWORD;
+  if (!smtpUser || !smtpAppPassword) {
+    throw new Error("SMTP_USER and SMTP_APP_PASSWORD are not configured for Fundraiser Food Math");
   }
 
   const planUrl = `${appUrl}/plan/${planId}`;
-  const connectors = new ReplitConnectors();
-  const response = await connectors.proxy("resend", RESEND_EMAILS_PATH, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "Idempotency-Key": `fundraiser-plan-${stripeSessionId}`,
+  const text = [
+    "Thank you for using Fundraiser Food Math.",
+    "",
+    "Your permanent plan link is ready:",
+    planUrl,
+    "",
+    "Bookmark or save this link, it is the only way to return to your plan later.",
+    "",
+    "We hope your fundraiser goes smoothly!",
+  ].join("\n");
+  const html = [
+    "<p>Thank you for using Fundraiser Food Math.</p>",
+    "<p>Your permanent plan link is ready:</p>",
+    `<p><a href="${planUrl}">Open my fundraiser plan</a></p>`,
+    "<p><strong>Bookmark or save this link, it is the only way to return to your plan later.</strong></p>",
+    "<p>We hope your fundraiser goes smoothly!</p>",
+  ].join("");
+
+  const transporter = nodemailer.createTransport({
+    service: "gmail",
+    auth: {
+      user: smtpUser,
+      pass: smtpAppPassword,
     },
-    body: JSON.stringify({
-      from: resendFromEmail,
-      to: [customerEmail],
-      subject: "Your Fundraiser Food Math plan is ready",
-      text: [
-        "Thank you for using Fundraiser Food Math.",
-        "",
-        "Your permanent plan link is ready:",
-        planUrl,
-        "",
-        "Bookmark or save this link, it is the only way to return to your plan later.",
-        "",
-        "We hope your fundraiser goes smoothly!",
-      ].join("\n"),
-      html: [
-        "<p>Thank you for using Fundraiser Food Math.</p>",
-        "<p>Your permanent plan link is ready:</p>",
-        `<p><a href="${planUrl}">Open my fundraiser plan</a></p>`,
-        "<p><strong>Bookmark or save this link, it is the only way to return to your plan later.</strong></p>",
-        "<p>We hope your fundraiser goes smoothly!</p>",
-      ].join(""),
-    }),
   });
 
-  if (!response.ok) {
-    const responseBody = await response.text();
-    throw new Error(`Resend request failed with status ${response.status}: ${responseBody.slice(0, 300)}`);
-  }
+  await transporter.sendMail({
+    from: {
+      name: "Fundraiser Food Math",
+      address: smtpUser,
+    },
+    to: customerEmail,
+    subject: "Your Fundraiser Food Math plan is ready",
+    text,
+    html,
+    messageId: `<fundraiser-plan-${stripeSessionId}@fundraiserplanner.online>`,
+  });
 }
