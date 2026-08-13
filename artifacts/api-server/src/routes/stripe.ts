@@ -60,19 +60,12 @@ router.post("/stripe/webhook", async (req, res) => {
       }
 
       if (email) {
-        const emailResult = await sendPlanConfirmationEmail({
+        await sendPlanConfirmationEmail({
           customerEmail: email,
           planId,
           stripeSessionId: sessionId,
         });
-        if (emailResult.sent) {
-          req.log.info({ sessionId, planId }, "Plan confirmation email sent");
-        } else {
-          req.log.warn(
-            { sessionId, planId },
-            "Plan confirmation email skipped because Resend is not configured",
-          );
-        }
+        req.log.info({ sessionId, planId }, "Plan confirmation email sent");
       } else {
         req.log.warn({ sessionId, planId }, "Plan confirmation email skipped because no customer email was provided");
       }

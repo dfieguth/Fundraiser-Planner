@@ -1,7 +1,9 @@
-const RESEND_API_URL = "https://api.resend.com/emails";
+import { ReplitConnectors } from "@replit/connectors-sdk";
 
-const resendApiKey = process.env.RESEND_API_KEY;
-const resendFromEmail = process.env.RESEND_FROM_EMAIL;
+const RESEND_EMAILS_PATH = "/emails";
+
+const resendFromEmail =
+  process.env.RESEND_FROM_EMAIL ?? "Fundraiser Food Math <plans@finlitapp.site>";
 const appUrl = (process.env.APP_URL ?? "https://fundraiser-planner.replit.app").replace(/\/$/, "");
 
 type SendPlanConfirmationInput = {
@@ -10,24 +12,16 @@ type SendPlanConfirmationInput = {
   stripeSessionId: string;
 };
 
-export type SendPlanConfirmationResult =
-  | { sent: true }
-  | { sent: false; reason: "unconfigured" };
-
 export async function sendPlanConfirmationEmail({
   customerEmail,
   planId,
   stripeSessionId,
-}: SendPlanConfirmationInput): Promise<SendPlanConfirmationResult> {
-  if (!resendApiKey || !resendFromEmail) {
-    return { sent: false, reason: "unconfigured" };
-  }
-
+}: SendPlanConfirmationInput): Promise<void> {
   const planUrl = `${appUrl}/plan/${planId}`;
-  const response = await fetch(RESEND_API_URL, {
+  const connectors = new ReplitConnectors();
+  const response = await connectors.proxy("resend", RESEND_EMAILS_PATH, {
     method: "POST",
     headers: {
-      Authorization: `Bearer ${resendApiKey}`,
       "Content-Type": "application/json",
       "Idempotency-Key": `fundraiser-plan-${stripeSessionId}`,
     },
@@ -41,7 +35,7 @@ export async function sendPlanConfirmationEmail({
         "Your permanent plan link is ready:",
         planUrl,
         "",
-        "Bookmark or save this link. It is the only way to return to your plan later.",
+        "Bookmark or save this link, it is the only way to return to your plan later.",
         "",
         "We hope your fundraiser goes smoothly!",
       ].join("\n"),
@@ -49,7 +43,7 @@ export async function sendPlanConfirmationEmail({
         "<p>Thank you for using Fundraiser Food Math.</p>",
         "<p>Your permanent plan link is ready:</p>",
         `<p><a href="${planUrl}">Open my fundraiser plan</a></p>`,
-        "<p><strong>Bookmark or save this link. It is the only way to return to your plan later.</strong></p>",
+        "<p><strong>Bookmark or save this link, it is the only way to return to your plan later.</strong></p>",
         "<p>We hope your fundraiser goes smoothly!</p>",
       ].join(""),
     }),
@@ -59,6 +53,4 @@ export async function sendPlanConfirmationEmail({
     const responseBody = await response.text();
     throw new Error(`Resend request failed with status ${response.status}: ${responseBody.slice(0, 300)}`);
   }
-
-  return { sent: true };
 }
