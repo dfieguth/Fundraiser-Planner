@@ -1,9 +1,6 @@
 import { ReplitConnectors } from "@replit/connectors-sdk";
 
 const RESEND_EMAILS_PATH = "/emails";
-
-const resendFromEmail =
-  process.env.RESEND_FROM_EMAIL ?? "Fundraiser Food Math <plans@finlitapp.site>";
 const appUrl = (process.env.APP_URL ?? "https://fundraiser-planner.replit.app").replace(/\/$/, "");
 
 type SendPlanConfirmationInput = {
@@ -17,6 +14,11 @@ export async function sendPlanConfirmationEmail({
   planId,
   stripeSessionId,
 }: SendPlanConfirmationInput): Promise<void> {
+  const resendFromEmail = process.env.RESEND_FROM_EMAIL;
+  if (!resendFromEmail) {
+    throw new Error("RESEND_FROM_EMAIL is not configured for Fundraiser Food Math");
+  }
+
   const planUrl = `${appUrl}/plan/${planId}`;
   const connectors = new ReplitConnectors();
   const response = await connectors.proxy("resend", RESEND_EMAILS_PATH, {
