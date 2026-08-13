@@ -221,6 +221,7 @@ export default function CustomizeMenuPage({ form, onConfirm, onBack }: Customize
   }, [items]);
 
   const mealLabel = MEAL_ASSUMPTIONS[form.mealType]?.displayName ?? form.mealType;
+  const combo = isComboMeal(form.mealType) ? (COMBO_DEFINITIONS[form.mealType] ?? null) : null;
   const checkedCount = Object.values(checked).filter(Boolean).length;
 
   return (
