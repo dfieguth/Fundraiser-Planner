@@ -52,7 +52,7 @@ A production-ready food fundraiser planning web app for churches, schools, sport
 ## Gotchas
 
 - Combo types must be in both `MealType` (types.ts), `MEAL_ASSUMPTIONS` (stubs for type safety), and `COMBO_DEFINITIONS` (real ingredient logic)
-- `buildCustomMenuIngredients()` in calculator.ts uses `adultServings=1` from customAssumptions — perServing values are calibrated per-person
+- `buildCustomMenuIngredients()` in calculator.ts uses the universal `perGuestServings=1` custom assumption — perServing values are calibrated per-person
 - `buildVolunteerBriefing`, `buildSetupLayout`, `buildLeftoverPlan` fall back to `plans["custom"]` automatically for unknown/combo types — no extra handling needed
 - PlannerPage step flow: step 1 → step 2 (custom only) → step 3 → step 4; non-custom skips step 2 (1→3→4 internally, displayed as 1,2,3)
 - `computeIngredientResults()` MUST stay at module scope (not nested inside `calculatePlan`) — nesting caused a Vite ES module closure bug where combo branches returned empty arrays

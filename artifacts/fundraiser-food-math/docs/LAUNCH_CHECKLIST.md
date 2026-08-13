@@ -12,4 +12,7 @@
 - [ ] Test Stripe checkout
 - [ ] Test print page
 - [ ] Test mobile
+- [ ] Confirm the active planner has no adult/kid percentage inputs
+- [ ] Confirm Results and Print show guests and universal servings only — no Attendance Split
+- [ ] Run the 100-guest supported-meal matrix and verify planner servings match food/shopping quantities
 - [ ] Send to first testers

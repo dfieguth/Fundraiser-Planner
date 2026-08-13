@@ -5,6 +5,7 @@ import { z } from "zod";
 import type { PlannerFormData, MealType, OrgType, StorePreference } from "@/lib/types";
 import { MEAL_ASSUMPTIONS } from "@/lib/mealAssumptions";
 import { toggleMealSelection as resolveMealSelection, selectSingleMeal } from "@/lib/mealSelection";
+import { getPreparedServings } from "@/lib/servingRules";
 import { SAMPLE_TEMPLATES } from "@/lib/sampleTemplates";
 import { Link } from "wouter";
 import { ArrowLeft, ArrowRight, Check, X } from "lucide-react";
@@ -15,7 +16,6 @@ import { Textarea } from "@/components/ui/textarea";
 
 const ENABLE_TIERED_PRICING = false;
 const SHOW_STORE_SELECTOR = false;
-const ENABLE_AUDIENCE_SPLIT = false;
 
 // ── Schema ───────────────────────────────────────────────────
 const schema = z.object({
@@ -28,8 +28,6 @@ const schema = z.object({
   ]),
   attendance: z.coerce.number().min(10, "Minimum 10 guests").max(5000, "Max 5000"),
   mealPrice: z.coerce.number().min(0.5, "Price must be at least $0.50"),
-  adultPercent: z.coerce.number().min(0).max(100),
-  kidPercent: z.coerce.number().min(0).max(100),
   storePreference: z.enum(["Costco", "Sam's Club", "Walmart", "Smart & Final", "Aldi", "Local Grocery", "Mixed"]),
   prepStartTime: z.string().min(1, "Prep start time is required"),
   serveStartTime: z.string().min(1, "Serve start time is required"),
@@ -131,8 +129,6 @@ const DEFAULT_VALUES: PlannerFormData = {
   mealType: "hotdogs",
   attendance: 100,
   mealPrice: 10,
-  adultPercent: 70,
-  kidPercent: 30,
   storePreference: "Mixed",
   prepStartTime: "10:00",
   serveStartTime: "12:00",
@@ -174,20 +170,6 @@ function toggleValue(arr: string[], value: string): string[] {
   return arr.includes(value) ? arr.filter((v) => v !== value) : [...arr, value];
 }
 
-// ── Auto-calculate servings from guest count ──────────────────
-// Uses the meal's adult/kid serving ratios + waste buffer.
-// Result is the number of servings to prepare, not the guest count.
-function autoCalcServings(guests: number, mealKey: string, adultPct: number): number {
-  const assumption = MEAL_ASSUMPTIONS[mealKey as MealType];
-  if (!assumption || guests <= 0) return Math.max(1, guests);
-  const adultFrac = Math.max(0, Math.min(1, adultPct / 100));
-  const kidFrac = 1 - adultFrac;
-  return Math.ceil(
-    (guests * adultFrac * assumption.adultServings + guests * kidFrac * assumption.kidServings)
-    * assumption.wasteBuffer
-  );
-}
-
 export default function PlannerPage({ onPlanReady }: PlannerPageProps) {
   // Internal step: 1=Event Info, 2=Tell Us About Your Menu (custom only), 3=Timing, 4=Review
   const [step, setStep] = useState(1);
@@ -198,8 +180,6 @@ export default function PlannerPage({ onPlanReady }: PlannerPageProps) {
     defaultValues: {
       ...DEFAULT_VALUES,
       pricingModel: "flat",
-      adultPercent: 60,
-      kidPercent: 40,
     },
     mode: "onChange",
   });
@@ -208,9 +188,6 @@ export default function PlannerPage({ onPlanReady }: PlannerPageProps) {
 
   // ── Multi-meal selection state ────────────────────────────────
   const [selectedMeals, setSelectedMeals] = useState<MealType[]>([DEFAULT_VALUES.mealType]);
-  const [mealServings, setMealServings] = useState<Record<string, number>>({
-    [DEFAULT_VALUES.mealType]: autoCalcServings(DEFAULT_VALUES.attendance, DEFAULT_VALUES.mealType, DEFAULT_VALUES.adultPercent),
-  });
   const [totalExpectedGuests, setTotalExpectedGuests] = useState<number>(DEFAULT_VALUES.attendance);
 
   // Sync first selected meal → form.mealType (for schema validation + downstream logic)
@@ -223,25 +200,10 @@ export default function PlannerPage({ onPlanReady }: PlannerPageProps) {
   const toggleMealSelection = (mealType: MealType) => {
     const nextSelectedMeals = resolveMealSelection(selectedMeals, mealType);
     setSelectedMeals(nextSelectedMeals);
-    setMealServings((prev) => ({
-      ...(nextSelectedMeals.length === 1 && nextSelectedMeals[0] === mealType
-        ? {}
-        : prev),
-      [mealType]: prev[mealType] !== undefined
-        ? prev[mealType]
-        : autoCalcServings(totalExpectedGuests, mealType, form.getValues("adultPercent") ?? DEFAULT_VALUES.adultPercent),
-    }));
   };
 
   const selectSingleMealType = (mealType: MealType) => {
     setSelectedMeals(selectSingleMeal(mealType));
-    setMealServings({
-      [mealType]: autoCalcServings(
-        totalExpectedGuests,
-        mealType,
-        form.getValues("adultPercent") ?? DEFAULT_VALUES.adultPercent,
-      ),
-    });
   };
 
   // On mount: check sessionStorage for Idea Finder pre-fill
@@ -284,7 +246,6 @@ export default function PlannerPage({ onPlanReady }: PlannerPageProps) {
     const att = template.formData.attendance;
     setSelectedMeals([mealT]);
     setTotalExpectedGuests(att);
-    setMealServings({ [mealT]: autoCalcServings(att, mealT, template.formData.adultPercent ?? DEFAULT_VALUES.adultPercent) });
     const formEl = document.querySelector("[data-testid='planner-form']");
     if (formEl) formEl.scrollIntoView({ behavior: "smooth", block: "start" });
   };
@@ -294,7 +255,6 @@ export default function PlannerPage({ onPlanReady }: PlannerPageProps) {
     setActiveTemplateId(null);
     setSelectedMeals([DEFAULT_VALUES.mealType]);
     setTotalExpectedGuests(DEFAULT_VALUES.attendance);
-    setMealServings({ [DEFAULT_VALUES.mealType]: autoCalcServings(DEFAULT_VALUES.attendance, DEFAULT_VALUES.mealType, DEFAULT_VALUES.adultPercent) });
   };
 
   const pricingModel = form.watch("pricingModel");
@@ -314,7 +274,6 @@ export default function PlannerPage({ onPlanReady }: PlannerPageProps) {
       mealType: primaryMeal,
       attendance: totalExpectedGuests,
       selectedMeals: selectedMeals.length >= 2 ? selectedMeals : undefined,
-      mealServings: selectedMeals.length >= 2 ? mealServings : undefined,
       totalExpectedGuests: selectedMeals.length >= 2 ? totalExpectedGuests : undefined,
     };
     onPlanReady(enriched);
@@ -327,8 +286,7 @@ export default function PlannerPage({ onPlanReady }: PlannerPageProps) {
       form.setValue("attendance", totalExpectedGuests);
       form.setValue("mealType", primaryMeal);
       const isValid = await form.trigger([
-        "eventName", "orgType", "mealType", "attendance", "mealPrice",
-        "adultPercent", "kidPercent", "notes",
+        "eventName", "orgType", "mealType", "attendance", "mealPrice", "notes",
       ]);
       if (!isValid) return;
       // Custom meal: go to menu details step; otherwise jump to timing
@@ -659,15 +617,6 @@ export default function PlannerPage({ onPlanReady }: PlannerPageProps) {
                     onChange={(e) => {
                       const guests = e.target.value === "" ? 0 : Math.max(0, parseInt(e.target.value) || 0);
                       setTotalExpectedGuests(guests);
-                      if (guests > 0) {
-                        setMealServings((prev) => {
-                          const next = { ...prev };
-                          selectedMeals.forEach((meal) => {
-                            next[meal] = autoCalcServings(guests, meal, form.getValues("adultPercent") ?? DEFAULT_VALUES.adultPercent);
-                          });
-                          return next;
-                        });
-                      }
                     }}
                     className="field-input"
                     style={{ width: 90 }}
@@ -676,13 +625,13 @@ export default function PlannerPage({ onPlanReady }: PlannerPageProps) {
                   <span style={{ fontSize: 13, color: "var(--color-text-muted)", whiteSpace: "nowrap" }}>guests</span>
                 </div>
 
-                {/* Secondary: per-meal servings (auto-calculated, editable) */}
+                 {/* Secondary: per-meal servings (calculated from the universal rule) */}
                 <div style={{ borderTop: "1px solid var(--color-border)", paddingTop: 12 }}>
                   <p style={{ fontSize: 13, fontWeight: 600, color: "var(--color-text)", marginBottom: 4 }}>
                     Servings to prepare
                   </p>
                   <p style={{ fontSize: 11, color: "var(--color-text-muted)", marginBottom: 10 }}>
-                    Auto-calculated from your guest count and meal ratios — edit if needed.
+                     Calculated as the ceiling of guests × this meal's per-guest serving factor.
                   </p>
 
                   {selectedMeals.map((meal, idx) => {
@@ -698,46 +647,18 @@ export default function PlannerPage({ onPlanReady }: PlannerPageProps) {
                             </span>
                           )}
                         </span>
-                        <input
-                          type="number"
-                          min={1}
-                          max={5000}
-                          value={mealServings[meal] ?? autoCalcServings(totalExpectedGuests, meal, form.getValues("adultPercent") ?? DEFAULT_VALUES.adultPercent)}
-                          onInput={(e) => {
-                            const t = e.currentTarget;
-                            const n = parseInt(t.value, 10);
-                            if (!isNaN(n) && t.value !== String(n)) t.value = String(n);
-                          }}
-                          onChange={(e) => setMealServings((prev) => ({
-                            ...prev,
-                            [meal]: e.target.value === "" ? 0 : Math.max(0, parseInt(e.target.value) || 0),
-                          }))}
-                          className="field-input"
-                          style={{ width: 90 }}
+                        <strong
+                          style={{ minWidth: 90, textAlign: "right", fontSize: 16, color: "var(--color-text)" }}
                           data-testid={`input-servings-${meal}`}
-                        />
+                        >
+                          {getPreparedServings(totalExpectedGuests, meal).toLocaleString()}
+                        </strong>
                         <span style={{ fontSize: 13, color: "var(--color-text-muted)", whiteSpace: "nowrap" }}>servings</span>
                       </div>
                     );
                   })}
                 </div>
 
-                {/* Coverage indicator — preserved for future use */}
-                {false && selectedMeals.length > 0 && (() => {
-                  const totalServings = selectedMeals.reduce((sum, m) => sum + (mealServings[m] ?? 0), 0);
-                  const coveragePct = totalExpectedGuests > 0 ? Math.round((totalServings / totalExpectedGuests) * 100) : 0;
-                  const color = coveragePct < 85 ? "#ca8a04" : coveragePct <= 100 ? "#16a34a" : coveragePct <= 130 ? "#2563eb" : "#ea580c";
-                  const bg = coveragePct < 85 ? "#fefce8" : coveragePct <= 100 ? "#f0fdf4" : coveragePct <= 130 ? "#eff6ff" : "#fff7ed";
-                  const coverageLabel = coveragePct < 85 ? "May run short — consider preparing more" : coveragePct <= 100 ? "Good coverage" : coveragePct <= 130 ? "Smart buffer" : "Significant overage — consider reducing";
-                  return (
-                    <div style={{ background: bg, border: `1px solid ${color}40`, borderRadius: 8, padding: "8px 12px", display: "flex", alignItems: "center", gap: 10, marginTop: 10 }}>
-                      <span style={{ fontSize: 14, fontWeight: 700, color, minWidth: 44 }}>{coveragePct}%</span>
-                      <span style={{ fontSize: 13, color: "var(--color-text)" }}>
-                        {totalServings.toLocaleString()} serving{totalServings !== 1 ? "s" : ""} planned for {totalExpectedGuests.toLocaleString()} guests — <strong>{coverageLabel}</strong>
-                      </span>
-                    </div>
-                  );
-                })()}
               </div>
 
               <FormField
@@ -831,49 +752,6 @@ export default function PlannerPage({ onPlanReady }: PlannerPageProps) {
                   </>
                 )}
               </div>
-
-              {ENABLE_AUDIENCE_SPLIT && (
-                <div className="field-row mb-2">
-                  <FormField
-                    control={form.control}
-                    name="adultPercent"
-                    render={({ field }) => (
-                      <FormItem className="field-group">
-                        <FormLabel className="field-label">% Adults</FormLabel>
-                        <FormControl>
-                          <Input
-                            className="field-input"
-                            type="number"
-                            min={0}
-                            max={100}
-                            {...field}
-                            data-testid="input-adult-percent"
-                          />
-                        </FormControl>
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="kidPercent"
-                    render={({ field }) => (
-                      <FormItem className="field-group">
-                        <FormLabel className="field-label">% Kids / Students</FormLabel>
-                        <FormControl>
-                          <Input
-                            className="field-input"
-                            type="number"
-                            min={0}
-                            max={100}
-                            {...field}
-                            data-testid="input-kid-percent"
-                          />
-                        </FormControl>
-                      </FormItem>
-                    )}
-                  />
-                </div>
-              )}
 
               {SHOW_STORE_SELECTOR && (
                 <FormField
@@ -1197,7 +1075,7 @@ export default function PlannerPage({ onPlanReady }: PlannerPageProps) {
                 {selectedMeals.map((meal) => (
                   <div key={meal} className="review-row">
                     <span>{selectedMeals.length > 1 ? `${ALL_MEAL_LABELS[meal] ?? meal} servings` : "Servings planned"}</span>
-                    <strong>{(mealServings[meal] ?? 100).toLocaleString()} servings</strong>
+                    <strong>{getPreparedServings(totalExpectedGuests, meal).toLocaleString()} servings</strong>
                   </div>
                 ))}
                 <div className="review-row">

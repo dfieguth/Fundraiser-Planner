@@ -4,9 +4,8 @@
 // ingredients, and serving sizes for each meal type.
 //
 // SERVING SIZE PHILOSOPHY (research-backed, updated):
-//   adultServings — portions per adult (includes 10% buffet premium baked in)
-//   kidServings   — portions per child (≈60% of adult for protein/starch * 1.1 buffet)
-//   wasteBuffer   — 1.05 standard (buffet premium already in servings)
+//   perGuestServings — universal portions to prepare per guest
+//   wasteBuffer      — retained as legacy metadata; not applied to quantities
 //   usageRate     — conservative fraction of guests who use optional items
 //   cookingOnly   — batch ingredient, not per-guest
 // ============================================================
@@ -14,8 +13,7 @@
 export interface MealAssumption {
   label: string;
   displayName: string;
-  adultServings: number;
-  kidServings: number;
+  perGuestServings: number;
   wasteBuffer: number;
   cookingComplexity: "low" | "medium" | "high";
   ingredients: IngredientDef[];
@@ -54,14 +52,12 @@ export interface SupplyDef {
 
 // ============================================================
 // HOT DOGS
-// Serving: 1.5 per adult, 1.0 per child (research-verified fundraiser standard)
-// 10% buffet premium baked into adultServings/kidServings.
+// Serving: 1.15 per guest with the fundraiser premium included.
 // ============================================================
 export const hotDogAssumptions: MealAssumption = {
   label: "hotdogs",
   displayName: "Hot Dogs",
-  adultServings: 1.265, // 1.15 × 1.1 buffet premium
-  kidServings: 1.10,    // 1.0 × 1.1 buffet premium
+  perGuestServings: 1.265, // 1.15 × 1.1 buffet premium
   wasteBuffer: 1.05,
   cookingComplexity: "low",
   ingredients: [
@@ -168,14 +164,13 @@ export const hotDogAssumptions: MealAssumption = {
 
 // ============================================================
 // BURGERS
-// Serving: 1 patty per adult, 0.75 per child (burgers are filling)
+// Serving: 1 patty per guest with the fundraiser premium included.
 // 10% buffet premium baked in. wasteBuffer reduced accordingly.
 // ============================================================
 export const burgerAssumptions: MealAssumption = {
   label: "burgers",
   displayName: "Burgers",
-  adultServings: 1.10,  // 1.0 × 1.1 buffet premium
-  kidServings: 0.83,    // 0.75 × 1.1 buffet premium
+  perGuestServings: 1.10,  // 1.0 × 1.1 buffet premium
   wasteBuffer: 1.05,
   cookingComplexity: "medium",
   ingredients: [
@@ -304,8 +299,7 @@ export const burgerAssumptions: MealAssumption = {
 export const bakedPotatoAssumptions: MealAssumption = {
   label: "bakedPotatoes",
   displayName: "Baked Potatoes",
-  adultServings: 1.10,  // 1.0 × 1.1 buffet premium
-  kidServings: 0.83,    // 0.75 × 1.1 buffet premium
+  perGuestServings: 1.10,  // 1.0 × 1.1 buffet premium
   wasteBuffer: 1.05,
   cookingComplexity: "medium",
   ingredients: [
@@ -454,8 +448,7 @@ export const bakedPotatoAssumptions: MealAssumption = {
 export const breakfastBurritoAssumptions: MealAssumption = {
   label: "breakfastBurritos",
   displayName: "Breakfast Burritos",
-  adultServings: 1.10,  // 1 burrito × 1.1 buffet premium
-  kidServings: 0.66,    // 0.6 adult × 1.1 buffet premium
+  perGuestServings: 1.10,  // 1 burrito × 1.1 buffet premium
   wasteBuffer: 1.05,
   cookingComplexity: "high",
   ingredients: [
@@ -576,8 +569,7 @@ export const breakfastBurritoAssumptions: MealAssumption = {
 export const tacoAssumptions: MealAssumption = {
   label: "tacos",
   displayName: "Tacos",
-  adultServings: 2.3,   // 2 × 1.15 per-person buffer
-  kidServings: 1.65,    // 1.5 × 1.1 buffet premium
+  perGuestServings: 2.3,   // 2 × 1.15 per-person buffer
   wasteBuffer: 1.05,
   cookingComplexity: "low",
   ingredients: [
@@ -739,8 +731,7 @@ export const tacoAssumptions: MealAssumption = {
 export const spaghettiAssumptions: MealAssumption = {
   label: "spaghetti",
   displayName: "Spaghetti Dinner",
-  adultServings: 1.1,   // 1 plate × 1.1 buffet premium
-  kidServings: 0.66,    // 0.6 adult × 1.1 buffet premium
+  perGuestServings: 1.1,   // 1 plate × 1.1 buffet premium
   wasteBuffer: 1.05,
   cookingComplexity: "high",
   ingredients: [
@@ -888,8 +879,7 @@ export const spaghettiAssumptions: MealAssumption = {
 export const pancakeAssumptions: MealAssumption = {
   label: "pancakes",
   displayName: "Pancake Breakfast",
-  adultServings: 3.45,  // 3 pancakes × 1.15 per-person buffer
-  kidServings: 2.2,     // 2 pancakes × 1.1 buffet premium
+  perGuestServings: 3.45,  // 3 pancakes × 1.15 per-person buffer
   wasteBuffer: 1.05,
   cookingComplexity: "medium",
   ingredients: [
@@ -1015,8 +1005,7 @@ export const pancakeAssumptions: MealAssumption = {
 export const walkingTacosAssumptions: MealAssumption = {
   label: "walkingTacos",
   displayName: "Walking Tacos",
-  adultServings: 1.0,   // 1 bag per person — format is self-limiting
-  kidServings: 1.0,     // kids love this format equally
+  perGuestServings: 1.0,   // 1 bag per person — format is self-limiting
   wasteBuffer: 1.05,
   cookingComplexity: "low",
   ingredients: [
@@ -1116,8 +1105,7 @@ export const walkingTacosAssumptions: MealAssumption = {
 export const chipsAssumption: MealAssumption = {
   label: "chips" as string,
   displayName: "Chips (side)",
-  adultServings: 1,
-  kidServings: 1,
+  perGuestServings: 1,
   wasteBuffer: 1.05,
   cookingComplexity: "low",
   ingredients: [
@@ -1142,8 +1130,7 @@ export const chipsAssumption: MealAssumption = {
 export const customAssumptions: MealAssumption = {
   label: "custom",
   displayName: "Custom Meal",
-  adultServings: 1,
-  kidServings: 0.75,
+  perGuestServings: 1,
   wasteBuffer: 1.15,
   cookingComplexity: "medium",
   ingredients: [],
@@ -1171,8 +1158,7 @@ const hotdogsForComboAssumptions: MealAssumption = {
   label: "hotdogs_combo",
   displayName: "Hot Dogs (combo portion)",
   // Solo: 1.65 per adult → combo 70%: ~1.15
-  adultServings: 1.15,
-  kidServings: 0.77,
+  perGuestServings: 1.15,
 };
 
 const bakedPotatoForComboAssumptions: MealAssumption = {
@@ -1180,8 +1166,7 @@ const bakedPotatoForComboAssumptions: MealAssumption = {
   label: "bakedPotatoes_combo",
   displayName: "Baked Potatoes (combo portion)",
   // Solo: 1.10 per adult → combo 70%: ~0.77
-  adultServings: 0.77,
-  kidServings: 0.58,
+  perGuestServings: 0.77,
   supplies: [],  // no duplicate plates/napkins — taken from hotdogs component
 };
 
@@ -1190,16 +1175,14 @@ const burgersForComboAssumptions: MealAssumption = {
   label: "burgers_combo",
   displayName: "Burgers (combo portion)",
   // Solo: 1.10 per adult → combo ~1.0 (burgers already conservative)
-  adultServings: 1.0,
-  kidServings: 0.75,
+  perGuestServings: 1.0,
 };
 
 const chipsForComboAssumptions: MealAssumption = {
   ...chipsAssumption,
   label: "chips_combo",
   displayName: "Chips (combo portion)",
-  adultServings: 1.0,
-  kidServings: 1.0,
+  perGuestServings: 1.0,
   supplies: [],
 };
 
@@ -1211,7 +1194,7 @@ const chipsForComboAssumptions: MealAssumption = {
 const comboHotdogsPotatoesStub: MealAssumption = {
   label: "combo_hotdogs_potatoes",
   displayName: "Hot Dogs + Baked Potatoes",
-  adultServings: 1, kidServings: 1, wasteBuffer: 1.05,
+  perGuestServings: 1, wasteBuffer: 1.05,
   cookingComplexity: "medium",
   ingredients: [], supplies: [],
   prepNotes: hotDogAssumptions.prepNotes + " | " + bakedPotatoAssumptions.prepNotes,
@@ -1221,7 +1204,7 @@ const comboHotdogsPotatoesStub: MealAssumption = {
 const comboBurgersChipsStub: MealAssumption = {
   label: "combo_burgers_chips",
   displayName: "Burgers + Chips",
-  adultServings: 1, kidServings: 1, wasteBuffer: 1.05,
+  perGuestServings: 1, wasteBuffer: 1.05,
   cookingComplexity: "medium",
   ingredients: [], supplies: [],
   prepNotes: burgerAssumptions.prepNotes + " | " + chipsAssumption.prepNotes,
@@ -1231,8 +1214,7 @@ const comboBurgersChipsStub: MealAssumption = {
 const comboPancakesSausageStub: MealAssumption = {
   label: "combo_pancakes_sausage",
   displayName: "Pancakes + Sausage",
-  adultServings: pancakeAssumptions.adultServings,
-  kidServings: pancakeAssumptions.kidServings,
+  perGuestServings: pancakeAssumptions.perGuestServings,
   wasteBuffer: pancakeAssumptions.wasteBuffer,
   cookingComplexity: "medium",
   ingredients: [], supplies: [],

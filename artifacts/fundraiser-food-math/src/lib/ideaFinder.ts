@@ -351,23 +351,14 @@ const DEFAULT_PRICES: Record<MealKey, number> = {
   breakfastBurritos: 8, tacos: 10, spaghetti: 13, pancakes: 8,
 };
 
-const AUDIENCE_PERCENTS: Record<AudienceType, { adultPercent: number; kidPercent: number }> = {
-  "mostly-kids":   { adultPercent: 30, kidPercent: 70 },
-  "mostly-adults": { adultPercent: 80, kidPercent: 20 },
-  "mixed":         { adultPercent: 60, kidPercent: 40 },
-};
-
 function buildDefaultFormData(meal: MealKey, quiz: QuizAnswers): PlannerFormData {
   const timings = TIME_DEFAULTS[quiz.timeOfEvent];
-  const { adultPercent, kidPercent } = AUDIENCE_PERCENTS[quiz.audience];
   return {
     eventName: "",
     orgType: quiz.orgType,
     mealType: meal,
     attendance: ATTENDANCE_MIDPOINTS[quiz.attendance],
     mealPrice: DEFAULT_PRICES[meal],
-    adultPercent,
-    kidPercent,
     storePreference: "Mixed",
     prepStartTime: timings.prep,
     serveStartTime: timings.serveStart,

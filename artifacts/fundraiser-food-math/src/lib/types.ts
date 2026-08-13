@@ -41,8 +41,9 @@ export interface PlannerFormData {
   mealType: MealType;
   attendance: number;
   mealPrice: number;
-  adultPercent: number;
-  kidPercent: number;
+  /** Legacy saved-plan fields. Retained for deserialization only; never shown or calculated. */
+  adultPercent?: number;
+  kidPercent?: number;
   storePreference: StorePreference;
   prepStartTime: string;
   serveStartTime: string;
@@ -82,7 +83,8 @@ export interface PlannerFormData {
   customItemPrices?: Record<string, number>;    // item name → custom price per package
   // ── Multi-meal mode ──────────────────────────────────────
   selectedMeals?: string[];                     // 1 or 2 selected meal types
-  mealServings?: Record<string, number>;        // independent serving count per meal
+  /** Legacy saved-plan field. Calculations always derive servings from guests and meal factors. */
+  mealServings?: Record<string, number>;
   totalExpectedGuests?: number;                 // total guests for coverage + supplies
 }
 
@@ -203,8 +205,7 @@ export interface FundraiserPlan {
     orgType: string;
     mealType: string;
     attendance: number;
-    adults: number;
-    kids: number;
+    servingsToPrepare: number;
     mealPrice: number;
     storePreference: string;
   };

@@ -56,7 +56,9 @@ Use care because it affects calculator, results, and print output.
 3. Try a sample template.
 4. Edit a template field after selecting it.
 5. Use the Idea Finder and build from a recommendation.
-6. Confirm results match the entered values.
+6. Confirm servings use the universal rule: ceiling of guests × the meal's per-guest serving factor.
+7. Confirm Results and Print show guests and servings, not an adult/kid attendance split.
+8. Confirm the displayed serving count matches the generated food quantities and shopping list.
 
 ## How to test the Stripe success redirect
 1. Use the Full Event Pack checkout flow.

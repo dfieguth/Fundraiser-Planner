@@ -44,8 +44,7 @@ export default function ResultsPage({ plan, formData, onReset }: ResultsPageProp
   const safeFormData = formData ?? null;
   const planSummary = safePlan?.summary;
   const safeAttendance = safeNumber(planSummary?.attendance, 0);
-  const safeAdults = safeNumber(planSummary?.adults, 0);
-  const safeKids = safeNumber(planSummary?.kids, 0);
+  const safeServings = safeNumber(planSummary?.servingsToPrepare, safeAttendance);
   const safeMealPrice = safeNumber(planSummary?.mealPrice, 0);
   const safeCostRange: [number, number] = [
     safeNumber(plan?.costRange?.[0], 0),
@@ -206,7 +205,7 @@ export default function ResultsPage({ plan, formData, onReset }: ResultsPageProp
       `Event:        ${planSummary?.eventName ?? "Unnamed Event"}`,
       `Organization: ${planSummary?.orgType ?? "—"}`,
       `Meal:         ${mealLabel}`,
-      `Attendance:   ${safeAttendance} guests (${safeAdults} adults, ${safeKids} kids)`,
+      `Attendance:   ${safeAttendance} guests`,
       `Suggested:    $${safeMealPrice} per person`,
       "",
       "FINANCIALS",
@@ -372,10 +371,10 @@ export default function ResultsPage({ plan, formData, onReset }: ResultsPageProp
             </div>
           </div>
         )}
-        <div className="summary-card" data-testid="card-attendance">
-          <div className="summary-label">Attendance Split</div>
-          <div className="summary-value">{safeAdults} adults</div>
-          <div className="summary-note">{safeKids} kids / students</div>
+        <div className="summary-card" data-testid="card-servings">
+          <div className="summary-label">Servings to Prepare</div>
+          <div className="summary-value">{safeServings.toLocaleString()}</div>
+          <div className="summary-note">Universal per-guest rule</div>
         </div>
       </div>
 

@@ -12,6 +12,7 @@ import type {
 } from "./types";
 import { MEAL_ASSUMPTIONS, isComboMeal, COMBO_DEFINITIONS, drinkAssumptions } from "./mealAssumptions";
 import type { MealAssumption, IngredientDef } from "./mealAssumptions";
+import { calculatePreparedServings, getPreparedServings } from "./servingRules";
 
 // ── Planning disclaimer ───────────────────────────────────────
 const DISCLAIMER =
@@ -927,7 +928,7 @@ function buildCustomMenuIngredients(form: PlannerFormData): IngredientDef[] {
   const drinks = form.customMenuDrinks ?? [];
   const desserts = form.customMenuDesserts ?? [];
 
-  // Sides — estimated per person (adultServings=1, so perServing ≈ per person)
+  // Sides — estimated per person; custom meals use one universal serving factor.
   if (sides.includes("rolls")) {
     ingredients.push({ name: "Dinner Rolls (bag of 12)", perServing: 0.1, unit: "bag", packageSize: 1, packageUnit: "bag of 12", costPerPackage: [3.00, 5.50], category: "carb" });
   }
@@ -984,7 +985,7 @@ function computeIngredientResults(
   shoppingItems: ShoppingItem[];
   cost: [number, number];
 } {
-  const servings = Math.ceil(guestCount * component.adultServings);
+  const servings = calculatePreparedServings(guestCount, component.perGuestServings);
   const activeIngredients = component.ingredients.filter(
     (ing) => !excludedItems?.includes(ing.name)
   );
@@ -1145,8 +1146,8 @@ function calculateMultiMealPlan(rawForm: PlannerFormData): FundraiserPlan {
 
   // Per-meal shopping sections (each uses its own independent serving count)
   const multiMealSections: MultiMealSection[] = (rawForm.selectedMeals ?? [primaryMeal]).map((mealType) => {
-    const servings = Math.max(1, rawForm.mealServings?.[mealType] ?? totalGuests);
     const mealAssumption = MEAL_ASSUMPTIONS[mealType as MealType] ?? MEAL_ASSUMPTIONS["custom"]!;
+    const servings = calculatePreparedServings(totalGuests, mealAssumption.perGuestServings);
     const r = computeIngredientResults(
       mealAssumption,
       servings,
@@ -1180,7 +1181,7 @@ function calculateMultiMealPlan(rawForm: PlannerFormData): FundraiserPlan {
 
 export function calculatePlan(rawForm: PlannerFormData): FundraiserPlan {
   // ── Multi-meal shortcut ──────────────────────────────────────
-  if (rawForm.selectedMeals && rawForm.selectedMeals.length >= 2 && rawForm.mealServings) {
+  if (rawForm.selectedMeals && rawForm.selectedMeals.length >= 2) {
     return calculateMultiMealPlan(rawForm);
   }
   // ── Input sanitization ──────────────────────────────────────
@@ -1190,8 +1191,6 @@ export function calculatePlan(rawForm: PlannerFormData): FundraiserPlan {
     ...rawForm,
     attendance: Math.max(1, Math.round(Number(rawForm.attendance) || 1)),
     mealPrice: Math.max(0, Number(rawForm.mealPrice) || 0),
-    adultPercent: Math.max(0, Math.min(100, Number(rawForm.adultPercent) || 0)),
-    kidPercent: Math.max(0, Math.min(100, Number(rawForm.kidPercent) || 0)),
     adultVolunteers: Math.max(0, Math.round(Number(rawForm.adultVolunteers) || 0)),
     studentVolunteers: Math.max(0, Math.round(Number(rawForm.studentVolunteers) || 0)),
     eventName: rawForm.eventName?.trim() || "Untitled Event",
@@ -1205,10 +1204,6 @@ export function calculatePlan(rawForm: PlannerFormData): FundraiserPlan {
   const combo = isComboMeal(form.mealType) ? (COMBO_DEFINITIONS[form.mealType] ?? null) : null;
   // meal is used for display metadata (displayName, cookingComplexity)
   const meal = mealMeta;
-
-  const adults = Math.round(form.attendance * (form.adultPercent / 100));
-  const kids = form.attendance - adults;
-  const kidPercent = form.attendance > 0 ? Math.round((kids / form.attendance) * 100) : 0;
 
   // ── Food Quantities + Shopping List ───────────────────────
   let totalCostRange: [number, number] = [0, 0];
@@ -1522,14 +1517,6 @@ export function calculatePlan(rawForm: PlannerFormData): FundraiserPlan {
     ));
   }
 
-  if (kidPercent > 60) {
-    risks.push(buildRisk(
-      "info",
-      `${kidPercent}% of your guests are kids or students. Kid portions are smaller, so total food volume is lower — your estimates reflect this. Check whether any kids have food allergies that require a separate option, and label condiments clearly.`,
-      "Prepare a simple allergen information card listing common allergens in your menu items. Post it at the serving station so parents can check before their child eats.",
-    ));
-  }
-
   if (meal.cookingComplexity === "high" && form.adultVolunteers < 4) {
     risks.push(buildRisk(
       "warning",
@@ -1567,14 +1554,6 @@ export function calculatePlan(rawForm: PlannerFormData): FundraiserPlan {
         "Do a test cook of your recipe at 25–50% of the full batch size before the event. This reveals actual timing, portion sizes, and equipment needs at scale.",
       ));
     }
-  }
-
-  if (form.adultPercent + form.kidPercent !== 100) {
-    risks.push(buildRisk(
-      "info",
-      `Adult % (${form.adultPercent}%) + Kids % (${form.kidPercent}%) doesn't total 100%. The remainder (${100 - form.adultPercent - form.kidPercent}%) is treated as adults for calculation purposes.`,
-      "Update your form to ensure adult percentage + kid percentage equals exactly 100%. This ensures food quantities are calculated correctly for your crowd mix.",
-    ));
   }
 
   // ── Revenue scenario-based profit warnings (Part 3) ───────
@@ -1689,8 +1668,7 @@ Thank you for supporting ${form.eventName}!`.trim();
       orgType: form.orgType,
       mealType: mealName,
       attendance: form.attendance,
-      adults,
-      kids,
+      servingsToPrepare: getPreparedServings(form.attendance, form.mealType),
       mealPrice: form.mealPrice,
       storePreference: form.storePreference,
     },

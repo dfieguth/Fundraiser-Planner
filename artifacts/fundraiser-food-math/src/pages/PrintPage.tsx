@@ -169,6 +169,7 @@ export default function PrintPage() {
   }
 
   const mealLabel = MEAL_LABELS[plan.summary.mealType] ?? plan.summary.mealType;
+  const servingsToPrepare = plan.summary.servingsToPrepare ?? plan.summary.attendance;
   const checklist  = buildDayOfChecklist(plan.summary.mealType);
 
   function printExecSummary() {
@@ -215,7 +216,7 @@ export default function PrintPage() {
           ["Event Name",      plan.summary.eventName || "—"],
           ["Organization",    plan.summary.orgType],
           ["Meal Type",       mealLabel],
-          ["Attendance",      `${plan.summary.attendance} guests (${plan.summary.adults} adults, ${plan.summary.kids} kids)`],
+          ["Attendance",      `${plan.summary.attendance} guests`],
           ...(formData?.notes ? [["Notes", formData.notes] as [string, React.ReactNode]] : []),
         ]} />
       </div>
@@ -227,7 +228,6 @@ export default function PrintPage() {
           <KVTable rows={[
             ["Serving Window",   `${formatTime12(formData.serveStartTime)} – ${formatTime12(formData.serveEndTime)}`],
             ["Prep Start",       formatTime12(formData.prepStartTime)],
-            ["Audience Mix",     `${formData.adultPercent}% adults · ${formData.kidPercent}% kids`],
             ["Adult Volunteers", String(formData.adultVolunteers)],
             ["Student Volunteers", String(formData.studentVolunteers)],
           ]} />
@@ -244,8 +244,8 @@ export default function PrintPage() {
       {/* ── 3. Guest Summary ── */}
       <div className="print-summary-grid">
         <div className="print-summary-card">
-          <div className="print-label">Guests</div>
-          <div className="print-value">{plan.summary.adults}A + {plan.summary.kids}K</div>
+          <div className="print-label">Servings to Prepare</div>
+          <div className="print-value">{servingsToPrepare.toLocaleString()}</div>
         </div>
       </div>
 
@@ -595,8 +595,8 @@ export default function PrintPage() {
                     </>
                   )}
                   <tr>
-                    <td className="exec-key">Audience Mix</td>
-                    <td>{plan.summary.adults} adults · {plan.summary.kids} kids</td>
+                    <td className="exec-key">Servings to Prepare</td>
+                    <td>{servingsToPrepare.toLocaleString()}</td>
                   </tr>
                 </tbody>
               </table>

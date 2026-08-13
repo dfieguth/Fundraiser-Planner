@@ -48,7 +48,7 @@ pnpm run typecheck
 ## Current MVP Features
 
 - 8 supported meal types: Hot Dogs, Burgers, Baked Potatoes, Breakfast Burritos, Tacos, Spaghetti, Pancakes, Custom
-- Per-meal food quantity calculations with adult/kid ratio splits and overage buffer
+- Universal per-guest food quantity calculations using one serving factor per meal
 - Itemized shopping list with package-size math and per-item cost ranges
 - Supplies list (plates, utensils, foil, trays, etc.)
 - Step-by-step prep timeline generated from form times
