@@ -1,7 +1,7 @@
 import { ReplitConnectors } from "@replit/connectors-sdk";
 
 const RESEND_EMAILS_PATH = "/emails";
-const appUrl = (process.env.APP_URL ?? "https://fundraiser-planner.replit.app").replace(/\/$/, "");
+const appUrl = (process.env.APP_URL ?? "https://fundraiserplanner.online").replace(/\/$/, "");
 
 type SendPlanConfirmationInput = {
   customerEmail: string;

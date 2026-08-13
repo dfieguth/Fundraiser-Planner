@@ -37,3 +37,9 @@ externalPort = 80
 
 [nix]
 channel = "stable-25_05"
+
+[userenv]
+
+[userenv.shared]
+APP_URL = "https://fundraiserplanner.online"
+RESEND_FROM_EMAIL = "Fundraiser Food Math <plans@fundraiserplanner.online>"
