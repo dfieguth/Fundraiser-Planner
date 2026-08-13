@@ -23,6 +23,19 @@ function ceilToPackage(total: number, packageSize: number): number {
   return Math.ceil(total / packageSize);
 }
 
+const IRREGULAR_PLURALS: Record<string, string> = {
+  patty: "patties",
+  tomato: "tomatoes",
+  potato: "potatoes",
+  box: "boxes",
+  loaf: "loaves",
+};
+
+function formatQuantityUnit(unit: string, quantity: number): string {
+  if (quantity === 1) return unit;
+  return IRREGULAR_PLURALS[unit] ?? `${unit}s`;
+}
+
 // ── Store-specific package overrides ─────────────────────────
 // Applies warehouse-specific package size overrides without changing
 // base mealAssumptions. Only called when storePreference warrants it.
@@ -998,7 +1011,7 @@ function computeIngredientResults(
     cost = rangeAdd(cost, itemCost);
 
     const neededCount = Math.ceil(rawTotal);
-    const neededDisplay = `${neededCount} ${ing.unit}${neededCount === 1 ? "" : "s"} needed`;
+    const neededDisplay = `${neededCount} ${formatQuantityUnit(ing.unit, neededCount)} needed`;
 
     const usageNote = (ing.usageRate !== undefined && ing.usageRate < 1.0)
       ? `~${Math.round(ing.usageRate * 100)}% of guests typically use this`

@@ -4,6 +4,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import type { PlannerFormData, MealType, OrgType, StorePreference } from "@/lib/types";
 import { MEAL_ASSUMPTIONS } from "@/lib/mealAssumptions";
+import { toggleMealSelection as resolveMealSelection, selectSingleMeal } from "@/lib/mealSelection";
 import { SAMPLE_TEMPLATES } from "@/lib/sampleTemplates";
 import { Link } from "wouter";
 import { ArrowLeft, ArrowRight, Check, X } from "lucide-react";
@@ -220,20 +221,27 @@ export default function PlannerPage({ onPlanReady }: PlannerPageProps) {
   }, [selectedMeals]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const toggleMealSelection = (mealType: MealType) => {
-    setSelectedMeals((prev) => {
-      if (prev.includes(mealType)) {
-        const next = prev.filter((m) => m !== mealType);
-        return next.length > 0 ? next : prev; // always keep at least 1
-      }
-      if (prev.length >= 2) return [prev[0], mealType]; // replace second slot
-      return [...prev, mealType];
-    });
+    const nextSelectedMeals = resolveMealSelection(selectedMeals, mealType);
+    setSelectedMeals(nextSelectedMeals);
     setMealServings((prev) => ({
-      ...prev,
+      ...(nextSelectedMeals.length === 1 && nextSelectedMeals[0] === mealType
+        ? {}
+        : prev),
       [mealType]: prev[mealType] !== undefined
         ? prev[mealType]
         : autoCalcServings(totalExpectedGuests, mealType, form.getValues("adultPercent") ?? DEFAULT_VALUES.adultPercent),
     }));
+  };
+
+  const selectSingleMealType = (mealType: MealType) => {
+    setSelectedMeals(selectSingleMeal(mealType));
+    setMealServings({
+      [mealType]: autoCalcServings(
+        totalExpectedGuests,
+        mealType,
+        form.getValues("adultPercent") ?? DEFAULT_VALUES.adultPercent,
+      ),
+    });
   };
 
   // On mount: check sessionStorage for Idea Finder pre-fill
@@ -506,7 +514,10 @@ export default function PlannerPage({ onPlanReady }: PlannerPageProps) {
                             key={opt.value}
                             type="button"
                             className={`meal-card meal-card--combo ${field.value === opt.value ? "meal-card--active" : ""}`}
-                            onClick={() => field.onChange(opt.value)}
+                             onClick={() => {
+                               field.onChange(opt.value);
+                               selectSingleMealType(opt.value);
+                             }}
                             data-testid={`meal-card-${opt.value}`}
                           >
                             <span className="meal-card-emoji" aria-hidden="true">{opt.emoji}</span>
@@ -600,7 +611,10 @@ export default function PlannerPage({ onPlanReady }: PlannerPageProps) {
                       <button
                         type="button"
                         className={`meal-card meal-card--custom ${field.value === "custom" ? "meal-card--active" : ""}`}
-                        onClick={() => field.onChange("custom")}
+                        onClick={() => {
+                          field.onChange("custom");
+                          selectSingleMealType("custom");
+                        }}
                         data-testid="meal-card-custom"
                       >
                         <span className="meal-card-emoji" aria-hidden="true">🍽️</span>
