@@ -1,6 +1,6 @@
 import nodemailer from "nodemailer";
 
-const appUrl = (process.env.APP_URL ?? "https://fundraiser-planner.replit.app").replace(/\/$/, "");
+const appUrl = (process.env.APP_URL ?? "https://fundraiserplanner.online").replace(/\/$/, "");
 
 type SendPlanConfirmationInput = {
   customerEmail: string;
