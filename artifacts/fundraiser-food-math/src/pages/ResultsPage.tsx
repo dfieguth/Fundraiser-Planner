@@ -571,7 +571,7 @@ export default function ResultsPage({ plan, formData, onReset }: ResultsPageProp
                 {
                   icon: <Mail className="w-5 h-5" />,
                   title: "Volunteer Recruitment Email",
-                  desc: "A pre-written email blurb you can copy and send to parents and students.",
+                  desc: "A pre-written email blurb you can copy and send to volunteers.",
                 },
                 {
                   icon: <Printer className="w-5 h-5" />,

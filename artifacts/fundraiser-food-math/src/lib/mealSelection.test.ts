@@ -257,6 +257,7 @@ console.log("Meal-selection regressions passed for 100 guests.");
   const comms = calculatePlan(BASE_FORM).commsPack;
   assert.match(comms.volunteerRequest, /Reply to this message to sign up\./);
   assert.ok(!/group leader|adults and students/i.test(comms.volunteerRequest));
+  assert.ok(!/parents and students/i.test(comms.volunteerRequest));
   assert.equal(
     Object.keys(comms).length,
     4,
