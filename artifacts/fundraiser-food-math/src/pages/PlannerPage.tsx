@@ -1032,7 +1032,7 @@ export default function PlannerPage({ onPlanReady }: PlannerPageProps) {
                 />
               </div>
               <p className="field-hint">
-                Volunteers are listed as "Adult Volunteer", "Parent Oversight", or "Student Volunteer" in the plan.
+                Volunteers are listed as "Adult Volunteer" or "Student Volunteer" in the plan.
               </p>
 
               <div className="form-nav form-nav--split">

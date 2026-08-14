@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import type { FundraiserPlan, PlannerFormData } from "@/lib/types";
 import { PAYMENT_LINKS } from "@/config/paymentLinks";
-import { getUnlocked, getStoredPlan } from "@/lib/unlock";
+import { getSessionStoredPlan, getUnlocked, getStoredPlan } from "@/lib/unlock";
 
 // ── Print-friendly plan page ──────────────────────────────────
 // Opened in a new tab from the Results page.
@@ -100,21 +100,10 @@ export default function PrintPage() {
 
   useEffect(() => {
     setUnlocked(getUnlocked());
-    try {
-      const raw = sessionStorage.getItem("ffm_plan");
-      if (raw) {
-        const parsed = JSON.parse(raw) as { plan: FundraiserPlan; formData: PlannerFormData };
-        setPlan(parsed.plan);
-        setFormData(parsed.formData ?? null);
-      } else {
-        const saved = getStoredPlan();
-        if (saved) {
-          setPlan(saved.plan);
-          setFormData(saved.formData ?? null);
-        }
-      }
-    } catch {
-      // ignore parse errors
+    const saved = getSessionStoredPlan() ?? getStoredPlan();
+    if (saved) {
+      setPlan(saved.plan);
+      setFormData(saved.formData);
     }
   }, []);
 
@@ -480,9 +469,9 @@ export default function PrintPage() {
         </div>
       )}
 
-      {/* ── 12. Parent & Student Communication Pack ── */}
+      {/* ── 12. Volunteer Communication Pack ── */}
       <div className="print-section print-page-break">
-        <SectionTitle>Parent &amp; Student Communication Pack</SectionTitle>
+        <SectionTitle>Volunteer Communication Pack</SectionTitle>
         {[
           { label: "Event Announcement",    text: plan.commsPack?.announcement ?? "" },
           { label: "Volunteer Request",     text: plan.commsPack?.volunteerRequest ?? "" },

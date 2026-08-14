@@ -561,11 +561,11 @@ export default function ResultsPage({ plan, formData, onReset }: ResultsPageProp
                 {
                   icon: <Users className="w-5 h-5" />,
                   title: "Volunteer Role Plan",
-                  desc: "Role assignments for Adult Volunteers, Parent Oversight, and Student Volunteers.",
+                  desc: "Role assignments for Adult Volunteers and Student Volunteers.",
                 },
                 {
                   icon: <Users className="w-5 h-5" />,
-                  title: "Parent & Student Sign-Up Sheet",
+                  title: "Volunteer Sign-Up Sheet",
                   desc: "A ready-to-print sign-up table for recruiting your team.",
                 },
                 {
@@ -605,7 +605,7 @@ export default function ResultsPage({ plan, formData, onReset }: ResultsPageProp
                 },
                 {
                   icon: <MessageSquare className="w-5 h-5" />,
-                  title: "Parent & Student Communication Pack",
+                  title: "Volunteer Communication Pack",
                   desc: "Four ready-to-copy messages: announcement, volunteer request, day-before reminder, and thank-you.",
                 },
                 {
@@ -1146,7 +1146,7 @@ export default function ResultsPage({ plan, formData, onReset }: ResultsPageProp
 
           {/* Communication Pack */}
           <section className="results-section" data-testid="section-comms">
-            <h2 className="section-heading">Parent & Student Communication Pack</h2>
+            <h2 className="section-heading">Volunteer Communication Pack</h2>
             <p className="section-note">
               Four ready-to-copy messages for your event. Click Copy on any message to use it.
             </p>

@@ -1,0 +1,1 @@
+- [Serving rounding](serving-rounding.md) — decimal serving factors need near-integer floating-point tolerance before applying the universal ceiling rule.

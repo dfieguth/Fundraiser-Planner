@@ -119,8 +119,7 @@ function buildRisk(
 
 // ── Volunteer plan by meal type ──────────────────────────────
 //
-// Approved role types: "Adult Volunteer" | "Parent Volunteer" |
-//   "Parent Oversight" | "Student Volunteer"
+// Approved role types: "Adult Volunteer" | "Student Volunteer"
 //
 // Approved role names include: Grill Master, Serving Team,
 //   Student Runner, Cleanup Team, Setup Crew, Cashier /
@@ -150,7 +149,7 @@ function buildVolunteerPlan(
       {
         role: "Bun & Condiment Station",
         count: Math.max(1, Math.ceil(attendance / 100)),
-        type: "Parent Oversight",
+        type: "Adult Volunteer",
         duties: [
           "Pre-open buns and stage in foil pans before service",
           "Keep condiment station stocked (ketchup, mustard, relish, onion)",
@@ -172,7 +171,7 @@ function buildVolunteerPlan(
       {
         role: "Burger Assembly Station",
         count: Math.max(1, Math.ceil(attendance / 75)),
-        type: "Parent Oversight",
+        type: "Adult Volunteer",
         duties: [
           "Place cheese slices on hot patties immediately off the grill",
           "Build burgers and set at the serving tray",
@@ -194,7 +193,7 @@ function buildVolunteerPlan(
       {
         role: "Topping Bar Attendant",
         count: Math.max(1, Math.ceil(attendance / 75)),
-        type: "Parent Oversight",
+        type: "Adult Volunteer",
         duties: [
           "Keep topping bar stocked: butter, sour cream, fiesta blend cheese, chili, nacho cheese, chives, and white onion",
           "Assist guests if the bar is not fully self-serve",
@@ -226,7 +225,7 @@ function buildVolunteerPlan(
       {
         role: "Burrito Assembly & Wrapping",
         count: Math.max(2, Math.ceil(attendance / 45)),
-        type: "Parent Oversight",
+        type: "Adult Volunteer",
         duties: [
           "Assemble burritos in order: eggs → sausage → O'Brien potatoes → cheese",
           "Fold and wrap each burrito tightly in foil",
@@ -248,7 +247,7 @@ function buildVolunteerPlan(
       {
         role: "Taco Bar Setup & Restock",
         count: Math.max(1, Math.ceil(attendance / 90)),
-        type: "Parent Oversight",
+        type: "Adult Volunteer",
         duties: [
           "Stock and maintain taco bar: shells, tortillas, cheese, lettuce, tomato, onion, cilantro, sour cream, salsa, lime",
           "Refill serving dishes continuously during service",
@@ -280,7 +279,7 @@ function buildVolunteerPlan(
       {
         role: "Garlic Bread & Salad",
         count: Math.max(1, Math.ceil(attendance / 120)),
-        type: "Parent Oversight",
+        type: "Adult Volunteer",
         duties: [
           "Warm garlic bread in foil and slice just before service",
           "Keep bread station and salad bar stocked",
@@ -302,7 +301,7 @@ function buildVolunteerPlan(
       {
         role: "Batter & Syrup Station",
         count: Math.max(1, Math.ceil(attendance / 100)),
-        type: "Parent Oversight",
+        type: "Adult Volunteer",
         duties: [
           "Mix fresh batter batches as needed (avoid overmixing)",
           "Keep syrup, whipped topping, and powdered sugar stocked",
@@ -312,7 +311,7 @@ function buildVolunteerPlan(
       {
         role: "Sausage Station",
         count: Math.max(1, Math.ceil(attendance / 120)),
-        type: "Parent Oversight",
+        type: "Adult Volunteer",
         duties: [
           "Pre-cook sausage links and hold warm in foil pans",
           "Restock sausage at the serving station throughout service",
@@ -339,7 +338,7 @@ function buildVolunteerPlan(
     {
       role: "Serving Team",
       count: Math.max(2, Math.ceil(attendance / 55)),
-      type: "Parent Oversight",
+      type: "Adult Volunteer",
       duties: [
         "Serve food to guests as they move through the line",
         "Maintain consistent serving portions",
@@ -396,13 +395,16 @@ function buildVolunteerPlan(
   const mealSpecificRoles = cookRoles[mealType] ?? cookRoles["custom"]!;
   const allRoles: VolunteerRole[] = [...mealSpecificRoles, ...sharedRoles];
 
-  // Scale counts down proportionally if actual volunteer count
-  // is less than the ideal computed total
+  // Assign available people in role-priority order. Meal-specific roles
+  // are intentionally first, followed by shared roles, so scarce teams
+  // get the most important stations covered before later roles.
   const rolesTotal = allRoles.reduce((s, r) => s + r.count, 0);
-  if (totalVolunteers > 0 && rolesTotal > totalVolunteers) {
-    const factor = totalVolunteers / rolesTotal;
-    allRoles.forEach((r) => {
-      r.count = Math.max(1, Math.round(r.count * factor));
+  if (rolesTotal > totalVolunteers) {
+    let remaining = Math.max(0, Math.floor(totalVolunteers));
+    allRoles.forEach((role) => {
+      const assigned = Math.min(Math.max(0, role.count), remaining);
+      role.count = assigned;
+      remaining -= assigned;
     });
   }
 
@@ -819,7 +821,7 @@ A Fundraiser for ${org}
 Join us for our ${mealName} fundraiser! This is a great opportunity to support ${org} while enjoying a delicious meal with your community.
 
   When: ${formatTime(serveStart)} – ${formatTime(serveEnd)}
-${announcementDonationLine ? announcementDonationLine + "\n" : ""}  We're expecting ${form.attendance} guests.
+${announcementDonationLine}
 
 Come out, eat well, and help us reach our goal. Every plate makes a difference.
 
@@ -830,12 +832,12 @@ See you there!
 
 We need volunteers to help make ${form.eventName} a success!
 
-We're looking for adults and students to help with cooking, serving, setup, and cleanup. If you can help out, please plan to arrive by ${formatTime(prepStart)}.
+We're looking for volunteers to help with cooking, serving, setup, and cleanup. If you can help out, please plan to arrive by ${formatTime(prepStart)}.
 
 Roles we need to fill:
 ${rolesText}
 
-Reply to this message or contact your group leader to sign up. Every hand matters!
+Reply to this message to sign up. Every hand matters!
 
 Thank you for supporting ${org}!`.trim();
 
@@ -1150,7 +1152,7 @@ function calculateMultiMealPlan(rawForm: PlannerFormData): FundraiserPlan {
     const servings = calculatePreparedServings(totalGuests, mealAssumption.perGuestServings);
     const r = computeIngredientResults(
       mealAssumption,
-      servings,
+      totalGuests,
       rawForm.excludedItems,
       rawForm.customItemPrices,
     );
@@ -1340,7 +1342,7 @@ export function calculatePlan(rawForm: PlannerFormData): FundraiserPlan {
     {
       time: formatTime(addMinutes(prepStart, 50)),
       task: `Begin cooking and prep — ${meal.prepNotes}`,
-      who: "Parent Oversight",
+      who: "Adult Volunteer",
       duration: `${Math.max(0, prepMins - 65)} min`,
       leaderNote: "Assign one adult to track cooking progress and communicate expected readiness to the Serving Team.",
       watchOut: "Do not let the first batch of food sit out for more than 30 minutes before service opens. Stagger batches to stay fresh.",
@@ -1614,12 +1616,12 @@ Volunteers needed by: ${formatTime(prepStart)}
 ${form.mealPrice > 0 ? `Suggested donation: ${fmt$(form.mealPrice)} per person` : ""}
 Attendance goal: ${form.attendance} guests
 
-We're looking for Adult Volunteers, Parent Volunteers, and Student Runners to help with cooking, serving, setup, and cleanup. Every role matters and we couldn't do it without you!
+We're looking for volunteers to help with cooking, serving, setup, and cleanup. Every role matters and we couldn't do it without you!
 
 Roles available:
 ${volunteerPlan.map((r) => `• ${r.role} (${r.type}) — ${r.count} needed`).join("\n")}
 
-Reply to this message to let us know you can help, or sign up using the link below.
+Reply to this message to let us know you can help.
 
 Thank you for supporting ${form.eventName}!`.trim();
 

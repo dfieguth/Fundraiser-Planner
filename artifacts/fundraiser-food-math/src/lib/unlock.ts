@@ -11,7 +11,14 @@
 // leaves for payment, then restored on the /success page.
 // ============================================================
 
-import type { FundraiserPlan, PlannerFormData } from "@/lib/types";
+import { calculatePlan } from "@/lib/calculator";
+import type {
+  FundraiserPlan,
+  MealType,
+  OrgType,
+  PlannerFormData,
+  StorePreference,
+} from "@/lib/types";
 import { ACCESS_CODES } from "@/config/paymentLinks";
 
 // ── Storage keys ─────────────────────────────────────────────
@@ -51,6 +58,109 @@ export const FULL_PACK_UNLOCK_VALUE = "full-event-pack";
 export interface SavedPlan {
   plan: FundraiserPlan;
   formData: PlannerFormData;
+}
+
+const VALID_MEAL_TYPES: MealType[] = [
+  "hotdogs",
+  "burgers",
+  "bakedPotatoes",
+  "breakfastBurritos",
+  "tacos",
+  "walkingTacos",
+  "spaghetti",
+  "pancakes",
+  "custom",
+  "combo_hotdogs_potatoes",
+  "combo_burgers_chips",
+  "combo_pancakes_sausage",
+];
+const VALID_ORG_TYPES: OrgType[] = ["Church", "School", "Sports Team", "Nonprofit", "Other"];
+const VALID_STORE_PREFERENCES: StorePreference[] = [
+  "Costco",
+  "Sam's Club",
+  "Walmart",
+  "Smart & Final",
+  "Aldi",
+  "Local Grocery",
+  "Mixed",
+];
+
+function isFiniteNumber(value: unknown): value is number {
+  return typeof value === "number" && Number.isFinite(value);
+}
+
+function isNonEmptyString(value: unknown): value is string {
+  return typeof value === "string" && value.trim().length > 0;
+}
+
+function isOptionalStringArray(value: unknown): value is string[] {
+  return value === undefined
+    || (Array.isArray(value) && value.every((item) => typeof item === "string"));
+}
+
+/**
+ * Saved form data must contain the fields required by the current planner.
+ * We intentionally do not fill missing values here: an incomplete historical
+ * purchase must remain a paid-but-no-plan record rather than becoming a plan
+ * with invented defaults.
+ */
+export function isValidSavedFormData(value: unknown): value is PlannerFormData {
+  if (!value || typeof value !== "object") return false;
+  const form = value as Partial<PlannerFormData>;
+
+  if (
+    !isNonEmptyString(form.eventName)
+    || !VALID_ORG_TYPES.includes(form.orgType as OrgType)
+    || !VALID_MEAL_TYPES.includes(form.mealType as MealType)
+    || !VALID_STORE_PREFERENCES.includes(form.storePreference as StorePreference)
+    || !isNonEmptyString(form.prepStartTime)
+    || !isNonEmptyString(form.serveStartTime)
+    || !isNonEmptyString(form.serveEndTime)
+    || !isFiniteNumber(form.attendance)
+    || form.attendance < 10
+    || form.attendance > 5000
+    || !isFiniteNumber(form.mealPrice)
+    || form.mealPrice < 0.5
+    || !isFiniteNumber(form.adultVolunteers)
+    || form.adultVolunteers < 0
+    || !isFiniteNumber(form.studentVolunteers)
+    || form.studentVolunteers < 0
+  ) {
+    return false;
+  }
+
+  if (
+    form.selectedMeals !== undefined
+    && (!Array.isArray(form.selectedMeals)
+      || form.selectedMeals.length === 0
+      || form.selectedMeals.length > 2
+      || form.selectedMeals.some((meal) => !VALID_MEAL_TYPES.includes(meal as MealType)))
+  ) {
+    return false;
+  }
+
+  return isOptionalStringArray(form.customMenuSides)
+    && isOptionalStringArray(form.customMenuDrinks)
+    && isOptionalStringArray(form.customMenuDesserts)
+    && isOptionalStringArray(form.customMenuDietary);
+}
+
+/**
+ * Rebuilds a saved plan from its saved form using the current calculator.
+ * This keeps the summary, food quantities, and shopping list on one rule set
+ * while preserving all custom meal information stored in formData.
+ */
+export function recalculateSavedPlan(saved: SavedPlan): SavedPlan | null {
+  if (!isValidSavedFormData(saved?.formData)) return null;
+
+  try {
+    return {
+      formData: saved.formData,
+      plan: calculatePlan(saved.formData),
+    };
+  } catch {
+    return null;
+  }
 }
 
 // ── Unlock state ─────────────────────────────────────────────
@@ -160,7 +270,7 @@ export function applyAccessCode(code: string): "ok" | "invalid" {
  */
 export function savePlanBeforePayment(plan: FundraiserPlan, formData: PlannerFormData): void {
   try {
-    const payload: SavedPlan = { plan, formData };
+    const payload = recalculateSavedPlan({ plan, formData }) ?? { plan, formData };
     const json = JSON.stringify(payload);
     localStorage.setItem(PLAN_SAVE_KEY, json);
     // Keep sessionStorage in sync for the print page (same-tab access).
@@ -178,7 +288,21 @@ export function getStoredPlan(): SavedPlan | null {
   try {
     const raw = localStorage.getItem(PLAN_SAVE_KEY);
     if (!raw) return null;
-    return JSON.parse(raw) as SavedPlan;
+    return recalculateSavedPlan(JSON.parse(raw) as SavedPlan);
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Reads the same saved-plan payload from the current tab and applies the
+ * same current-rule recalculation as localStorage restores.
+ */
+export function getSessionStoredPlan(): SavedPlan | null {
+  try {
+    const raw = sessionStorage.getItem("ffm_plan");
+    if (!raw) return null;
+    return recalculateSavedPlan(JSON.parse(raw) as SavedPlan);
   } catch {
     return null;
   }

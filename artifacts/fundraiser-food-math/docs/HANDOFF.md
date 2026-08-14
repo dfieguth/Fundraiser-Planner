@@ -36,7 +36,7 @@ The app uses a client-side redirect unlock model. Users click the Stripe payment
 - Test mode uses the Stripe test link
 - Live mode uses the live Stripe link
 - The success redirect URL must match the deployed domain and include `?unlock=full-event-pack`
-- The backend webhook route exists as future infrastructure, but it is not required for the current launch flow
+- The backend verifies Stripe sessions, processes signed webhooks, stores durable purchases, and sends confirmation email through the configured mail transport
 
 ## Current launch blockers
 No hard launch blocker is currently known in the app itself. The main launch dependencies are operational:

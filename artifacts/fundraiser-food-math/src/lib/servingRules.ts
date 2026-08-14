@@ -7,7 +7,15 @@ import { COMBO_DEFINITIONS, MEAL_ASSUMPTIONS, isComboMeal } from "./mealAssumpti
  */
 export function calculatePreparedServings(guestCount: number, perGuestServings: number): number {
   const guests = Math.max(1, Number(guestCount) || 1);
-  return Math.ceil(guests * perGuestServings);
+  const rawServings = guests * perGuestServings;
+  const nearestInteger = Math.round(rawServings);
+  // Decimal factors such as 1.1 can produce 110.00000000000001 in
+  // JavaScript. Treat only that floating-point noise as the exact integer
+  // it represents; preserve real fractions for the ceiling rule.
+  if (Math.abs(rawServings - nearestInteger) < 1e-9) {
+    return nearestInteger;
+  }
+  return Math.ceil(rawServings);
 }
 
 export function getPreparedServingCounts(guestCount: number, mealType: MealType): number[] {

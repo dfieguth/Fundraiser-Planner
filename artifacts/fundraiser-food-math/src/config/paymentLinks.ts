@@ -1,14 +1,9 @@
 // ============================================================
 // BACKEND READINESS NOTE
 //
-// Current MVP launch uses a client-side post-payment redirect unlock:
-//   Stripe → /success?unlock=full-event-pack&session_id={CHECKOUT_SESSION_ID} → localStorage flag set → plan unlocked.
-//
-// The backend webhook route at /api/stripe/webhook exists only as future
-// infrastructure. It is NOT required for launch and does NOT affect the
-// current unlock flow in any way.
-//
-// See artifacts/api-server/src/routes/stripe.ts for the future secure flow.
+// The paid flow verifies the Stripe session server-side, stores a durable
+// purchase, and keeps a local unlock only as a convenience for the current
+// browser. Signed webhook processing is handled by the API server.
 // ============================================================
 
 // ============================================================
@@ -21,13 +16,13 @@
 //  [ ] Set USE_STRIPE_TEST_MODE = false before going live
 //  [ ] In your Stripe Payment Link settings:
 //        After payment → Confirmation page → Redirect to your website
-//        URL: https://fundraiser-planner.replit.app/success?unlock=full-event-pack&session_id={CHECKOUT_SESSION_ID}
+//        URL: https://fundraiserplanner.online/success?unlock=full-event-pack&session_id={CHECKOUT_SESSION_ID}
 //      Or in Gumroad:
-//        Product settings → Redirect URL → https://fundraiser-planner.replit.app/success?unlock=full-event-pack&session_id={CHECKOUT_SESSION_ID}
+//        Product settings → Redirect URL → https://fundraiserplanner.online/success?unlock=full-event-pack&session_id={CHECKOUT_SESSION_ID}
 //  [ ] Test a full purchase flow in the same browser tab before launch
 //
-//  Published app URL: https://fundraiser-planner.replit.app
-//  Success redirect:  https://fundraiser-planner.replit.app/success?unlock=full-event-pack&session_id={CHECKOUT_SESSION_ID}
+//  Canonical customer-facing URL: https://fundraiserplanner.online
+//  Success redirect:  https://fundraiserplanner.online/success?unlock=full-event-pack&session_id={CHECKOUT_SESSION_ID}
 // ============================================================
 
 // ============================================================
@@ -35,16 +30,10 @@
 // Replace the placeholder URLs below with your actual
 // Stripe Payment Links or Gumroad product links.
 //
-// DEVELOPER NOTE — MVP SECURITY POSTURE:
-// The current unlock flow is client-side only (sessionStorage flag set after
-// a post-payment redirect). This is fine for early MVP testing and low-volume
-// sales — the downside exposure is minimal and the implementation is simple.
-//
-// If this app starts getting meaningful sales volume, replace this with a
-// server-verified flow: use a Stripe webhook to confirm payment server-side,
-// then issue a short-lived signed token or session that the client can
-// validate before showing the full plan. Do not rely solely on a URL
-// parameter or sessionStorage flag for high-stakes gating.
+// DEVELOPER NOTE — SECURITY POSTURE:
+// Do not remove server-side checkout-session verification or signed webhook
+// verification. The URL parameter and browser storage are not payment proof;
+// they only carry the local plan through the redirect.
 // ============================================================
 
 // ── Stripe test / live switch ────────────────────────────────
@@ -56,6 +45,15 @@
 export const LIVE_FULL_EVENT_PACK_LINK = "https://buy.stripe.com/28E7sF4DPgWw8pVgvE9EI00";
 export const TEST_FULL_EVENT_PACK_LINK = "https://buy.stripe.com/test_28E7sF4DPgWw8pVgvE9EI00";
 export const USE_STRIPE_TEST_MODE = false;
+export const CUSTOMER_FACING_ORIGIN = "https://fundraiserplanner.online";
+
+export function isCustomerFacingOrigin(origin: string): boolean {
+  return origin === CUSTOMER_FACING_ORIGIN;
+}
+
+export function buildPermanentPlanUrl(planId: string): string {
+  return `${CUSTOMER_FACING_ORIGIN}/plan/${planId}`;
+}
 
 export const PAYMENT_LINKS = {
   // Free tier — no payment needed, just scroll to planner
@@ -71,7 +69,7 @@ export const PAYMENT_LINKS = {
   // POST-PAYMENT REDIRECT SETUP (both test and live links):
   // Stripe: Dashboard → Payment Links → [your link] → After payment → Confirmation page
   //   → Set to "Redirect to your website"
-  //   → URL: https://fundraiser-planner.replit.app/success?unlock=full-event-pack&session_id={CHECKOUT_SESSION_ID}
+  //   → URL: https://fundraiserplanner.online/success?unlock=full-event-pack&session_id={CHECKOUT_SESSION_ID}
   fullEventPack: USE_STRIPE_TEST_MODE ? TEST_FULL_EVENT_PACK_LINK : LIVE_FULL_EVENT_PACK_LINK,
 
   // $49 Custom Plan — replace with your Stripe/Gumroad link or calendar booking link

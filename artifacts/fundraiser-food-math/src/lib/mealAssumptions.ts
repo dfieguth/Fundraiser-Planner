@@ -52,12 +52,12 @@ export interface SupplyDef {
 
 // ============================================================
 // HOT DOGS
-// Serving: 1.15 per guest with the fundraiser premium included.
+// Serving: 1.1 per guest with the fundraiser premium included.
 // ============================================================
 export const hotDogAssumptions: MealAssumption = {
   label: "hotdogs",
   displayName: "Hot Dogs",
-  perGuestServings: 1.265, // 1.15 × 1.1 buffet premium
+  perGuestServings: 1.1,
   wasteBuffer: 1.05,
   cookingComplexity: "low",
   ingredients: [

@@ -45,7 +45,10 @@ router.post("/purchases", async (req, res) => {
       if (Object.keys(updates).length > 0) {
         await db.update(purchases).set(updates).where(eq(purchases.id, record.id));
       }
-      return res.json({ planId: record.id });
+      return res.json({
+        planId: record.id,
+        hasPlan: Boolean(record.planData ?? updates.planData) && Boolean(record.formData ?? updates.formData),
+      });
     }
 
     // 2. No record yet — verify the session directly with Stripe.
@@ -84,16 +87,22 @@ router.post("/purchases", async (req, res) => {
       .returning({ id: purchases.id });
 
     if (inserted.length > 0) {
-      return res.json({ planId: inserted[0]!.id });
+      return res.json({
+        planId: inserted[0]!.id,
+        hasPlan: Boolean(planData) && Boolean(formData),
+      });
     }
 
     // Rare race: webhook inserted between our select and insert.
     const raced = await db
-      .select({ id: purchases.id })
+      .select({ id: purchases.id, planData: purchases.planData, formData: purchases.formData })
       .from(purchases)
       .where(eq(purchases.stripeSessionId, sessionId))
       .limit(1);
-    return res.json({ planId: raced[0]!.id });
+    return res.json({
+      planId: raced[0]!.id,
+      hasPlan: Boolean(raced[0]!.planData) && Boolean(raced[0]!.formData),
+    });
   } catch (err) {
     req.log.error({ err }, "Failed to create purchase record");
     return res.status(500).json({ error: "Failed to save purchase" });
@@ -123,6 +132,7 @@ router.get("/purchases/:planId", async (req, res) => {
     const record = rows[0]!;
     return res.json({
       planId: record.id,
+      hasPlan: Boolean(record.planData) && Boolean(record.formData),
       planData: record.planData,
       formData: record.formData,
       createdAt: record.createdAt,

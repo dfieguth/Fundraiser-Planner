@@ -15,7 +15,7 @@ import NotFound from "@/pages/not-found";
 import type { FundraiserPlan, PlannerFormData } from "@/lib/types";
 import { calculatePlan } from "@/lib/calculator";
 import { getStoredPlan, savePlanBeforePayment } from "@/lib/unlock";
-import { USE_STRIPE_TEST_MODE } from "@/config/paymentLinks";
+import { isCustomerFacingOrigin, USE_STRIPE_TEST_MODE } from "@/config/paymentLinks";
 
 const queryClient = new QueryClient();
 
@@ -28,12 +28,17 @@ function AppRoutes() {
   const [plan, setPlan] = useState<FundraiserPlan | null>(null);
   const [formData, setFormData] = useState<PlannerFormData | null>(null);
   const [pendingForm, setPendingForm] = useState<PlannerFormData | null>(null);
-  const [, setLocation] = useLocation();
+  const [location, setLocation] = useLocation();
 
   // On mount, restore plan from localStorage so returning users (e.g. after a
   // Stripe redirect → /success → /results) find their plan in the results page
   // without having to rebuild it.
   useEffect(() => {
+    // The legacy production Replit origin must not restore an old same-origin
+    // plan. Local Vite previews may still use browser storage for development.
+    if (!isCustomerFacingOrigin(window.location.origin) && !import.meta.env.DEV) {
+      return;
+    }
     if (!plan) {
       const saved = getStoredPlan();
       if (saved) {
@@ -41,7 +46,7 @@ function AppRoutes() {
         setFormData(saved.formData);
       }
     }
-  }, []);  // eslint-disable-line react-hooks/exhaustive-deps
+  }, [location]);  // eslint-disable-line react-hooks/exhaustive-deps
 
   // Step 1: PlannerPage submits form → skip Customize Your Menu if flag is set
   const handlePlanReady = (form: PlannerFormData) => {

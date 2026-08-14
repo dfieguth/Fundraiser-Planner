@@ -3,7 +3,12 @@ import { useLocation } from "wouter";
 import { AlertCircle, Loader2 } from "lucide-react";
 import type { FundraiserPlan, PlannerFormData } from "@/lib/types";
 import ResultsPage from "@/pages/ResultsPage";
-import { setUnlocked, savePlanBeforePayment, savePlanId } from "@/lib/unlock";
+import {
+  recalculateSavedPlan,
+  savePlanBeforePayment,
+  savePlanId,
+  setUnlocked,
+} from "@/lib/unlock";
 import { buildSupportMailto } from "@/config/paymentLinks";
 
 // ── /plan/:planId route ───────────────────────────────────────
@@ -42,16 +47,24 @@ export default function PlanPage({ planId }: PlanPageProps) {
           return;
         }
         const data = await res.json();
-        // A database record for this id means the purchase is verified —
-        // unlock this device and remember the plan id.
-        setUnlocked();
+        // A database record for this id means the purchase is verified.
+        // Only unlock after a valid plan has been rebuilt; otherwise an old
+        // local plan must not be mirrored into this device's session.
         savePlanId(planId);
 
         if (data.planData && data.formData) {
-          const plan = data.planData as FundraiserPlan;
-          const formData = data.formData as PlannerFormData;
+          const normalized = recalculateSavedPlan({
+            plan: data.planData as FundraiserPlan,
+            formData: data.formData as PlannerFormData,
+          });
+          if (!normalized) {
+            if (!cancelled) setState({ status: "paid-no-plan" });
+            return;
+          }
+          const { plan, formData } = normalized;
           // Refresh local copies so /print and /results work on this device.
           savePlanBeforePayment(plan, formData);
+          setUnlocked();
           if (!cancelled) setState({ status: "ready", plan, formData });
         } else {
           if (!cancelled) setState({ status: "paid-no-plan" });

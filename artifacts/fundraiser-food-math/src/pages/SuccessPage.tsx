@@ -1,7 +1,11 @@
 import { useEffect, useState } from "react";
 import { CheckCircle2, AlertCircle, ArrowLeft, FileText, Link2, Copy } from "lucide-react";
 import { setUnlocked, getStoredPlan, savePlanId, FULL_PACK_UNLOCK_VALUE } from "@/lib/unlock";
-import { buildSupportMailto } from "@/config/paymentLinks";
+import {
+  buildPermanentPlanUrl,
+  buildSupportMailto,
+  isCustomerFacingOrigin,
+} from "@/config/paymentLinks";
 
 // ── /success route ────────────────────────────────────────────
 // Stripe redirects here after payment. Configure the payment link's
@@ -26,9 +30,11 @@ export default function SuccessPage() {
     const sessionId = params.get("session_id");
 
     if (unlockParam === FULL_PACK_UNLOCK_VALUE) {
-      // Valid unlock param — grant local access and restore saved plan.
-      setUnlocked();
-      const saved = getStoredPlan();
+      const isCanonicalOrigin = isCustomerFacingOrigin(window.location.origin);
+      // Only the canonical origin may attach browser-saved plan data. In
+      // particular, do not let the old Replit origin attach an older plan.
+      const saved = isCanonicalOrigin ? getStoredPlan() : null;
+      if (saved) setUnlocked();
       setState(saved ? "unlocked" : "no-plan-after-unlock");
 
       // Record the purchase in the database so the unlock survives
@@ -47,7 +53,11 @@ export default function SuccessPage() {
         .then((data) => {
           if (data?.planId) {
             savePlanId(data.planId);
-            setPermanentLink(`${window.location.origin}/plan/${data.planId}`);
+            if (data.hasPlan) {
+              setPermanentLink(buildPermanentPlanUrl(data.planId));
+            } else {
+              setState("no-plan-after-unlock");
+            }
           }
         })
         .catch(() => {
@@ -128,8 +138,8 @@ export default function SuccessPage() {
           </div>
           <h1 className="success-title">Your purchase was successful.</h1>
           <p className="success-desc">
-            Your Full Event Pack is unlocked, but we could not find a saved plan on this
-            device. This can happen if you completed payment on a different device or browser.
+            Your payment is confirmed, but we could not find a matching saved plan on the
+            customer-facing site. We did not attach a different browser plan.
           </p>
           <p className="success-desc">
             Please rebuild your plan below — it will unlock automatically once you reach
@@ -164,7 +174,7 @@ export default function SuccessPage() {
   }
 
   // state === "unconfirmed" — no valid unlock param, don't grant anything
-  const hasSavedPlan = getStoredPlan() !== null;
+  const hasSavedPlan = isCustomerFacingOrigin(window.location.origin) && getStoredPlan() !== null;
 
   return (
     <div className="success-page" data-testid="success-page-unconfirmed">

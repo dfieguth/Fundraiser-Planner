@@ -27,11 +27,13 @@ A production-ready food fundraiser planning web app for churches, schools, sport
 
 ## Architecture decisions
 
-- **Frontend-only** — all calculations run in the browser, no backend needed
+- **Calculation and purchase split** — calculations run in the browser, while the API verifies Stripe sessions, stores durable purchases, and serves permanent plan links
 - **Meal type tiers**: Tier 1 = 7 known meals with full ingredient lists; Combo = two Tier 1 meals merged (independent two-pass calculation, not averaged); Tier 2 = "custom" meal that triggers a follow-up "Tell Us About Your Menu" step with checkbox-driven shopping list generation
 - **Combo calculation**: each combo component runs its own `computeIngredientResults()` pass (correct serving ratios per meal), then results are concatenated — never averaged or merged into a single assumption
-- **Unlock model**: free preview → paid Full Event Pack. Keys: `ffm_unlocked` (localStorage), `ffm_plan` (sessionStorage). Code `DEVINTEST` unlocks for 30 days
-- Print page reads `sessionStorage["ffm_plan"]` with a `localStorage` fallback via `getStoredPlan()`
+- **Unlock model**: free preview → verified paid Full Event Pack. Keys: `ffm_unlocked` (localStorage), `ffm_plan` (sessionStorage), and `ffm_plan_id` for the durable purchase link. Code `DEVINTEST` unlocks for 30 days
+- Saved and permanent plans rebuild from valid saved form data with the current calculator before display; incomplete historical data remains paid-but-no-plan
+- Print page reads normalized session storage with a normalized `localStorage` fallback via `getStoredPlan()`
+- `https://fundraiserplanner.online` is the canonical customer-facing origin. The Stripe success redirect must include `session_id={CHECKOUT_SESSION_ID}` on that origin.
 
 ## Product
 
@@ -44,10 +46,17 @@ A production-ready food fundraiser planning web app for churches, schools, sport
 - **Attendance range mode**: "Estimate Range" toggle shows low/high inputs; calculator auto-syncs attendance to midpoint; results show ScenarioCompare table for all 3 attendance levels
 - **Canva Ad Brief**: button on results page generates a copyable event brief with headline options, body copy, and Canva design guidance
 
+## Current MVT status
+
+- Hot Dogs use the universal rule `ceil(guest count × 1.1)`; 100 guests produces 110 hot dogs and 110 buns.
+- Volunteer role counts are deterministic, priority ordered, and capped at the entered adult-plus-student volunteer total.
+- The Volunteer Communication Pack retains four concise message types; expected attendance stays in private planning and operational volunteer materials, not the public announcement.
+- The completed code change is committed locally only; publishing and GitHub push remain intentionally deferred.
+
 ## User preferences
 
-- Volunteer terminology: "Adult Volunteer", "Parent Oversight", "Student Volunteer" — never "Parent Helper"
-- Do not change Stripe links, USE_STRIPE_TEST_MODE, or unlock behavior without explicit instruction
+- Volunteer terminology: "Adult Volunteer" and "Student Volunteer" — never "Parent Oversight", "Parent Helper", or "Parent Volunteer"
+- Keep `https://fundraiserplanner.online` as the canonical customer-facing origin; Stripe success redirects must not attach stale plans from the old Replit origin
 
 ## Gotchas
 

@@ -126,7 +126,7 @@ export interface PrepStep {
 export interface VolunteerRole {
   role: string;
   count: number;
-  type: "Adult Volunteer" | "Parent Volunteer" | "Parent Oversight" | "Student Volunteer";
+  type: "Adult Volunteer" | "Student Volunteer";
   duties: string[];
 }
 
