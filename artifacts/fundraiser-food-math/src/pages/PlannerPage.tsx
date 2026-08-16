@@ -355,7 +355,7 @@ export default function PlannerPage({ onPlanReady }: PlannerPageProps) {
             >
               <span className="template-card-emoji" aria-hidden="true">{template.mealEmoji}</span>
               <span className="template-card-name">{template.displayName}</span>
-              <span className="template-card-meta">
+              <span className="template-card-meta" hidden>
                 {template.formData.attendance} guests · {template.formData.orgType}
               </span>
             </button>
