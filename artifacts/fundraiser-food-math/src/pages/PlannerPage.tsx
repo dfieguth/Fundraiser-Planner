@@ -18,16 +18,49 @@ const ENABLE_TIERED_PRICING = false;
 const SHOW_STORE_SELECTOR = false;
 
 // ── Schema ───────────────────────────────────────────────────
+const requiredNumber = (
+  label: string,
+  min: number,
+  max?: number,
+  wholeNumber = false,
+) => z.preprocess(
+  (value) => {
+    if (value === "" || value === null || value === undefined) return undefined;
+    if (typeof value === "string") {
+      const parsed = Number(value);
+      return Number.isFinite(parsed) ? parsed : value;
+    }
+    return value;
+  },
+  z.number({
+    required_error: `${label} is required.`,
+    invalid_type_error: `${label} must be a valid number.`,
+  })
+    .min(min, `${label} must be at least ${min.toLocaleString()}.`)
+    .refine((value) => !wholeNumber || Number.isInteger(value), {
+      message: `${label} must be a whole number.`,
+    })
+    .refine((value) => max === undefined || value <= max, {
+      message: max === undefined ? `${label} is invalid.` : `${label} must be ${max.toLocaleString()} or less.`,
+    }),
+);
+
 const schema = z.object({
   eventName: z.string().min(1, "Event name is required"),
-  orgType: z.enum(["Church", "School", "Sports Team", "Nonprofit", "Other"]),
+  orgType: z.preprocess(
+    (value) => value === "" || value === null || value === undefined ? undefined : value,
+    z.enum(["Church", "School", "Sports Team", "Nonprofit", "Other"], {
+      required_error: "Please select an organization type.",
+      invalid_type_error: "Please select an organization type.",
+    }),
+  ),
   mealType: z.enum([
     "hotdogs", "burgers", "bakedPotatoes", "breakfastBurritos",
     "tacos", "walkingTacos", "spaghetti", "pancakes", "custom",
     "combo_hotdogs_potatoes", "combo_burgers_chips", "combo_pancakes_sausage",
   ]),
-  attendance: z.coerce.number().min(10, "Minimum 10 guests").max(5000, "Max 5000"),
-  mealPrice: z.coerce.number().min(0.5, "Price must be at least $0.50"),
+  attendance: requiredNumber("Guest count", 10, 5000, true),
+  mealPrice: requiredNumber("Suggested donation", 0.5),
   storePreference: z.enum(["Costco", "Sam's Club", "Walmart", "Smart & Final", "Aldi", "Local Grocery", "Mixed"]),
   prepStartTime: z.string().min(1, "Prep start time is required"),
   serveStartTime: z.string().min(1, "Serve start time is required"),
@@ -125,10 +158,10 @@ const DIETARY_OPTIONS  = [
 
 // ── Default form values ───────────────────────────────────────
 const DEFAULT_VALUES: PlannerFormData = {
-  orgType: "Church",
+  orgType: "" as PlannerFormData["orgType"],
   mealType: "hotdogs",
-  attendance: 100,
-  mealPrice: 10,
+  attendance: "" as unknown as number,
+  mealPrice: "" as unknown as number,
   storePreference: "Mixed",
   prepStartTime: "10:00",
   serveStartTime: "12:00",
@@ -188,7 +221,7 @@ export default function PlannerPage({ onPlanReady }: PlannerPageProps) {
 
   // ── Multi-meal selection state ────────────────────────────────
   const [selectedMeals, setSelectedMeals] = useState<MealType[]>([DEFAULT_VALUES.mealType]);
-  const [totalExpectedGuests, setTotalExpectedGuests] = useState<number>(DEFAULT_VALUES.attendance);
+  const [totalExpectedGuests, setTotalExpectedGuests] = useState<number | "">("");
 
   // Sync first selected meal → form.mealType (for schema validation + downstream logic)
   useEffect(() => {
@@ -240,12 +273,20 @@ export default function PlannerPage({ onPlanReady }: PlannerPageProps) {
   const handleSelectTemplate = (templateId: string) => {
     const template = SAMPLE_TEMPLATES.find((t) => t.id === templateId);
     if (!template) return;
-    form.reset({ ...DEFAULT_VALUES, ...template.formData });
+    form.reset({
+      ...DEFAULT_VALUES,
+      eventName: template.formData.eventName,
+      mealType: template.formData.mealType,
+      prepStartTime: template.formData.prepStartTime,
+      serveStartTime: template.formData.serveStartTime,
+      serveEndTime: template.formData.serveEndTime,
+      adultVolunteers: template.formData.adultVolunteers,
+      studentVolunteers: template.formData.studentVolunteers,
+    });
     setActiveTemplateId(templateId);
     const mealT = template.formData.mealType;
-    const att = template.formData.attendance;
     setSelectedMeals([mealT]);
-    setTotalExpectedGuests(att);
+    setTotalExpectedGuests("");
     const formEl = document.querySelector("[data-testid='planner-form']");
     if (formEl) formEl.scrollIntoView({ behavior: "smooth", block: "start" });
   };
@@ -254,7 +295,7 @@ export default function PlannerPage({ onPlanReady }: PlannerPageProps) {
     form.reset(DEFAULT_VALUES);
     setActiveTemplateId(null);
     setSelectedMeals([DEFAULT_VALUES.mealType]);
-    setTotalExpectedGuests(DEFAULT_VALUES.attendance);
+    setTotalExpectedGuests("");
   };
 
   const pricingModel = form.watch("pricingModel");
@@ -265,16 +306,19 @@ export default function PlannerPage({ onPlanReady }: PlannerPageProps) {
     ? "Suggested Donation per Plate ($) *"
     : orgType === "School" || orgType === "Sports Team"
       ? "Suggested Donation / Ticket Price ($) *"
-      : "Price per Plate ($) *";
+      : "Suggested Donation or Ticket Price ($) *";
 
   const onSubmit = (data: PlannerFormData) => {
     const primaryMeal = selectedMeals[0] ?? data.mealType;
+    const attendance = typeof totalExpectedGuests === "number"
+      ? totalExpectedGuests
+      : data.attendance;
     const enriched: PlannerFormData = {
       ...data,
       mealType: primaryMeal,
-      attendance: totalExpectedGuests,
+      attendance,
       selectedMeals: selectedMeals.length >= 2 ? selectedMeals : undefined,
-      totalExpectedGuests: selectedMeals.length >= 2 ? totalExpectedGuests : undefined,
+      totalExpectedGuests: selectedMeals.length >= 2 ? attendance : undefined,
     };
     onPlanReady(enriched);
   };
@@ -283,7 +327,7 @@ export default function PlannerPage({ onPlanReady }: PlannerPageProps) {
     if (step === 1) {
       // Sync attendance from state so schema validation passes
       const primaryMeal = selectedMeals[0] ?? DEFAULT_VALUES.mealType;
-      form.setValue("attendance", totalExpectedGuests);
+      form.setValue("attendance", totalExpectedGuests as number);
       form.setValue("mealType", primaryMeal);
       const isValid = await form.trigger([
         "eventName", "orgType", "mealType", "attendance", "mealPrice", "notes",
@@ -340,7 +384,7 @@ export default function PlannerPage({ onPlanReady }: PlannerPageProps) {
           <h2 className="template-picker-heading">Start with a sample</h2>
           <p className="template-picker-note">
             Choose a common fundraiser scenario and edit it to match your event.
-            Samples are starting points — adjust attendance, volunteers, pricing, and timing for your actual event.
+            Samples preload only the event name and meal type. Any timing and volunteer numbers are suggested starting values — confirm and edit them for your actual event.
           </p>
         </div>
 
@@ -441,7 +485,7 @@ export default function PlannerPage({ onPlanReady }: PlannerPageProps) {
                     <Select onValueChange={field.onChange} value={field.value}>
                       <FormControl>
                         <SelectTrigger className="field-select" data-testid="select-org-type">
-                          <SelectValue placeholder="Select type" />
+                          <SelectValue placeholder="Select organization type" />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
@@ -589,41 +633,50 @@ export default function PlannerPage({ onPlanReady }: PlannerPageProps) {
 
               {/* ── Servings & Guest Count ─────────────────────── */}
               <div className="field-group">
-                {/* Primary: guest headcount */}
-                <p className="field-label">How many guests are you expecting? *</p>
-                <p className="field-hint" style={{ marginTop: 0, marginBottom: 12 }}>
-                  Enter your expected guest count. Servings to prepare are calculated automatically below.
-                </p>
+                <FormField
+                  control={form.control}
+                  name="attendance"
+                  render={({ field }) => (
+                    <FormItem>
+                      <p className="field-label">How many guests are you expecting? *</p>
+                      <p className="field-hint" style={{ marginTop: 0, marginBottom: 12 }}>
+                        Enter your expected guest count. Servings to prepare are calculated automatically below.
+                      </p>
 
-                <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 16 }}>
-                  <span style={{ flex: 1 }}>
-                    <span style={{ fontWeight: 600, fontSize: 14, color: "var(--color-text)", display: "block" }}>
-                      Total guests expected
-                    </span>
-                    <span style={{ fontSize: 11, color: "var(--color-text-muted)" }}>
-                      Used for revenue estimate, supplies, and volunteer ratios
-                    </span>
-                  </span>
-                  <input
-                    type="number"
-                    min={1}
-                    max={5000}
-                    value={totalExpectedGuests}
-                    onInput={(e) => {
-                      const t = e.currentTarget;
-                      const n = parseInt(t.value, 10);
-                      if (!isNaN(n) && t.value !== String(n)) t.value = String(n);
-                    }}
-                    onChange={(e) => {
-                      const guests = e.target.value === "" ? 0 : Math.max(0, parseInt(e.target.value) || 0);
-                      setTotalExpectedGuests(guests);
-                    }}
-                    className="field-input"
-                    style={{ width: 90 }}
-                    data-testid="input-total-guests"
-                  />
-                  <span style={{ fontSize: 13, color: "var(--color-text-muted)", whiteSpace: "nowrap" }}>guests</span>
-                </div>
+                      <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 16 }}>
+                        <span style={{ flex: 1 }}>
+                          <span style={{ fontWeight: 600, fontSize: 14, color: "var(--color-text)", display: "block" }}>
+                            Total guests expected
+                          </span>
+                          <span style={{ fontSize: 11, color: "var(--color-text-muted)" }}>
+                            Used for revenue estimate, supplies, and volunteer ratios
+                          </span>
+                        </span>
+                        <input
+                          type="number"
+                          min={10}
+                          max={5000}
+                          value={totalExpectedGuests}
+                          onInput={(e) => {
+                            const t = e.currentTarget;
+                            const n = parseInt(t.value, 10);
+                            if (!isNaN(n) && t.value !== String(n)) t.value = String(n);
+                          }}
+                          onChange={(e) => {
+                            const guests = e.target.value === "" ? "" : Math.max(0, parseInt(e.target.value) || 0);
+                            setTotalExpectedGuests(guests);
+                            field.onChange(guests);
+                          }}
+                          className="field-input"
+                          style={{ width: 90 }}
+                          data-testid="input-total-guests"
+                        />
+                        <span style={{ fontSize: 13, color: "var(--color-text-muted)", whiteSpace: "nowrap" }}>guests</span>
+                      </div>
+                      <FormMessage className="field-error" />
+                    </FormItem>
+                  )}
+                />
 
                  {/* Secondary: per-meal servings (calculated from the universal rule) */}
                 <div style={{ borderTop: "1px solid var(--color-border)", paddingTop: 12 }}>
@@ -651,7 +704,9 @@ export default function PlannerPage({ onPlanReady }: PlannerPageProps) {
                           style={{ minWidth: 90, textAlign: "right", fontSize: 16, color: "var(--color-text)" }}
                           data-testid={`input-servings-${meal}`}
                         >
-                          {getPreparedServings(totalExpectedGuests, meal).toLocaleString()}
+                          {totalExpectedGuests === ""
+                            ? "—"
+                            : getPreparedServings(totalExpectedGuests, meal).toLocaleString()}
                         </strong>
                         <span style={{ fontSize: 13, color: "var(--color-text-muted)", whiteSpace: "nowrap" }}>servings</span>
                       </div>
@@ -947,7 +1002,7 @@ export default function PlannerPage({ onPlanReady }: PlannerPageProps) {
 
               {activeTemplate && (
                 <p className="template-step-note" data-testid="template-step-note-3">
-                  Pre-filled from <strong>{activeTemplate.displayName}</strong> — adjust as needed.
+                  Suggested starting values from <strong>{activeTemplate.displayName}</strong> — confirm and edit these times and volunteer counts for your event.
                 </p>
               )}
 
@@ -1075,12 +1130,20 @@ export default function PlannerPage({ onPlanReady }: PlannerPageProps) {
                 {selectedMeals.map((meal) => (
                   <div key={meal} className="review-row">
                     <span>{selectedMeals.length > 1 ? `${ALL_MEAL_LABELS[meal] ?? meal} servings` : "Servings planned"}</span>
-                    <strong>{getPreparedServings(totalExpectedGuests, meal).toLocaleString()} servings</strong>
+                    <strong>
+                      {typeof totalExpectedGuests === "number"
+                        ? `${getPreparedServings(totalExpectedGuests, meal).toLocaleString()} servings`
+                        : "—"}
+                    </strong>
                   </div>
                 ))}
                 <div className="review-row">
                   <span>Total Guests Expected</span>
-                  <strong>{totalExpectedGuests.toLocaleString()} guests</strong>
+                  <strong>
+                    {typeof totalExpectedGuests === "number"
+                      ? `${totalExpectedGuests.toLocaleString()} guests`
+                      : "—"}
+                  </strong>
                 </div>
                 <div className="review-row">
                   <span>Meal Price</span>
