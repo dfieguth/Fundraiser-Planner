@@ -355,7 +355,7 @@ export default function ResultsPage({ plan, formData, onReset }: ResultsPageProp
           <div className="summary-card" data-testid="card-cost">
             <div className="summary-label">Est. Total Cost</div>
             <div className="summary-value">{fmt(safeCostRange[0])} – {fmt(safeCostRange[1])}</div>
-            <div className="summary-note">Food + supplies + 5% buffer</div>
+            <div className="summary-note">Food + supplies + planning buffer</div>
           </div>
         )}
         {SHOW_PRICING && (
@@ -696,14 +696,17 @@ export default function ResultsPage({ plan, formData, onReset }: ResultsPageProp
           <section className="results-section">
             <h2 className="section-heading">Food Quantity Plan</h2>
             <p className="section-note">
-              Quantities include a waste/overage buffer. Adjust based on your knowledge of your crowd.
+              Recommended quantities may be slightly higher than your expected attendance. This small planning buffer helps cover dropped or damaged food, larger portions, and unexpected guests. Actual needs can vary, so use your knowledge of your group when making final purchases.
+            </p>
+            <p className="section-note">
+              Use the expected servings as the planning baseline. Each row shows the likely food amount needed; the Shopping List notes packages to purchase and expected leftovers where the package size creates extra.
             </p>
             <div className="table-wrap">
               <table className="data-table" data-testid="table-food-quantities">
                 <thead>
                   <tr>
                     <th>Ingredient</th>
-                    <th>Quantity to Buy</th>
+                    <th>Expected Amount</th>
                     <th>Notes</th>
                   </tr>
                 </thead>

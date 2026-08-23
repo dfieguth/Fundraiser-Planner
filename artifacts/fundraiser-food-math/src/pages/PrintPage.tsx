@@ -259,12 +259,18 @@ export default function PrintPage() {
       {/* ── 5. Shopping List (grouped by category) ── */}
       <div className="print-section print-section--breakable">
         <SectionTitle>Shopping List</SectionTitle>
+        <p className="print-note">
+          Recommended quantities may be slightly higher than your expected attendance. This small planning buffer helps cover dropped or damaged food, larger portions, and unexpected guests. Actual needs can vary, so use your knowledge of your group when making final purchases.
+        </p>
+        <p className="print-note">
+          Expected servings are the planning baseline. Ingredient quantities describe likely usage; shopping rows identify package quantities to purchase and expected leftovers when package sizes create extra.
+        </p>
 
         {/* Food Quantity Estimates */}
         <p className="print-sub-heading">Ingredient Quantities</p>
         <table className="print-table" style={{ marginBottom: "1.25rem" }}>
           <thead>
-            <tr><th>Ingredient</th><th>Quantity Needed</th><th>Notes</th></tr>
+            <tr><th>Ingredient</th><th>Expected Amount</th><th>Notes</th></tr>
           </thead>
           <tbody>
             {plan.foodQuantities.map((q, i) => (

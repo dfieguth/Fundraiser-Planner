@@ -23,7 +23,7 @@ export default function LandingPage() {
           <div className="hero-badge" data-testid="hero-badge">For churches, schools, teams & nonprofits</div>
           <h1 className="hero-headline" data-testid="hero-headline">Plan your food fundraiser without guessing.</h1>
           <p className="hero-subheadline" data-testid="hero-subheadline">
-            Get your food quantities, shopping list, prep timeline, volunteer plan, basic budget range, announcement copy, and Canva flyer brief in one ready-to-use fundraiser plan.
+            Choose a supported meal, enter your expected attendance, and get dependable food quantities plus a practical shopping plan. You also receive helpful prep, volunteer, and communication extras for running the event.
           </p>
           <Link href="/planner" className="hero-cta" data-testid="button-hero-cta">
             Build My Fundraiser Plan <ArrowRight className="ml-2 w-5 h-5" />
@@ -43,18 +43,18 @@ export default function LandingPage() {
           <div className="steps-grid">
             <div className="step-card" data-testid="card-step-1">
               <div className="step-number"><Utensils className="w-6 h-6" /></div>
-              <h3 className="step-title">Fill out your event details</h3>
-              <p className="step-desc">Tell us your meal type, expected attendance, price point, and volunteer count.</p>
+              <h3 className="step-title">Choose a meal and attendance</h3>
+              <p className="step-desc">Pick a supported meal and enter how many guests you expect.</p>
             </div>
             <div className="step-card" data-testid="card-step-2">
               <div className="step-number"><Calculator className="w-6 h-6" /></div>
               <h3 className="step-title">We do the math</h3>
-              <p className="step-desc">Shopping list, food quantities, supply list, cost range, and profit estimate — all calculated instantly.</p>
+              <p className="step-desc">Get dependable quantities, package guidance, and a practical shopping list calculated for your event.</p>
             </div>
             <div className="step-card" data-testid="card-step-3">
               <div className="step-number"><Printer className="w-6 h-6" /></div>
               <h3 className="step-title">Print and run your event</h3>
-              <p className="step-desc">Take your printable plan to the store and your team. No more guessing how many hot dogs to buy.</p>
+              <p className="step-desc">Take the food plan to the store, with prep, volunteer, and communication tools as helpful bonuses.</p>
             </div>
           </div>
         </div>
@@ -66,7 +66,7 @@ export default function LandingPage() {
           <h2 className="section-title">Meals we support</h2>
           <div className="meals-grid">
             {[
-              "Hot Dogs", "Burgers", "Baked Potatoes",
+              "Hot Dogs", "Burgers", "Baked Potato Bar",
               "Taco Bar", "Walking Tacos", "Spaghetti Dinner",
             ].map((m) => (
               <div key={m} className="meal-chip" data-testid={`chip-meal-${m.replace(/\s/g, "-").toLowerCase()}`}>{m}</div>
@@ -118,11 +118,11 @@ export default function LandingPage() {
             <p className="about-text">
               Fundraiser Food Math was built for the event coordinators who are already
               doing too much — the parent volunteer who got asked to "handle food" for 300 people,
-              the youth pastor figuring out how many pounds of taco meat to buy, the team mom
-              managing a pancake breakfast on a Saturday morning.
+              the youth pastor figuring out how many pounds of taco meat to buy, or the
+              coordinator managing a spaghetti dinner on a Saturday night.
             </p>
             <p className="about-text">
-              We handle the math. You handle the people.
+              We handle the meal math. You handle the people. Prep, volunteer, and communication tools are there to support you.
             </p>
             <Link href="/planner" className="hero-cta about-cta" data-testid="button-about-cta">
               Build My Plan Now
