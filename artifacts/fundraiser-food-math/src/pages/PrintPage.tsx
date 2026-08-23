@@ -23,10 +23,10 @@ function formatTime12(t: string): string {
 const MEAL_LABELS: Record<string, string> = {
   hotdogs: "Hot Dogs",
   burgers: "Burgers",
-  bakedPotatoes: "Baked Potatoes",
+  bakedPotatoes: "Baked Potato Bar",
   breakfastBurritos: "Breakfast Burritos",
   tacos: "Tacos",
-  spaghetti: "Spaghetti",
+  spaghetti: "Spaghetti Dinner",
   pancakes: "Pancakes",
   custom: "Custom Meal",
 };

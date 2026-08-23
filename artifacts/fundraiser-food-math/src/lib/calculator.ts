@@ -37,6 +37,11 @@ function formatQuantityUnit(unit: string, quantity: number): string {
   return IRREGULAR_PLURALS[unit] ?? `${unit}s`;
 }
 
+function formatApproximateQuantity(quantity: number): string {
+  const rounded = Math.round(quantity * 10) / 10;
+  return Number.isInteger(rounded) ? `${rounded}` : `${rounded}`;
+}
+
 // ── Store-specific package overrides ─────────────────────────
 // Applies warehouse-specific package size overrides without changing
 // base mealAssumptions. Only called when storePreference warrants it.
@@ -1014,7 +1019,12 @@ function computeIngredientResults(
     cost = rangeAdd(cost, itemCost);
 
     const neededCount = Math.ceil(rawTotal);
-    const neededDisplay = `${neededCount} ${formatQuantityUnit(ing.unit, neededCount)} needed`;
+    const secondaryDisplay = ing.secondaryPerServing && ing.secondaryUnit
+      ? ` (${ing.secondaryLabel ?? "about"} ${formatApproximateQuantity(servings * ing.secondaryPerServing)} ${ing.secondaryUnit} total)`
+      : "";
+    const neededDisplay = ing.usedPerGuest && ing.usedUnit
+      ? `about ${formatApproximateQuantity(guestCount * ing.usedPerGuest)} ${formatQuantityUnit(ing.usedUnit, Math.round(guestCount * ing.usedPerGuest))} used`
+      : `${neededCount} ${formatQuantityUnit(ing.unit, neededCount)} needed${secondaryDisplay}`;
 
     const usageNote = (ing.usageRate !== undefined && ing.usageRate < 1.0)
       ? `~${Math.round(ing.usageRate * 100)}% of guests typically use this`
@@ -1022,7 +1032,12 @@ function computeIngredientResults(
     const cookingNote = ing.cookingOnly
       ? "Cooking ingredient — calculated by batch, not per guest"
       : undefined;
-    const note = cookingNote ?? usageNote ?? (ing.category === "condiment" ? "Estimate — adjust for your crowd" : undefined);
+    const purchaseNote = ing.usedPerGuest && ing.usedUnit
+      ? `Buy ${packages} × ${ing.packageUnit}; package leftovers are expected`
+      : packages > 0 ? `Buy ${packages} × ${ing.packageUnit}` : undefined;
+    const note = [cookingNote, purchaseNote, usageNote ?? (ing.category === "condiment" ? "Estimate — adjust for your crowd" : undefined)]
+      .filter(Boolean)
+      .join(" · ") || undefined;
 
     foodQuantities.push({
       ingredient: ing.name,
@@ -1033,7 +1048,9 @@ function computeIngredientResults(
       item: ing.name,
       quantity: neededDisplay,
       estimatedCost: itemCost,
-      notes: cookingNote ?? usageNote ?? (ing.category === "condiment" ? "May have leftovers — saves money at your next event" : undefined),
+      notes: [cookingNote, purchaseNote, usageNote ?? (ing.category === "condiment" ? "May have leftovers — saves money at your next event" : undefined)]
+        .filter(Boolean)
+        .join(" · ") || undefined,
       category: ing.category,
       tier: ing.tier,
     });

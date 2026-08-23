@@ -40,6 +40,13 @@ export interface IngredientDef {
   // Display tier for shopping list grouping. When set, shopping list uses
   // tier-based sections instead of category-based sections.
   tier?: "essential" | "recommended" | "optional";
+  // Optional secondary quantity for food amounts that differ from package units.
+  secondaryPerServing?: number;
+  secondaryUnit?: string;
+  secondaryLabel?: string;
+  // Actual usage for batch cooking ingredients, shown separately from purchase.
+  usedPerGuest?: number;
+  usedUnit?: string;
 }
 
 export interface SupplyDef {
@@ -127,19 +134,20 @@ export const hotDogAssumptions: MealAssumption = {
     },
     {
       name: "Canned Chili (108 oz can \u2014 optional topping for chili dogs)",
-      perServing: 0.04,
-      unit: "can",
-      packageSize: 1,
-      packageUnit: "108 oz can",
+      perServing: 60 / 110,
+      unit: "oz",
+      packageSize: 30,
+      packageUnit: "30 oz can",
       costPerPackage: [1.50, 3.00],
       category: "other",
-      usageRate: 0.20,
+      usageRate: 1,
+      tier: "optional",
       required: false,
     },
     {
       // Individual bags preferred for self-serve lines — no sharing issues
       name: "Potato Chips (individual snack bags — side option)",
-      perServing: 1,
+      perServing: 120 / 110,
       unit: "bag",
       packageSize: 40,
       packageUnit: "40-count variety pack",
@@ -175,7 +183,7 @@ export const burgerAssumptions: MealAssumption = {
   cookingComplexity: "medium",
   ingredients: [
     {
-      name: "Ground Beef Patties (1/3 lb each, frozen or fresh)",
+      name: "Ground Beef Patties (1/4 lb each, frozen or fresh)",
       perServing: 1,
       unit: "patty",
       packageSize: 6,
@@ -298,7 +306,7 @@ export const burgerAssumptions: MealAssumption = {
 // ============================================================
 export const bakedPotatoAssumptions: MealAssumption = {
   label: "bakedPotatoes",
-  displayName: "Baked Potatoes",
+  displayName: "Baked Potato Bar",
   perGuestServings: 1.10,  // 1.0 × 1.1 buffet premium
   wasteBuffer: 1.05,
   cookingComplexity: "medium",
@@ -313,6 +321,9 @@ export const bakedPotatoAssumptions: MealAssumption = {
       category: "carb",
       required: true,
       tier: "essential",
+      secondaryPerServing: 7 / 11,
+      secondaryUnit: "lb",
+      secondaryLabel: "about",
     },
     {
       // Cooking ingredient — 1 tbsp per 10 potatoes.
@@ -326,6 +337,8 @@ export const bakedPotatoAssumptions: MealAssumption = {
       costPerPackage: [8.00, 15.00],
       category: "other",
       cookingOnly: true,
+      usedPerGuest: 0.06,
+      usedUnit: "oz",
     },
     {
       // Cooking ingredient — 1 tsp per 10 potatoes.
@@ -339,89 +352,91 @@ export const bakedPotatoAssumptions: MealAssumption = {
       costPerPackage: [3.00, 5.50],
       category: "condiment",
       cookingOnly: true,
+      usedPerGuest: 0.02,
+      usedUnit: "oz",
     },
     {
       // 80% usage — core topping; 1 box per 100 guests
       name: "Butter (1-lb block box)",
-      perServing: 0.0125,
+      perServing: 3 / 110,
       unit: "box",
       packageSize: 1,
       packageUnit: "1-lb block box (4 sticks)",
       costPerPackage: [4.50, 8.00],
       category: "dairy",
-      usageRate: 0.80,
+      usageRate: 1,
       tier: "essential",
     },
     {
       // 60% usage — core topping; 1 x 3-lb tub per 100 guests
       name: "Sour Cream (3-lb tub)",
-      perServing: 0.0167,
-      unit: "tub",
-      packageSize: 1,
+      perServing: 5 / 110,
+      unit: "lb",
+      packageSize: 3,
       packageUnit: "3-lb tub",
       costPerPackage: [5.99, 5.99],
       category: "dairy",
-      usageRate: 0.60,
+      usageRate: 1,
       tier: "essential",
     },
     {
       // 65% usage — core topping; 2.5 lbs per 100 guests, buy in 5-lb bags
       name: "Fiesta Blend Shredded Cheese",
-      perServing: 0.0385,
+      perServing: 5 / 110,
       unit: "lb",
       packageSize: 5,
       packageUnit: "5-lb bag",
       costPerPackage: [10.99, 10.99],
       category: "dairy",
-      usageRate: 0.65,
+      usageRate: 1,
       tier: "essential",
     },
     {
       // 30% usage — fresh garnish; 3 bunches per 100 guests
       name: "Chives or Green Onions (bunches)",
-      perServing: 0.10,
+      perServing: 3 / 110,
       unit: "bunch",
       packageSize: 1,
       packageUnit: "bunch",
       costPerPackage: [1.25, 3.00],
       category: "produce",
-      usageRate: 0.30,
+      usageRate: 1,
       tier: "essential",
     },
     {
       // 50% usage — popular add-on; 2 large cans per 100 guests
       name: "Chili (large can)",
-      perServing: 0.04,
+      perServing: 4 / 110,
       unit: "can",
       packageSize: 1,
       packageUnit: "large can (~30 oz)",
       costPerPackage: [3.50, 6.00],
       category: "protein",
-      usageRate: 0.50,
+      usageRate: 1,
       tier: "recommended",
     },
     {
       // 40% usage — popular add-on; 1 large can per 100 guests
       name: "Nacho Cheese (large can)",
-      perServing: 0.025,
+      perServing: 2 / 110,
       unit: "can",
       packageSize: 1,
       packageUnit: "large can (~30 oz)",
       costPerPackage: [4.00, 7.50],
       category: "dairy",
-      usageRate: 0.40,
+      usageRate: 1,
       tier: "recommended",
     },
     {
       // 30% usage — fresh topping; 2 large onions per 100 guests
       name: "White Onion (large)",
-      perServing: 0.067,
+      perServing: 2 / 110,
       unit: "onion",
       packageSize: 1,
       packageUnit: "large onion",
       costPerPackage: [1.00, 2.00],
       category: "produce",
-      usageRate: 0.30,
+      usageRate: 1,
       tier: "recommended",
     },
   ],
@@ -568,15 +583,15 @@ export const breakfastBurritoAssumptions: MealAssumption = {
 // ============================================================
 export const tacoAssumptions: MealAssumption = {
   label: "tacos",
-  displayName: "Tacos",
-  perGuestServings: 2.3,   // 2 × 1.15 per-person buffer
+  displayName: "Taco Bar",
+  perGuestServings: 2.2,
   wasteBuffer: 1.05,
   cookingComplexity: "low",
   ingredients: [
     {
       // 2.5 oz cooked per taco → raw with 25% shrink = 3.33 oz = 0.208 lb raw per taco
       name: "Ground Beef 80/20 (or ground turkey)",
-      perServing: 0.208,
+      perServing: 30 / 220,
       unit: "lb",
       packageSize: 5,
       packageUnit: "5-lb pack",
@@ -606,9 +621,9 @@ export const tacoAssumptions: MealAssumption = {
       category: "carb",
     },
     {
-      // 1 packet per 1 lb of meat, scaled to 0.208 lb meat per taco
+      // One packet per pound of raw meat.
       name: "Taco Seasoning (1-oz packet per 1 lb of meat)",
-      perServing: 0.208,
+      perServing: 30 / 220,
       unit: "packet",
       packageSize: 1,
       packageUnit: "1-oz packet",
@@ -738,7 +753,7 @@ export const spaghettiAssumptions: MealAssumption = {
     {
       // 4 oz (0.25 lb) dry pasta per adult serving — standard main-course portion
       name: "Dry Spaghetti (1-lb boxes)",
-      perServing: 0.25,
+      perServing: 18 / 110,
       unit: "lb",
       packageSize: 1,
       packageUnit: "1-lb box",
@@ -749,7 +764,7 @@ export const spaghettiAssumptions: MealAssumption = {
     {
       // 2.5 oz cooked per serving; raw with 25% shrink = 0.208 lb raw
       name: "Ground Beef 80/20 or Italian Sausage (for sauce)",
-      perServing: 0.21,
+      perServing: 20 / 110,
       unit: "lb",
       packageSize: 5,
       packageUnit: "5-lb pack",
@@ -760,7 +775,7 @@ export const spaghettiAssumptions: MealAssumption = {
     {
       // 4 oz sauce per serving → 4/24 = 0.167 of a 24 oz jar per serving
       name: "Jarred Pasta Sauce (24 oz jar)",
-      perServing: 0.167,
+      perServing: 20 / 110,
       unit: "jar",
       packageSize: 1,
       packageUnit: "24 oz jar",
@@ -781,23 +796,23 @@ export const spaghettiAssumptions: MealAssumption = {
     },
     {
       name: "Bagged Salad Mix (12 oz bag — optional side)",
-      perServing: 0.05,
+      perServing: 12 / 110,
       unit: "bag",
       packageSize: 1,
       packageUnit: "12 oz bag",
       costPerPackage: [3.50, 6.00],
       category: "produce",
-      usageRate: 0.65,
+      usageRate: 1,
     },
     {
       name: "Italian Salad Dressing (16 oz bottle)",
-      perServing: 0.04,
+      perServing: 5 / 110,
       unit: "bottle",
       packageSize: 1,
       packageUnit: "16 oz bottle",
       costPerPackage: [2.50, 5.00],
       category: "condiment",
-      usageRate: 0.65,
+      usageRate: 1,
     },
     {
       name: "Parmesan Cheese (shredded, 8 oz bag)",
@@ -1005,7 +1020,7 @@ export const pancakeAssumptions: MealAssumption = {
 export const walkingTacosAssumptions: MealAssumption = {
   label: "walkingTacos",
   displayName: "Walking Tacos",
-  perGuestServings: 1.0,   // 1 bag per person — format is self-limiting
+  perGuestServings: 1.1,   // 110 individual bags for 100 guests
   wasteBuffer: 1.05,
   cookingComplexity: "low",
   ingredients: [
@@ -1023,7 +1038,7 @@ export const walkingTacosAssumptions: MealAssumption = {
     {
       // 2 oz cooked meat per person → raw with 25% shrink = 2.67 oz = 0.167 lb raw
       name: "Ground Beef 80/20 (seasoned taco meat)",
-      perServing: 0.167,
+      perServing: 20 / 110,
       unit: "lb",
       packageSize: 5,
       packageUnit: "5-lb pack",
@@ -1056,7 +1071,7 @@ export const walkingTacosAssumptions: MealAssumption = {
     {
       // 0.75 oz per person; 50% usage
       name: "Sour Cream (5-lb tub)",
-      perServing: 0.047,
+      perServing: 5 / 110,
       unit: "lb",
       packageSize: 5,
       packageUnit: "5-lb tub",

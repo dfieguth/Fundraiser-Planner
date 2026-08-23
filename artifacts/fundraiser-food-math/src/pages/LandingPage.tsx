@@ -67,8 +67,7 @@ export default function LandingPage() {
           <div className="meals-grid">
             {[
               "Hot Dogs", "Burgers", "Baked Potatoes",
-              "Breakfast Burritos", "Tacos", "Spaghetti",
-              "Pancakes", "Custom Meal",
+              "Taco Bar", "Walking Tacos", "Spaghetti Dinner",
             ].map((m) => (
               <div key={m} className="meal-chip" data-testid={`chip-meal-${m.replace(/\s/g, "-").toLowerCase()}`}>{m}</div>
             ))}
@@ -131,7 +130,7 @@ export default function LandingPage() {
           </div>
           <div className="about-stats">
             {[
-              { label: "Meal types supported", value: "8+", icon: <Utensils className="w-6 h-6 text-accent mb-2" /> },
+              { label: "Meal types supported", value: "6", icon: <Utensils className="w-6 h-6 text-accent mb-2" /> },
               { label: "Event sections generated", value: "10+", icon: <LayoutList className="w-6 h-6 text-accent mb-2" /> },
               { label: "Time to complete", value: "~5 min", icon: <Clock className="w-6 h-6 text-accent mb-2" /> },
               { label: "Volunteers helped", value: "Countless", icon: <Users className="w-6 h-6 text-accent mb-2" /> },

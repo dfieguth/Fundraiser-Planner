@@ -79,6 +79,27 @@ function quantityFor(plan: ReturnType<typeof calculatePlan>, name: RegExp): stri
     plan.shoppingList.find((item) => /^Hot Dog Buns /i.test(item.item))?.quantity,
     "110 buns needed",
   );
+  assert.match(quantityFor(plan, /Potato Chips \(individual snack bags/i), /^120 bags needed$/);
+  assert.match(plan.shoppingList.find((item) => /Canned Chili/i.test(item.item))?.notes ?? "", /Buy 2/);
+}
+
+{
+  const targetMeals: Array<[MealType, RegExp[]]> = [
+    ["hotdogs", [/^Hot Dogs/i, /Potato Chips \(individual snack bags/i]],
+    ["burgers", [/Ground Beef Patties \(1\/4 lb/i, /Hamburger Buns/i]],
+    ["bakedPotatoes", [/Russet Potatoes/i, /Butter \(1-lb/i, /Sour Cream \(3-lb/i]],
+    ["tacos", [/Ground Beef 80\/20/i, /Taco Shells/i]],
+    ["walkingTacos", [/Individual Snack Bags/i, /seasoned taco meat/i]],
+    ["spaghetti", [/Dry Spaghetti/i, /for sauce/i, /Jarred Pasta Sauce/i]],
+  ];
+  for (const [mealType, ingredients] of targetMeals) {
+    const plan = calculatePlan({ ...BASE_FORM, mealType });
+    assert.equal(plan.summary.attendance, 100);
+    for (const ingredient of ingredients) assert.ok(quantityFor(plan, ingredient), `Missing ${ingredient}`);
+  }
+  assert.equal(quantityFor(calculatePlan({ ...BASE_FORM, mealType: "tacos" }), /Ground Beef 80\/20/i), "30 lbs needed");
+  assert.equal(quantityFor(calculatePlan({ ...BASE_FORM, mealType: "walkingTacos" }), /Individual Snack Bags/i), "110 bags needed");
+  assert.equal(quantityFor(calculatePlan({ ...BASE_FORM, mealType: "spaghetti" }), /Dry Spaghetti/i), "18 lbs needed");
 }
 
 {
@@ -89,7 +110,7 @@ function quantityFor(plan: ReturnType<typeof calculatePlan>, name: RegExp): stri
   });
   assert.deepEqual(
     multiMealPlan.multiMealSections?.map((section) => section.servings),
-    [110, 100],
+    [110, 110],
   );
   assert.equal(quantityFor(multiMealPlan, /^Hot Dogs(?:$| )/i), "110 hot dogs needed");
   assert.equal(quantityFor(multiMealPlan, /^Hot Dog Buns /i), "110 buns needed");

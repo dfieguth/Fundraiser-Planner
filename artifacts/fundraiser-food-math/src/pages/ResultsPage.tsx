@@ -92,9 +92,9 @@ export default function ResultsPage({ plan, formData, onReset }: ResultsPageProp
     : "Based on flat plate price.";
 
   const MEAL_LABELS: Record<string, string> = {
-    hotdogs: "Hot Dogs", burgers: "Burgers", bakedPotatoes: "Baked Potatoes",
+    hotdogs: "Hot Dogs", burgers: "Burgers", bakedPotatoes: "Baked Potato Bar",
     breakfastBurritos: "Breakfast Burritos", tacos: "Tacos", walkingTacos: "Walking Tacos",
-    spaghetti: "Spaghetti", pancakes: "Pancakes", custom: "Custom Meal",
+    spaghetti: "Spaghetti Dinner", pancakes: "Pancakes", custom: "Custom Meal",
     combo_hotdogs_potatoes: "Hot Dogs + Baked Potatoes",
     combo_burgers_chips: "Burgers + Chips",
     combo_pancakes_sausage: "Pancakes + Sausage",

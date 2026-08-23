@@ -14,7 +14,7 @@ export type VolunteerStudents = "0-3" | "4-8" | "9-15" | "16plus";
 export type EquipmentItem = "kitchen" | "oven" | "grill" | "large-pots" | "warmers" | "fridge" | "no-kitchen";
 export type PriorityItem = "lowest-cost" | "easiest" | "highest-profit" | "fastest-serving" | "kid-friendly" | "adult-friendly";
 export type ConstraintItem = "no-cooking" | "limited-prep" | "limited-adults" | "grab-and-go" | "vegetarian";
-export type MealKey = "hotdogs" | "burgers" | "bakedPotatoes" | "breakfastBurritos" | "tacos" | "spaghetti" | "pancakes";
+export type MealKey = "hotdogs" | "burgers" | "bakedPotatoes" | "breakfastBurritos" | "tacos" | "walkingTacos" | "spaghetti" | "pancakes";
 
 export interface QuizAnswers {
   orgType: OrgType;
@@ -80,6 +80,15 @@ const MEAL_STATIC: Record<MealKey, {
       "Plan oven batches in advance so supply stays ahead of demand during service.",
     ],
   },
+  walkingTacos: {
+    name: "Walking Tacos", emoji: "🌮",
+    difficulty: "Easy", profitPotential: "Medium", volunteerNeed: "Low",
+    equipment: ["Tabletop topping station", "Foil pans for meat", "Serving forks"],
+    watchOuts: [
+      "Open chip bags at service and keep seasoned meat hot in covered pans.",
+      "Use a separate topping station to keep the line moving.",
+    ],
+  },
   breakfastBurritos: {
     name: "Breakfast Burritos", emoji: "🌯",
     difficulty: "Moderate", profitPotential: "Medium", volunteerNeed: "Medium",
@@ -121,7 +130,7 @@ const MEAL_STATIC: Record<MealKey, {
 // ── Scoring tables ────────────────────────────────────────────
 // Each value is the number of points added for that meal/answer combo.
 
-const ATTENDANCE_SCORE: Record<MealKey, Record<AttendanceRange, number>> = {
+const ATTENDANCE_SCORE: Record<string, Record<AttendanceRange, number>> = {
   hotdogs:          { "under75": 2, "75-150": 2, "150-250": 1, "250plus": 0 },
   burgers:          { "under75": 1, "75-150": 2, "150-250": 2, "250plus": 1 },
   bakedPotatoes:    { "under75": 1, "75-150": 2, "150-250": 2, "250plus": 1 },
@@ -131,7 +140,7 @@ const ATTENDANCE_SCORE: Record<MealKey, Record<AttendanceRange, number>> = {
   pancakes:         { "under75": 2, "75-150": 2, "150-250": 1, "250plus": 0 },
 };
 
-const AUDIENCE_SCORE: Record<MealKey, Record<AudienceType, number>> = {
+const AUDIENCE_SCORE: Record<string, Record<AudienceType, number>> = {
   hotdogs:          { "mostly-kids": 2, "mostly-adults": 0, "mixed": 1 },
   burgers:          { "mostly-kids": 0, "mostly-adults": 2, "mixed": 2 },
   bakedPotatoes:    { "mostly-kids": 0, "mostly-adults": 3, "mixed": 2 },
@@ -141,7 +150,7 @@ const AUDIENCE_SCORE: Record<MealKey, Record<AudienceType, number>> = {
   pancakes:         { "mostly-kids": 2, "mostly-adults": 1, "mixed": 2 },
 };
 
-const TIME_SCORE: Record<MealKey, Record<EventTime, number>> = {
+const TIME_SCORE: Record<string, Record<EventTime, number>> = {
   hotdogs:          { breakfast: -2, lunch: 2, dinner: 1, "after-church-school": 2, "during-event": 2 },
   burgers:          { breakfast: -2, lunch: 2, dinner: 2, "after-church-school": 1, "during-event": 1 },
   bakedPotatoes:    { breakfast: -2, lunch: 1, dinner: 3, "after-church-school": 1, "during-event": 0 },
@@ -151,7 +160,7 @@ const TIME_SCORE: Record<MealKey, Record<EventTime, number>> = {
   pancakes:         { breakfast: 4, lunch: 0, dinner: -2, "after-church-school": 1, "during-event": 0 },
 };
 
-const ADULT_VOL_SCORE: Record<MealKey, Record<VolunteerAdults, number>> = {
+const ADULT_VOL_SCORE: Record<string, Record<VolunteerAdults, number>> = {
   hotdogs:          { "0-2": 3, "3-5": 2, "6-10": 1, "10plus": 0 },
   burgers:          { "0-2": -1, "3-5": 1, "6-10": 2, "10plus": 2 },
   bakedPotatoes:    { "0-2": -1, "3-5": 1, "6-10": 2, "10plus": 2 },
@@ -161,7 +170,7 @@ const ADULT_VOL_SCORE: Record<MealKey, Record<VolunteerAdults, number>> = {
   pancakes:         { "0-2": 0, "3-5": 1, "6-10": 2, "10plus": 2 },
 };
 
-const STUDENT_VOL_SCORE: Record<MealKey, Record<VolunteerStudents, number>> = {
+const STUDENT_VOL_SCORE: Record<string, Record<VolunteerStudents, number>> = {
   hotdogs:          { "0-3": 1, "4-8": 1, "9-15": 1, "16plus": 1 },
   burgers:          { "0-3": 0, "4-8": 1, "9-15": 1, "16plus": 1 },
   bakedPotatoes:    { "0-3": 0, "4-8": 1, "9-15": 1, "16plus": 1 },
@@ -171,7 +180,7 @@ const STUDENT_VOL_SCORE: Record<MealKey, Record<VolunteerStudents, number>> = {
   pancakes:         { "0-3": 0, "4-8": 1, "9-15": 1, "16plus": 1 },
 };
 
-const EQUIPMENT_SCORE: Record<MealKey, Record<EquipmentItem, number>> = {
+const EQUIPMENT_SCORE: Record<string, Record<EquipmentItem, number>> = {
   hotdogs:          { kitchen: 0, oven: 0, grill: 3, "large-pots": 0, warmers: 1, fridge: 0, "no-kitchen": 1 },
   burgers:          { kitchen: 0, oven: 0, grill: 3, "large-pots": 0, warmers: 1, fridge: 1, "no-kitchen": -2 },
   bakedPotatoes:    { kitchen: 2, oven: 3, grill: 0, "large-pots": 0, warmers: 2, fridge: 1, "no-kitchen": -3 },
@@ -181,7 +190,7 @@ const EQUIPMENT_SCORE: Record<MealKey, Record<EquipmentItem, number>> = {
   pancakes:         { kitchen: 2, oven: 0, grill: 0, "large-pots": 0, warmers: 1, fridge: 0, "no-kitchen": -2 },
 };
 
-const PRIORITY_SCORE: Record<MealKey, Record<PriorityItem, number>> = {
+const PRIORITY_SCORE: Record<string, Record<PriorityItem, number>> = {
   hotdogs:          { "lowest-cost": 2, easiest: 3, "highest-profit": 0, "fastest-serving": 3, "kid-friendly": 2, "adult-friendly": 0 },
   burgers:          { "lowest-cost": 0, easiest: -1, "highest-profit": 2, "fastest-serving": 1, "kid-friendly": 0, "adult-friendly": 2 },
   bakedPotatoes:    { "lowest-cost": 1, easiest: -2, "highest-profit": 3, "fastest-serving": -1, "kid-friendly": 0, "adult-friendly": 2 },
@@ -189,9 +198,10 @@ const PRIORITY_SCORE: Record<MealKey, Record<PriorityItem, number>> = {
   tacos:            { "lowest-cost": 2, easiest: 1, "highest-profit": 1, "fastest-serving": 1, "kid-friendly": 2, "adult-friendly": 1 },
   spaghetti:        { "lowest-cost": 0, easiest: -2, "highest-profit": 3, "fastest-serving": -2, "kid-friendly": 0, "adult-friendly": 2 },
   pancakes:         { "lowest-cost": 3, easiest: 1, "highest-profit": 1, "fastest-serving": 0, "kid-friendly": 2, "adult-friendly": 1 },
+  walkingTacos:     { "lowest-cost": 2, easiest: 3, "highest-profit": 1, "fastest-serving": 3, "kid-friendly": 3, "adult-friendly": 0 },
 };
 
-const CONSTRAINT_SCORE: Record<MealKey, Record<ConstraintItem, number>> = {
+const CONSTRAINT_SCORE: Record<string, Record<ConstraintItem, number>> = {
   hotdogs:          { "no-cooking": -3, "limited-prep": 2, "limited-adults": 2, "grab-and-go": 2, vegetarian: -2 },
   burgers:          { "no-cooking": -3, "limited-prep": -1, "limited-adults": -1, "grab-and-go": 1, vegetarian: -2 },
   bakedPotatoes:    { "no-cooking": -4, "limited-prep": -2, "limited-adults": -1, "grab-and-go": -2, vegetarian: 1 },
@@ -199,19 +209,20 @@ const CONSTRAINT_SCORE: Record<MealKey, Record<ConstraintItem, number>> = {
   tacos:            { "no-cooking": -3, "limited-prep": -1, "limited-adults": -1, "grab-and-go": 0, vegetarian: 1 },
   spaghetti:        { "no-cooking": -4, "limited-prep": -3, "limited-adults": -3, "grab-and-go": -2, vegetarian: 0 },
   pancakes:         { "no-cooking": -3, "limited-prep": -1, "limited-adults": 0, "grab-and-go": -1, vegetarian: 1 },
+  walkingTacos:     { "no-cooking": -2, "limited-prep": 2, "limited-adults": 2, "grab-and-go": 3, vegetarian: 1 },
 };
 
 // ── Score a single meal ───────────────────────────────────────
 function scoreMeal(meal: MealKey, quiz: QuizAnswers): number {
   let score = 0;
-  score += ATTENDANCE_SCORE[meal][quiz.attendance];
-  score += AUDIENCE_SCORE[meal][quiz.audience];
-  score += TIME_SCORE[meal][quiz.timeOfEvent];
-  score += ADULT_VOL_SCORE[meal][quiz.adultVolunteers];
-  score += STUDENT_VOL_SCORE[meal][quiz.studentHelpers];
-  for (const eq of quiz.equipment) score += EQUIPMENT_SCORE[meal][eq];
-  for (const pr of quiz.priorities) score += PRIORITY_SCORE[meal][pr];
-  for (const cn of quiz.constraints) score += CONSTRAINT_SCORE[meal][cn];
+  score += ATTENDANCE_SCORE[meal]?.[quiz.attendance] ?? 0;
+  score += AUDIENCE_SCORE[meal]?.[quiz.audience] ?? 0;
+  score += TIME_SCORE[meal]?.[quiz.timeOfEvent] ?? 0;
+  score += ADULT_VOL_SCORE[meal]?.[quiz.adultVolunteers] ?? 0;
+  score += STUDENT_VOL_SCORE[meal]?.[quiz.studentHelpers] ?? 0;
+  for (const eq of quiz.equipment) score += EQUIPMENT_SCORE[meal]?.[eq] ?? 0;
+  for (const pr of quiz.priorities) score += PRIORITY_SCORE[meal]?.[pr] ?? 0;
+  for (const cn of quiz.constraints) score += CONSTRAINT_SCORE[meal]?.[cn] ?? 0;
   return score;
 }
 
@@ -346,9 +357,9 @@ const STUDENT_VOL_MIDPOINTS: Record<VolunteerStudents, number> = {
   "0-3": 2, "4-8": 6, "9-15": 10, "16plus": 16,
 };
 
-const DEFAULT_PRICES: Record<MealKey, number> = {
+const DEFAULT_PRICES: Record<string, number> = {
   hotdogs: 8, burgers: 12, bakedPotatoes: 10,
-  breakfastBurritos: 8, tacos: 10, spaghetti: 13, pancakes: 8,
+  breakfastBurritos: 8, tacos: 10, walkingTacos: 9, spaghetti: 13, pancakes: 8,
 };
 
 function buildDefaultFormData(meal: MealKey, quiz: QuizAnswers): PlannerFormData {
@@ -374,7 +385,7 @@ function buildDefaultFormData(meal: MealKey, quiz: QuizAnswers): PlannerFormData
 
 // ── Main entry point ──────────────────────────────────────────
 export function getRecommendations(quiz: QuizAnswers): MealRecommendation[] {
-  const meals: MealKey[] = ["hotdogs", "burgers", "bakedPotatoes", "breakfastBurritos", "tacos", "spaghetti", "pancakes"];
+  const meals: MealKey[] = ["hotdogs", "burgers", "bakedPotatoes", "tacos", "walkingTacos", "spaghetti"];
 
   const scored = meals.map((meal) => ({
     meal,

@@ -105,25 +105,26 @@ const COMBO_OPTIONS: { value: MealType; label: string; emoji: string; desc: stri
 const INDIVIDUAL_OPTIONS: { value: MealType; label: string; emoji: string; desc: string }[] = [
   { value: "hotdogs",          label: "Hot Dogs",          emoji: "🌭", desc: "Easy to grill at scale" },
   { value: "burgers",          label: "Burgers",           emoji: "🍔", desc: "Great for outdoor events" },
-  { value: "bakedPotatoes",    label: "Baked Potatoes",    emoji: "🥔", desc: "Topping-bar format" },
-  { value: "breakfastBurritos",label: "Breakfast Burritos",emoji: "🌯", desc: "Popular morning fundraiser" },
-  { value: "tacos",            label: "Tacos",             emoji: "🌮", desc: "Build-your-own taco bar" },
-  { value: "spaghetti",        label: "Spaghetti",         emoji: "🍝", desc: "Classic sit-down dinner" },
-  { value: "pancakes",         label: "Pancakes",          emoji: "🥞", desc: "Griddle-based breakfast" },
+  { value: "bakedPotatoes",    label: "Baked Potato Bar",  emoji: "🥔", desc: "Topping-bar format" },
+  { value: "tacos",            label: "Taco Bar",           emoji: "🌮", desc: "Build-your-own taco bar" },
+  { value: "walkingTacos",     label: "Walking Tacos",      emoji: "🌮", desc: "Individual chip-bag service" },
+  { value: "spaghetti",        label: "Spaghetti Dinner",  emoji: "🍝", desc: "Classic sit-down dinner" },
 ];
 
-const SNACK_OPTIONS: { value: MealType; label: string; emoji: string; desc: string; badge?: string }[] = [
-  { value: "walkingTacos", label: "Walking Tacos", emoji: "🌮", desc: "Great for youth events and outdoor gatherings", badge: "Youth Favorite" },
-];
+const SNACK_OPTIONS: { value: MealType; label: string; emoji: string; desc: string; badge?: string }[] = [];
 
 const ALL_MEAL_LABELS: Record<string, string> = {
-  hotdogs: "Hot Dogs", burgers: "Burgers", bakedPotatoes: "Baked Potatoes",
+  hotdogs: "Hot Dogs", burgers: "Burgers", bakedPotatoes: "Baked Potato Bar",
   breakfastBurritos: "Breakfast Burritos", tacos: "Tacos", walkingTacos: "Walking Tacos",
-  spaghetti: "Spaghetti", pancakes: "Pancakes", custom: "Custom Meal",
+  spaghetti: "Spaghetti Dinner", pancakes: "Pancakes", custom: "Custom Meal",
   combo_hotdogs_potatoes: "Hot Dogs + Baked Potatoes",
   combo_burgers_chips: "Burgers + Chips",
   combo_pancakes_sausage: "Pancakes + Sausage",
 };
+
+const PUBLIC_MEAL_TYPES = new Set<MealType>([
+  "hotdogs", "burgers", "bakedPotatoes", "tacos", "walkingTacos", "spaghetti",
+]);
 
 const ORG_TYPES: OrgType[] = ["Church", "School", "Sports Team", "Nonprofit", "Other"];
 const STORE_PREFS: StorePreference[] = ["Costco", "Sam's Club", "Walmart", "Smart & Final", "Aldi", "Local Grocery", "Mixed"];
@@ -389,7 +390,7 @@ export default function PlannerPage({ onPlanReady }: PlannerPageProps) {
         </div>
 
         <div className="template-grid" data-testid="template-grid">
-          {SAMPLE_TEMPLATES.map((template) => (
+          {SAMPLE_TEMPLATES.filter((template) => PUBLIC_MEAL_TYPES.has(template.formData.mealType)).map((template) => (
             <button
               key={template.id}
               type="button"
@@ -534,7 +535,6 @@ export default function PlannerPage({ onPlanReady }: PlannerPageProps) {
                     </div>
                     </div>
 
-                    <div style={{ display: "none" }}>
                     {selectedMeals.length >= 2 && (
                       <p style={{ fontSize: 12, color: "var(--color-text-muted)", marginBottom: 8, marginTop: 2 }}>
                         Two meals selected — tap a selected meal to deselect it, or tap a new one to swap the second.
@@ -571,62 +571,9 @@ export default function PlannerPage({ onPlanReady }: PlannerPageProps) {
                         })}
                       </div>
                     </div>
-                    </div>
+                    {/* Legacy snack choices remain in the data model but are not public options. */}
 
-                    {/* Snacks and Light Meals */}
-                    <div className="meal-selector-section">
-                      <p className="meal-selector-section-label">Snacks &amp; Light Meals</p>
-                      <div className="meal-selector-grid meal-selector-grid--individual">
-                        {SNACK_OPTIONS.map((opt) => {
-                          const slotIndex = selectedMeals.indexOf(opt.value as MealType);
-                          const isSelected = slotIndex !== -1;
-                          return (
-                            <button
-                              key={opt.value}
-                              type="button"
-                              className={`meal-card ${isSelected ? "meal-card--active" : ""}`}
-                              onClick={() => toggleMealSelection(opt.value as MealType)}
-                              data-testid={`meal-card-${opt.value}`}
-                            >
-                              <span className="meal-card-emoji" aria-hidden="true">{opt.emoji}</span>
-                              <span className="meal-card-label">{opt.label}</span>
-                              {opt.badge && (
-                                <span style={{ display: "inline-block", fontSize: 10, fontWeight: 700, background: "#fef3c7", color: "#92400e", borderRadius: 4, padding: "1px 5px", marginBottom: 2 }}>{opt.badge}</span>
-                              )}
-                              <span className="meal-card-desc">{opt.desc}</span>
-                              {isSelected && (
-                                <span className="meal-card-check">
-                                  {selectedMeals.length >= 2
-                                    ? <span style={{ fontSize: 11, fontWeight: 700 }}>{slotIndex === 0 ? "①" : "②"}</span>
-                                    : <Check className="w-3.5 h-3.5" />}
-                                </span>
-                              )}
-                            </button>
-                          );
-                        })}
-                      </div>
-                    </div>
-
-                    {/* Custom Meal */}
-                    <div className="meal-selector-section">
-                      <p className="meal-selector-section-label">Something Else</p>
-                      <button
-                        type="button"
-                        className={`meal-card meal-card--custom ${field.value === "custom" ? "meal-card--active" : ""}`}
-                        onClick={() => {
-                          field.onChange("custom");
-                          selectSingleMealType("custom");
-                        }}
-                        data-testid="meal-card-custom"
-                      >
-                        <span className="meal-card-emoji" aria-hidden="true">🍽️</span>
-                        <span className="meal-card-label">Custom Meal</span>
-                        <span className="meal-card-desc">Tell us about your menu on the next step</span>
-                        {field.value === "custom" && (
-                          <span className="meal-card-check"><Check className="w-3.5 h-3.5" /></span>
-                        )}
-                      </button>
-                    </div>
+                    {/* Custom Meal remains supported for legacy saved plans but is not a public selection. */}
                   </FormItem>
                 )}
               />
