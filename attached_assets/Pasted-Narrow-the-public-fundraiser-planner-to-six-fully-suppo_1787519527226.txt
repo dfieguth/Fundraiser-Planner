@@ -1,0 +1,17 @@
+Narrow the public fundraiser planner to six fully supported meals: Hot Dogs, Burgers, Baked Potato Bar, Taco Bar, Walking Tacos, and Spaghetti Dinner. Temporarily hide Breakfast Burritos, Pancake Breakfast, every combination meal, and Custom Meal quantity generation everywhere users choose samples or meals, but preserve their underlying implementation for later restoration.
+
+Update the supported meal calculations so a 100-guest test produces these fundraiser-ready targets after package rounding:
+
+Hot Dogs: 110 hot dogs, at least 110 usable buns, 120 individual chip bags, two 32-ounce ketchup bottles, one 20-ounce mustard bottle, one 10-ounce relish jar, about two large onions, and about 60 ounces of optional chili rather than a 108-ounce institutional can.
+
+Burgers: 110 quarter-pound patties and at least 110 usable buns, while retaining realistic topping participation rates.
+
+Baked Potato Bar: 110 potatoes sized 8 to 10 ounces, shown as about 70 pounds total rather than 110 pounds; 3 pounds butter, 5 pounds sour cream, 5 pounds shredded cheese, 3 to 4 bunches green onions or chives, four 30-ounce chili cans, two 30-ounce nacho-cheese cans, and 2 to 3 large onions. Keep chili and cheese as standard items. Show actual cooking usage of about 6 ounces olive oil and 2 ounces kosher salt separately from any package purchase with leftovers.
+
+Taco Bar: 220 tacos, 30 pounds raw ground meat, and approximately 1.5 to 1.65 cooked ounces of meat per taco, with shells, tortillas, seasoning, and toppings scaled to 220 tacos.
+
+Walking Tacos: 110 individual one-ounce chip bags, 20 pounds raw ground meat, and toppings scaled for 110 servings using the existing realistic participation rates.
+
+Spaghetti Dinner: 110 plates, 18 pounds dry spaghetti, 20 pounds raw ground meat, twenty 24-ounce jars of sauce, 17 garlic-bread loaves that each serve about eight, twelve 12-ounce salad bags, five 16-ounce dressing bottles, and three 8-ounce Parmesan bags.
+
+Make shopping-list wording distinguish food actually used from full packages purchased where that matters. Add or update automated regression checks for each exact 100-guest target and verify typecheck, production build, and existing payment, email, permanent-plan, and restoration tests. Do not publish, change prices, alter Stripe or email settings, change domains, or expose secrets. Report every changed file, exact 100-guest outputs, test results, and any calculation limitation or conflict found.
