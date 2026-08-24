@@ -141,7 +141,10 @@ export default function IdeaFinderPage() {
 
   // ── Build this plan ─────────────────────────────────────────
   const handleBuildPlan = (rec: MealRecommendation) => {
-    const payload = { formData: rec.defaultFormData, mealName: rec.mealName };
+    const payload = {
+      formData: { ...rec.defaultFormData, mealPrice: "" as unknown as number },
+      mealName: rec.mealName,
+    };
     sessionStorage.setItem("ffm_idea_prefill", JSON.stringify(payload));
     setLocation("/planner");
   };

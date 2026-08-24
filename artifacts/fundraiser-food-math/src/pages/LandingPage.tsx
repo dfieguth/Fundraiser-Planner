@@ -1,4 +1,4 @@
-import { PRICING_TIERS, isConfigured } from "@/config/paymentLinks";
+import { PRICING_TIERS } from "@/config/paymentLinks";
 import { ArrowRight, Utensils, Calculator, Printer, Check, Users, Clock, LayoutList } from "lucide-react";
 import { Link } from "wouter";
 
@@ -6,22 +6,23 @@ export default function LandingPage() {
   return (
     <div className="landing" data-testid="landing-page">
       {/* Nav */}
-      <nav className="landing-nav">
+      <header className="landing-nav">
         <Link href="/" className="brand" data-testid="link-home">Fundraiser Food Math</Link>
-        <div className="nav-links">
+        <nav className="nav-links" aria-label="Primary navigation">
           <a href="#how-it-works" data-testid="link-how-it-works">How It Works</a>
           <a href="#pricing" data-testid="link-pricing">Pricing</a>
           <Link href="/planner" className="nav-cta" data-testid="link-nav-cta">
             Start Planning
           </Link>
-        </div>
-      </nav>
+        </nav>
+      </header>
 
       {/* Hero */}
-      <section className="hero-section">
+      <main>
+      <section className="hero-section" aria-labelledby="hero-heading">
         <div className="hero-inner">
           <div className="hero-badge" data-testid="hero-badge">For churches, schools, teams & nonprofits</div>
-          <h1 className="hero-headline" data-testid="hero-headline">Plan your food fundraiser without guessing.</h1>
+          <h1 id="hero-heading" className="hero-headline" data-testid="hero-headline">Plan your food fundraiser without guessing.</h1>
           <p className="hero-subheadline" data-testid="hero-subheadline">
             Choose a supported meal, enter your expected attendance, and get dependable food quantities plus a practical shopping plan. You also receive helpful prep, volunteer, and communication extras for running the event.
           </p>
@@ -60,6 +61,23 @@ export default function LandingPage() {
         </div>
       </section>
 
+      <section className="trust-section" aria-labelledby="trust-heading">
+        <div className="section-inner trust-inner">
+          <div>
+            <p className="eyebrow">Clear about the math</p>
+            <h2 id="trust-heading" className="section-title trust-title">A planning estimate you can inspect.</h2>
+            <p className="trust-copy">
+              Fundraiser Food Math shows the assumptions behind each estimate so your team can review quantities before buying. It is a planning tool—not a promise of exact attendance, prices, or leftovers.
+            </p>
+          </div>
+          <ul className="trust-list">
+            <li><Check className="w-5 h-5" /><span><strong>Serving assumptions are visible</strong><br />Review the buffer and serving logic before you shop.</span></li>
+            <li><Check className="w-5 h-5" /><span><strong>No account required</strong><br />Start with the free planner and decide when you are ready to save.</span></li>
+            <li><Check className="w-5 h-5" /><span><strong>Real support is available</strong><br />Questions about a plan? <a href="mailto:devin@ghfc.org">Contact the team</a>.</span></li>
+          </ul>
+        </div>
+      </section>
+
       {/* Meal types */}
       <section className="meals-section">
         <div className="section-inner">
@@ -81,7 +99,7 @@ export default function LandingPage() {
           <h2 className="section-title">Simple pricing</h2>
           <p className="section-sub">Start free. Upgrade to the $19 Founding Event Pack when you want the full plan.</p>
           <div className="pricing-grid">
-            {PRICING_TIERS.map((tier) => (
+            {PRICING_TIERS.filter((tier) => tier.id !== "custom").map((tier) => (
               <div key={tier.id} className={`pricing-card${tier.highlighted ? " pricing-card--highlighted" : ""}`} data-testid={`card-pricing-${tier.id}`}>
                 {tier.highlighted && <div className="pricing-badge">Most popular</div>}
                 <div className="pricing-name">{tier.name}</div>
@@ -95,15 +113,9 @@ export default function LandingPage() {
                     </li>
                   ))}
                 </ul>
-                {isConfigured(tier.link) ? (
-                  <a href={tier.link} className="pricing-cta" target="_blank" rel="noopener noreferrer" data-testid={`link-pricing-cta-${tier.id}`}>
-                    {tier.cta}
-                  </a>
-                ) : (
-                  <Link href="/planner" className={`pricing-cta${tier.id === "free" ? " pricing-cta--free" : ""}`} data-testid={`button-pricing-cta-${tier.id}`}>
-                    {tier.cta}
-                  </Link>
-                )}
+                <Link href="/planner" className={`pricing-cta${tier.id === "free" ? " pricing-cta--free" : ""}`} data-testid={`button-pricing-cta-${tier.id}`}>
+                  {tier.cta}
+                </Link>
               </div>
             ))}
           </div>
@@ -133,7 +145,7 @@ export default function LandingPage() {
               { label: "Meal types supported", value: "6", icon: <Utensils className="w-6 h-6 text-accent mb-2" /> },
               { label: "Event sections generated", value: "10+", icon: <LayoutList className="w-6 h-6 text-accent mb-2" /> },
               { label: "Time to complete", value: "~5 min", icon: <Clock className="w-6 h-6 text-accent mb-2" /> },
-              { label: "Volunteers helped", value: "Countless", icon: <Users className="w-6 h-6 text-accent mb-2" /> },
+               { label: "Signup required", value: "None", icon: <Users className="w-6 h-6 text-accent mb-2" /> },
             ].map((stat) => (
               <div key={stat.label} className="stat-card" data-testid={`card-stat-${stat.label.replace(/\s/g, "-").toLowerCase()}`}>
                 {stat.icon}
@@ -144,17 +156,18 @@ export default function LandingPage() {
           </div>
         </div>
       </section>
+      </main>
 
       {/* Footer */}
       <footer className="footer">
         <div className="footer-inner">
           <span className="brand" data-testid="footer-brand">Fundraiser Food Math</span>
-          <div className="footer-links">
+           <nav className="footer-links" aria-label="Footer navigation">
             <a href="/" data-testid="footer-link-home">Home</a>
             <Link href="/planner" data-testid="footer-link-planner">Planner</Link>
             <Link href="/idea-finder" data-testid="footer-link-idea-finder">Idea Finder</Link>
             <a href="#pricing" data-testid="footer-link-pricing">Pricing</a>
-          </div>
+           </nav>
           <p className="footer-copy">© {new Date().getFullYear()} Fundraiser Food Math. All rights reserved.</p>
         </div>
       </footer>

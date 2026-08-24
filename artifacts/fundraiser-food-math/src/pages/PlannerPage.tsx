@@ -13,6 +13,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { trackFunnelEvent } from "@/lib/analytics";
 
 const ENABLE_TIERED_PRICING = false;
 const SHOW_STORE_SELECTOR = false;
@@ -160,7 +161,7 @@ const DIETARY_OPTIONS  = [
 // ── Default form values ───────────────────────────────────────
 const DEFAULT_VALUES: PlannerFormData = {
   orgType: "" as PlannerFormData["orgType"],
-  mealType: "hotdogs",
+  mealType: "" as PlannerFormData["mealType"],
   attendance: "" as unknown as number,
   mealPrice: "" as unknown as number,
   storePreference: "Mixed",
@@ -208,6 +209,7 @@ export default function PlannerPage({ onPlanReady }: PlannerPageProps) {
   // Internal step: 1=Event Info, 2=Tell Us About Your Menu (custom only), 3=Timing, 4=Review
   const [step, setStep] = useState(1);
   const [activeTemplateId, setActiveTemplateId] = useState<string | null>(null);
+  useEffect(() => { trackFunnelEvent("planner_started"); }, []);
 
   const form = useForm<PlannerFormData>({
     resolver: zodResolver(schema),
@@ -221,14 +223,12 @@ export default function PlannerPage({ onPlanReady }: PlannerPageProps) {
   const [ideaPreFillLabel, setIdeaPreFillLabel] = useState<string | null>(null);
 
   // ── Multi-meal selection state ────────────────────────────────
-  const [selectedMeals, setSelectedMeals] = useState<MealType[]>([DEFAULT_VALUES.mealType]);
+  const [selectedMeals, setSelectedMeals] = useState<MealType[]>([]);
   const [totalExpectedGuests, setTotalExpectedGuests] = useState<number | "">("");
 
   // Sync first selected meal → form.mealType (for schema validation + downstream logic)
   useEffect(() => {
-    if (selectedMeals.length > 0) {
-      form.setValue("mealType", selectedMeals[0] as MealType);
-    }
+    if (selectedMeals[0]) form.setValue("mealType", selectedMeals[0]);
   }, [selectedMeals]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const toggleMealSelection = (mealType: MealType) => {
@@ -247,6 +247,7 @@ export default function PlannerPage({ onPlanReady }: PlannerPageProps) {
       try {
         const { formData, mealName } = JSON.parse(raw) as { formData: PlannerFormData; mealName: string };
         form.reset({ ...DEFAULT_VALUES, ...formData });
+        setSelectedMeals([formData.mealType]);
         setIdeaPreFillLabel(mealName);
         sessionStorage.removeItem("ffm_idea_prefill");
       } catch {
@@ -295,7 +296,7 @@ export default function PlannerPage({ onPlanReady }: PlannerPageProps) {
   const handleClearTemplate = () => {
     form.reset(DEFAULT_VALUES);
     setActiveTemplateId(null);
-    setSelectedMeals([DEFAULT_VALUES.mealType]);
+    setSelectedMeals([]);
     setTotalExpectedGuests("");
   };
 
@@ -310,7 +311,8 @@ export default function PlannerPage({ onPlanReady }: PlannerPageProps) {
       : "Suggested Donation or Ticket Price ($) *";
 
   const onSubmit = (data: PlannerFormData) => {
-    const primaryMeal = selectedMeals[0] ?? data.mealType;
+    const primaryMeal = selectedMeals[0];
+    if (!primaryMeal) return;
     const attendance = typeof totalExpectedGuests === "number"
       ? totalExpectedGuests
       : data.attendance;
@@ -318,16 +320,21 @@ export default function PlannerPage({ onPlanReady }: PlannerPageProps) {
       ...data,
       mealType: primaryMeal,
       attendance,
-      selectedMeals: selectedMeals.length >= 2 ? selectedMeals : undefined,
-      totalExpectedGuests: selectedMeals.length >= 2 ? attendance : undefined,
+      selectedMeals: undefined,
+      totalExpectedGuests: undefined,
     };
+    trackFunnelEvent("planner_completed");
     onPlanReady(enriched);
   };
 
   const handleNext = async () => {
     if (step === 1) {
       // Sync attendance from state so schema validation passes
-      const primaryMeal = selectedMeals[0] ?? DEFAULT_VALUES.mealType;
+      const primaryMeal = selectedMeals[0];
+      if (!primaryMeal) {
+        form.setError("mealType", { message: "Please select one meal." });
+        return;
+      }
       form.setValue("attendance", totalExpectedGuests as number);
       form.setValue("mealType", primaryMeal);
       const isValid = await form.trigger([
@@ -535,15 +542,9 @@ export default function PlannerPage({ onPlanReady }: PlannerPageProps) {
                     </div>
                     </div>
 
-                    {selectedMeals.length >= 2 && (
-                      <p style={{ fontSize: 12, color: "var(--color-text-muted)", marginBottom: 8, marginTop: 2 }}>
-                        Two meals selected — tap a selected meal to deselect it, or tap a new one to swap the second.
-                      </p>
-                    )}
-
                     {/* Individual Meals */}
                     <div className="meal-selector-section">
-                      <p className="meal-selector-section-label">Individual Meals — select up to 2</p>
+                      <p className="meal-selector-section-label">Individual Meals — select one</p>
                       <div className="meal-selector-grid meal-selector-grid--individual">
                         {INDIVIDUAL_OPTIONS.map((opt) => {
                           const slotIndex = selectedMeals.indexOf(opt.value as MealType);
@@ -561,9 +562,7 @@ export default function PlannerPage({ onPlanReady }: PlannerPageProps) {
                               <span className="meal-card-desc">{opt.desc}</span>
                               {isSelected && (
                                 <span className="meal-card-check">
-                                  {selectedMeals.length >= 2
-                                    ? <span style={{ fontSize: 11, fontWeight: 700 }}>{slotIndex === 0 ? "①" : "②"}</span>
-                                    : <Check className="w-3.5 h-3.5" />}
+                                  <Check className="w-3.5 h-3.5" />
                                 </span>
                               )}
                             </button>
@@ -1053,8 +1052,8 @@ export default function PlannerPage({ onPlanReady }: PlannerPageProps) {
             <div className="form-step" data-testid="form-step-4">
               <h2 className="step-heading">Review &amp; Generate</h2>
               <p className="review-desc">
-                Everything looks good? Click below to generate your full fundraiser plan including shopping list,
-                prep timeline, volunteer roles, and profit estimate.
+                Everything looks good? Click below to generate your free preview. The $19 Founding Event Pack unlocks
+                the complete shopping list and supporting plan.
               </p>
 
               {activeTemplate && (

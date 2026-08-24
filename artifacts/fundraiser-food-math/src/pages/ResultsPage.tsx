@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 import { PAYMENT_LINKS, ENABLE_DEMO_UNLOCK } from "@/config/paymentLinks";
 import { getUnlocked, hasExpiredCodeUnlock, setUnlocked, savePlanBeforePayment, applyAccessCode } from "@/lib/unlock";
+import { trackFunnelEvent } from "@/lib/analytics";
 
 // ── FREE PREVIEW LIMITS ───────────────────────────────────────
 // Change these numbers to adjust what the free preview shows.
@@ -157,8 +158,8 @@ export default function ResultsPage({ plan, formData, onReset }: ResultsPageProp
     if (safePlan && safeFormData) savePlanBeforePayment(safePlan, safeFormData);
   };
 
-  const handleApplyCode = () => {
-    const result = applyAccessCode(accessCode);
+  const handleApplyCode = async () => {
+    const result = await applyAccessCode(accessCode);
     if (result === "ok") {
       if (safePlan && safeFormData) savePlanBeforePayment(safePlan, safeFormData);
       setCodeStatus("success");
@@ -169,6 +170,7 @@ export default function ResultsPage({ plan, formData, onReset }: ResultsPageProp
   };
 
   const handlePaymentCTAClick = () => {
+    trackFunnelEvent("checkout_clicked");
     if (safePlan && safeFormData) savePlanBeforePayment(safePlan, safeFormData);
     const link = PAYMENT_LINKS.fullEventPack;
     if (link) window.location.href = link;

@@ -24,11 +24,53 @@ const queryClient = new QueryClient();
 // The screen's code and route are preserved; this flag bypasses them.
 const SKIP_CUSTOMIZE_MENU = true;
 
+const SEO_ORIGIN = "https://fundraiserplanner.online";
+const SEO_DEFAULTS = {
+  "/": {
+    title: "Fundraiser Planning Calculator | Fundraiser Food Math",
+    description: "Plan a food fundraiser with clear meal quantities, shopping lists, prep timelines, volunteer guidance, and profit estimates. Start free with no account.",
+    indexable: true,
+  },
+  "/idea-finder": {
+    title: "Choose a Fundraiser Meal | Fundraiser Food Math",
+    description: "Find a practical fundraiser meal based on your group, volunteers, equipment, and serving goals. Get an honest recommendation before you plan.",
+    indexable: true,
+  },
+  "/planner": {
+    title: "Build a Fundraiser Food Plan | Fundraiser Food Math",
+    description: "Enter your event details and create a practical food fundraiser plan with quantities, shopping guidance, prep timing, and volunteer needs.",
+    indexable: false,
+  },
+  "/utility": {
+    title: "Fundraiser Food Plan | Fundraiser Food Math",
+    description: "Review your fundraiser food plan, shopping guidance, and event details.",
+    indexable: false,
+  },
+};
+
+function updatePageMetadata(pathname: string) {
+  const key = pathname === "/" ? "/" : pathname.startsWith("/idea-finder") ? "/idea-finder" : pathname.startsWith("/planner") ? "/planner" : "/utility";
+  const metadata = SEO_DEFAULTS[key];
+  document.title = metadata.title;
+  document.querySelector('meta[name="description"]')?.setAttribute("content", metadata.description);
+  document.querySelector('meta[name="robots"]')?.setAttribute("content", metadata.indexable ? "index,follow" : "noindex,nofollow");
+  document.querySelector('meta[property="og:title"]')?.setAttribute("content", metadata.title);
+  document.querySelector('meta[property="og:description"]')?.setAttribute("content", metadata.description);
+  document.querySelector('meta[property="og:url"]')?.setAttribute("content", `${SEO_ORIGIN}${pathname}`);
+  document.querySelector('meta[name="twitter:title"]')?.setAttribute("content", metadata.title);
+  document.querySelector('meta[name="twitter:description"]')?.setAttribute("content", metadata.description);
+  document.querySelector('link[rel="canonical"]')?.setAttribute("href", `${SEO_ORIGIN}${pathname}`);
+}
+
 function AppRoutes() {
   const [plan, setPlan] = useState<FundraiserPlan | null>(null);
   const [formData, setFormData] = useState<PlannerFormData | null>(null);
   const [pendingForm, setPendingForm] = useState<PlannerFormData | null>(null);
   const [location, setLocation] = useLocation();
+
+  useEffect(() => {
+    updatePageMetadata(location);
+  }, [location]);
 
   // On mount, restore plan from localStorage so returning users (e.g. after a
   // Stripe redirect → /success → /results) find their plan in the results page

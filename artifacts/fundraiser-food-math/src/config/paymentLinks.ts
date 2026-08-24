@@ -135,14 +135,6 @@ export interface AccessCode {
   durationDays: number;
 }
 
-export const ACCESS_CODES: AccessCode[] = [
-  {
-    code: "DEVINTEST",
-    label: "30-day tester access",
-    durationDays: 30,
-  },
-];
-
 // ============================================================
 // PRICING DISPLAY CONFIG
 // Update labels and descriptions here to match your copy.
@@ -167,7 +159,7 @@ export const PRICING_TIERS: PricingTier[] = [
     description: "Preview your estimate before purchasing.",
     features: [
       "Event summary",
-      "Revenue & profit estimate",
+      "Servings to prepare",
       "Top food items preview",
       "Risk flags",
     ],

@@ -229,6 +229,9 @@ function scoreMeal(meal: MealKey, quiz: QuizAnswers): number {
 // ── Dynamic "why this fits" text ──────────────────────────────
 function buildWhyThisFits(meal: MealKey, quiz: QuizAnswers): string {
   const parts: string[] = [];
+  if (quiz.timeOfEvent === "breakfast") {
+    parts.push("We do not currently offer an audited breakfast meal in the public planner, so this is the closest supported format to review.");
+  }
 
   switch (meal) {
     case "hotdogs":
@@ -369,7 +372,7 @@ function buildDefaultFormData(meal: MealKey, quiz: QuizAnswers): PlannerFormData
     orgType: quiz.orgType,
     mealType: meal,
     attendance: ATTENDANCE_MIDPOINTS[quiz.attendance],
-    mealPrice: DEFAULT_PRICES[meal],
+    mealPrice: "" as unknown as number,
     storePreference: "Mixed",
     prepStartTime: timings.prep,
     serveStartTime: timings.serveStart,

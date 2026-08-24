@@ -6,6 +6,7 @@ import {
   buildSupportMailto,
   isCustomerFacingOrigin,
 } from "@/config/paymentLinks";
+import { trackFunnelEvent } from "@/lib/analytics";
 
 // ── /success route ────────────────────────────────────────────
 // Stripe redirects here after payment. Configure the payment link's
@@ -30,6 +31,7 @@ export default function SuccessPage() {
     const sessionId = params.get("session_id");
 
     if (unlockParam === FULL_PACK_UNLOCK_VALUE) {
+      trackFunnelEvent("purchase_succeeded");
       const isCanonicalOrigin = isCustomerFacingOrigin(window.location.origin);
       // Only the canonical origin may attach browser-saved plan data. In
       // particular, do not let the old Replit origin attach an older plan.

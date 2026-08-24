@@ -1254,6 +1254,16 @@ export function calculatePlan(rawForm: PlannerFormData): FundraiserPlan {
     totalCostRange = rangeAdd(totalCostRange, r.cost);
   }
 
+  if (form.mealType === "tacos") {
+    const preparedServings = getPreparedServings(form.attendance, form.mealType);
+    const tacoTotal = preparedServings * 2;
+    foodQuantities.unshift({
+      ingredient: "Taco count (2 tacos per prepared meal serving)",
+      quantity: `${tacoTotal} tacos total`,
+      notes: `${preparedServings} prepared meal servings for ${form.attendance} expected guests.`,
+    });
+  }
+
   // ── Supplies List ──────────────────────────────────────────
   // For combos: use the first component's supplies (avoids duplication of plates/napkins)
   const supplySource = combo ? (combo.components[0]) : meal;

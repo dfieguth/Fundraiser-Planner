@@ -584,14 +584,17 @@ export const breakfastBurritoAssumptions: MealAssumption = {
 export const tacoAssumptions: MealAssumption = {
   label: "tacos",
   displayName: "Taco Bar",
-  perGuestServings: 2.2,
+  // One prepared meal serving is a two-taco plate. The taco count is
+  // represented by the ingredient factors below, not by the summary serving
+  // count.
+  perGuestServings: 1.1,
   wasteBuffer: 1.05,
   cookingComplexity: "low",
   ingredients: [
     {
       // 2.5 oz cooked per taco → raw with 25% shrink = 3.33 oz = 0.208 lb raw per taco
       name: "Ground Beef 80/20 (or ground turkey)",
-      perServing: 30 / 220,
+      perServing: 30 / 110,
       unit: "lb",
       packageSize: 5,
       packageUnit: "5-lb pack",
@@ -602,7 +605,7 @@ export const tacoAssumptions: MealAssumption = {
     {
       // 40% of tacos go in hard shells
       name: "Taco Shells (hard, 24-count box)",
-      perServing: 0.4,
+      perServing: 0.8,
       unit: "shell",
       packageSize: 24,
       packageUnit: "24-count box",
@@ -613,7 +616,7 @@ export const tacoAssumptions: MealAssumption = {
     {
       // 60% of tacos go in soft tortillas
       name: "Flour Tortillas — soft taco option (20-pack)",
-      perServing: 0.6,
+      perServing: 1.2,
       unit: "tortilla",
       packageSize: 20,
       packageUnit: "20-pack",
@@ -623,7 +626,7 @@ export const tacoAssumptions: MealAssumption = {
     {
       // One packet per pound of raw meat.
       name: "Taco Seasoning (1-oz packet per 1 lb of meat)",
-      perServing: 30 / 220,
+      perServing: 30 / 110,
       unit: "packet",
       packageSize: 1,
       packageUnit: "1-oz packet",

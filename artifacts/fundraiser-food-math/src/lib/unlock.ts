@@ -19,7 +19,6 @@ import type {
   PlannerFormData,
   StorePreference,
 } from "@/lib/types";
-import { ACCESS_CODES } from "@/config/paymentLinks";
 
 // ── Storage keys ─────────────────────────────────────────────
 // Change these if you need to namespace multiple apps on the same origin.
@@ -248,15 +247,24 @@ export function setUnlockedWithCode(durationDays: number): void {
  * Returns "ok" if the code matched and unlock was applied,
  * or "invalid" if the code was not recognized.
  *
- * NOTE: Client-side access codes are for early testing only.
- * For production coupon codes, validate codes on the backend.
+ * Validation happens on the API server so reusable codes never ship in the
+ * public frontend bundle.
  */
-export function applyAccessCode(code: string): "ok" | "invalid" {
-  const normalized = code.trim().toUpperCase();
-  const match = ACCESS_CODES.find((ac) => ac.code.trim().toUpperCase() === normalized);
-  if (!match) return "invalid";
-  setUnlockedWithCode(match.durationDays);
-  return "ok";
+export async function applyAccessCode(code: string): Promise<"ok" | "invalid"> {
+  try {
+    const response = await fetch("/api/access-code", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ code }),
+    });
+    if (!response.ok) return "invalid";
+    const result = await response.json() as { valid?: boolean; durationDays?: number };
+    if (!result.valid || !Number.isFinite(result.durationDays)) return "invalid";
+    setUnlockedWithCode(result.durationDays!);
+    return "ok";
+  } catch {
+    return "invalid";
+  }
 }
 
 // ── Plan persistence ─────────────────────────────────────────

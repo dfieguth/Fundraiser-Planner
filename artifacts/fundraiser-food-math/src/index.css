@@ -257,6 +257,36 @@
   .section-sub {
     @apply text-lg text-muted-foreground text-center mb-12;
   }
+  .trust-section {
+    @apply border-y bg-card;
+  }
+  .trust-inner {
+    @apply grid gap-10 md:grid-cols-2 items-center;
+  }
+  .eyebrow {
+    @apply text-xs font-bold uppercase tracking-[0.16em] text-accent mb-3;
+  }
+  .trust-title {
+    @apply text-left mb-4;
+  }
+  .trust-copy {
+    @apply text-lg leading-relaxed text-muted-foreground max-w-xl;
+  }
+  .trust-list {
+    @apply flex flex-col gap-5 text-sm text-muted-foreground;
+  }
+  .trust-list li {
+    @apply flex items-start gap-3;
+  }
+  .trust-list svg {
+    @apply flex-shrink-0 text-accent mt-0.5;
+  }
+  .trust-list strong {
+    @apply text-foreground;
+  }
+  .trust-list a {
+    @apply text-accent underline underline-offset-2;
+  }
 
   .steps-grid {
     @apply grid gap-8 md:grid-cols-3;
